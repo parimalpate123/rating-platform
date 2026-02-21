@@ -3,47 +3,47 @@ import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateCol
 @Entity('systems')
 export class SystemEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ unique: true, length: 50 })
-  code: string;
+  code!: string;
 
   @Column({ length: 255 })
-  name: string;
+  name!: string;
 
   @Column({ length: 20 })
-  type: string;
+  type!: string;
 
   @Column({ length: 20, default: 'json' })
-  format: string;
+  format!: string;
 
   @Column({ length: 20, default: 'rest' })
-  protocol: string;
+  protocol!: string;
 
   @Column({ name: 'base_url', nullable: true, length: 500 })
-  baseUrl: string;
+  baseUrl!: string;
 
   @Column({ name: 'base_url_prod', nullable: true, length: 500 })
-  baseUrlProd: string;
+  baseUrlProd!: string;
 
   @Column({ name: 'auth_method', length: 30, default: 'none' })
-  authMethod: string;
+  authMethod!: string;
 
   @Column({ name: 'auth_secret_id', nullable: true, length: 255 })
-  authSecretId: string;
+  authSecretId!: string;
 
   @Column({ name: 'is_mock', default: false })
-  isMock: boolean;
+  isMock!: boolean;
 
   @Column({ name: 'is_active', default: true })
-  isActive: boolean;
+  isActive!: boolean;
 
   @Column({ type: 'jsonb', default: {} })
-  config: Record<string, unknown>;
+  config!: Record<string, unknown>;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 }

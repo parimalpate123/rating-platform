@@ -9,7 +9,8 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ScopesService, CreateScopeDto, UpdateScopeDto } from './scopes.service';
+import { ScopesService } from './scopes.service';
+import type { CreateScopeDto, UpdateScopeDto } from './scopes.service';
 
 @Controller('product-lines/:code/scopes')
 export class ScopesController {

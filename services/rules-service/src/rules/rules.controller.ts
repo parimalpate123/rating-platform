@@ -11,7 +11,8 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { RulesService, EvaluateRequest, EvaluateResponse } from './rules.service';
+import { RulesService } from './rules.service';
+import type { EvaluateRequest, EvaluateResponse } from './rules.service';
 import { AiPromptsService } from '../ai-prompts/ai-prompts.service';
 
 @Controller('rules')

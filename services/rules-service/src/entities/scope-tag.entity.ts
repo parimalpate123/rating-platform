@@ -3,20 +3,20 @@ import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeor
 @Entity('entity_scope_tags')
 export class ScopeTagEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'varchar', length: 30, name: 'entity_type' })
-  entityType: string;
+  entityType!: string;
 
   @Column({ type: 'uuid', name: 'entity_id' })
-  entityId: string;
+  entityId!: string;
 
   @Column({ type: 'varchar', length: 30, name: 'scope_type' })
-  scopeType: string;
+  scopeType!: string;
 
   @Column({ type: 'varchar', length: 100, name: 'scope_value' })
-  scopeValue: string;
+  scopeValue!: string;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 }

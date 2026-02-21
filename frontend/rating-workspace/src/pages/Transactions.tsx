@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Loader2, Activity, ChevronDown, ChevronRight, AlertCircle, CheckCircle, Clock } from 'lucide-react'
 import { transactionsApi, type Transaction, type StepLog } from '../api/transactions'
 import { cn, statusColor, formatDate } from '../lib/utils'
+import { ExecutionFlowDiagram, type DiagramStep, type DiagramResult } from '../components/flow/ExecutionFlowDiagram'
+import { StepDetailPanel } from '../components/flow/StepDetailPanel'
 
 function StepStatusIcon({ status }: { status: string }) {
   if (status === 'COMPLETED') return <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
@@ -13,6 +16,7 @@ function StepLogsRow({ txId }: { txId: string }) {
   const [steps, setSteps] = useState<StepLog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedStep, setSelectedStep] = useState<{ step: DiagramStep; result?: DiagramResult } | null>(null)
 
   useEffect(() => {
     transactionsApi
@@ -27,7 +31,7 @@ function StepLogsRow({ txId }: { txId: string }) {
   if (loading) {
     return (
       <tr>
-        <td colSpan={6} className="px-6 py-3 bg-gray-50">
+        <td colSpan={7} className="px-6 py-3 bg-gray-50">
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
             Loading step logs...
@@ -40,60 +44,105 @@ function StepLogsRow({ txId }: { txId: string }) {
   if (error) {
     return (
       <tr>
-        <td colSpan={6} className="px-6 py-3 bg-red-50">
+        <td colSpan={7} className="px-6 py-3 bg-red-50">
           <p className="text-xs text-red-600">{error}</p>
         </td>
       </tr>
     )
   }
 
+  const derivedSteps: DiagramStep[] = steps.map((log) => ({
+    id: log.id,
+    name: log.stepName,
+    stepType: log.stepType,
+    stepOrder: log.stepOrder,
+  }))
+
+  const derivedResults: DiagramResult[] = steps.map((log) => ({
+    stepId: log.id,
+    status: log.status,
+    durationMs: log.durationMs,
+    error: log.errorMessage,
+    startedAt: log.startedAt,
+    completedAt: log.completedAt,
+  }))
+
   return (
-    <tr>
-      <td colSpan={6} className="px-0 pb-0">
-        <div className="bg-gray-50 border-t border-gray-100 px-6 py-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Step Logs
-          </p>
-          {steps.length === 0 ? (
-            <p className="text-xs text-gray-400">No step logs available.</p>
-          ) : (
-            <div className="space-y-1.5">
-              {steps.map((step) => (
-                <div
-                  key={step.id}
-                  className="flex items-center gap-3 text-xs text-gray-700 bg-white rounded border border-gray-200 px-3 py-2"
-                >
-                  <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 font-mono text-[10px] flex-shrink-0">
-                    {step.stepOrder}
-                  </span>
-                  <StepStatusIcon status={step.status} />
-                  <div className="flex-1 min-w-0">
-                    <span className="font-medium text-gray-800">{step.stepName}</span>
-                    <span className="ml-2 text-gray-400 text-[11px]">{step.stepType}</span>
-                    {step.errorMessage && (
-                      <p className="text-red-500 text-[11px] mt-0.5 truncate">{step.errorMessage}</p>
-                    )}
-                  </div>
-                  <span
-                    className={cn(
-                      'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium',
-                      statusColor(step.status),
-                    )}
-                  >
-                    {step.status}
-                  </span>
-                  {step.durationMs != null && (
-                    <span className="text-gray-400 text-[11px] flex-shrink-0">
-                      {step.durationMs}ms
-                    </span>
-                  )}
+    <>
+      <tr>
+        <td colSpan={7} className="px-0 pb-0">
+          <div className="bg-gray-50 border-t border-gray-100 px-6 py-3 space-y-4">
+            {steps.length === 0 ? (
+              <p className="text-xs text-gray-400">No step logs available.</p>
+            ) : (
+              <>
+                {/* Flow diagram */}
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    Execution Flow · click a node to inspect
+                  </p>
+                  <ExecutionFlowDiagram
+                    steps={derivedSteps}
+                    results={derivedResults}
+                    onStepClick={(step, result) => setSelectedStep({ step, result })}
+                    selectedStepId={selectedStep?.step.id}
+                  />
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </td>
-    </tr>
+
+                {/* Step list */}
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    Step Logs
+                  </p>
+                  <div className="space-y-1.5">
+                    {steps.map((step) => (
+                      <div
+                        key={step.id}
+                        className="flex items-center gap-3 text-xs text-gray-700 bg-white rounded border border-gray-200 px-3 py-2"
+                      >
+                        <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 font-mono text-[10px] flex-shrink-0">
+                          {step.stepOrder}
+                        </span>
+                        <StepStatusIcon status={step.status} />
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium text-gray-800">{step.stepName}</span>
+                          <span className="ml-2 text-gray-400 text-[11px]">{step.stepType}</span>
+                          {step.errorMessage && (
+                            <p className="text-red-500 text-[11px] mt-0.5 truncate">{step.errorMessage}</p>
+                          )}
+                        </div>
+                        <span
+                          className={cn(
+                            'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium',
+                            statusColor(step.status),
+                          )}
+                        >
+                          {step.status}
+                        </span>
+                        {step.durationMs != null && (
+                          <span className="text-gray-400 text-[11px] flex-shrink-0">
+                            {step.durationMs}ms
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </td>
+      </tr>
+      {selectedStep &&
+        createPortal(
+          <StepDetailPanel
+            step={selectedStep.step}
+            result={selectedStep.result}
+            onClose={() => setSelectedStep(null)}
+          />,
+          document.body,
+        )}
+    </>
   )
 }
 

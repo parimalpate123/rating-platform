@@ -3,26 +3,26 @@ import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateCol
 @Entity('mappings')
 export class MappingEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ length: 255 })
-  name: string;
+  name!: string;
 
   @Column({ name: 'product_line_code', length: 50 })
-  productLineCode: string;
+  productLineCode!: string;
 
   @Column({ length: 20, default: 'request' })
-  direction: string;
+  direction!: string;
 
   @Column({ length: 20, default: 'draft' })
-  status: string;
+  status!: string;
 
   @Column({ name: 'created_by', length: 100, default: 'System' })
-  createdBy: string;
+  createdBy!: string;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 }

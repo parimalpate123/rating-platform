@@ -14,6 +14,10 @@ export type TransactionStatus =
 
 export type StepStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
 
+// Convenience aliases re-exported for the controller layer
+export type { TransactionEntity as Transaction } from '../entities/transaction.entity';
+export type { TransactionStepLogEntity as StepLog } from '../entities/transaction-step-log.entity';
+
 export interface CreateTransactionDto {
   correlationId?: string;
   productLineCode: string;

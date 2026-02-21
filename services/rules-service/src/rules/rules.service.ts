@@ -395,14 +395,4 @@ export class RulesService {
     return path.split('.').reduce((o, k) => o?.[k], obj);
   }
 
-  private setNestedValue(obj: any, path: string, value: any): void {
-    if (!path) return;
-    const parts = path.split('.');
-    let current = obj;
-    for (let i = 0; i < parts.length - 1; i++) {
-      if (!(parts[i] in current)) current[parts[i]] = {};
-      current = current[parts[i]];
-    }
-    current[parts[parts.length - 1]] = value;
-  }
 }

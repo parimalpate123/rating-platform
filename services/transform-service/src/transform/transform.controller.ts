@@ -1,8 +1,8 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import {
   TransformService,
-  TransformRequest,
-  TransformResponse,
+  type TransformRequest,
+  type TransformResponse,
 } from './transform.service';
 
 @Controller('transform')

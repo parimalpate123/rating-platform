@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
+import { XMLParser, XMLBuilder } from 'fast-xml-parser';
 
 export interface TransformRequest {
   input: any;
@@ -7,17 +8,36 @@ export interface TransformRequest {
 }
 
 export interface TransformResponse {
-  output: string;
+  output: string | Record<string, unknown>;
   format: string;
   durationMs: number;
 }
+
+const xmlParser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: '@_',
+  textNodeName: '#text',
+  parseAttributeValue: true,
+  parseTagValue: true,
+  trimValues: true,
+  isArray: () => false,
+});
+
+const xmlBuilder = new XMLBuilder({
+  ignoreAttributes: false,
+  attributeNamePrefix: '@_',
+  textNodeName: '#text',
+  format: true,
+  indentBy: '  ',
+  suppressEmptyNode: true,
+});
 
 @Injectable()
 export class TransformService {
   transform(request: TransformRequest): TransformResponse {
     const start = Date.now();
 
-    let output: string;
+    let output: string | Record<string, unknown>;
     let format: string;
 
     switch (request.direction) {
@@ -39,7 +59,7 @@ export class TransformService {
         break;
       default:
         throw new BadRequestException(
-          `Unsupported direction: ${request.direction}`
+          `Unsupported direction: ${(request as any).direction}`,
         );
     }
 
@@ -47,65 +67,26 @@ export class TransformService {
     return { output, format, durationMs };
   }
 
-  private jsonToXml(
-    input: any,
-    options?: Record<string, any>
-  ): string {
+  private jsonToXml(input: any, options?: Record<string, any>): string {
     const rootTag = options?.rootTag || 'root';
-    const xml = this.objectToXml(input, rootTag);
+    const wrapped = { [rootTag]: input };
+    const xml = xmlBuilder.build(wrapped);
     return `<?xml version="1.0" encoding="UTF-8"?>\n${xml}`;
   }
 
-  private objectToXml(obj: any, tagName: string): string {
-    if (obj === null || obj === undefined) {
-      return `<${tagName}/>`;
+  private xmlToJson(input: any, _options?: Record<string, any>): Record<string, unknown> {
+    const xmlString = typeof input === 'string' ? input : JSON.stringify(input);
+    try {
+      return xmlParser.parse(xmlString) as Record<string, unknown>;
+    } catch (err) {
+      throw new BadRequestException(`Failed to parse XML: ${err}`);
     }
-
-    if (typeof obj !== 'object') {
-      return `<${tagName}>${this.escapeXml(String(obj))}</${tagName}>`;
-    }
-
-    if (Array.isArray(obj)) {
-      return obj.map((item) => this.objectToXml(item, tagName)).join('\n');
-    }
-
-    const children = Object.entries(obj)
-      .map(([key, value]) => this.objectToXml(value, key))
-      .join('\n');
-
-    return `<${tagName}>\n${children}\n</${tagName}>`;
   }
 
-  private escapeXml(str: string): string {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&apos;');
-  }
-
-  private xmlToJson(
-    input: any,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _options?: Record<string, any>
-  ): string {
-    // Placeholder: full XML parsing will be added in Phase 2
-    return JSON.stringify({
-      _placeholder: true,
-      _message:
-        'XML to JSON conversion will use a full XML parser in Phase 2',
-      rawInput: typeof input === 'string' ? input.substring(0, 200) : input,
-    });
-  }
-
-  private jsonToSoap(
-    input: any,
-    options?: Record<string, any>
-  ): string {
+  private jsonToSoap(input: any, options?: Record<string, any>): string {
     const namespace = options?.namespace || 'http://example.com/rating';
     const action = options?.action || 'RateRequest';
-    const bodyXml = this.objectToXml(input, action);
+    const bodyXml = xmlBuilder.build({ [action]: input });
 
     return [
       '<?xml version="1.0" encoding="UTF-8"?>',
@@ -118,17 +99,23 @@ export class TransformService {
     ].join('\n');
   }
 
-  private soapToJson(
-    input: any,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _options?: Record<string, any>
-  ): string {
-    // Placeholder: full SOAP parsing will be added in Phase 2
-    return JSON.stringify({
-      _placeholder: true,
-      _message:
-        'SOAP to JSON conversion will use a full XML/SOAP parser in Phase 2',
-      rawInput: typeof input === 'string' ? input.substring(0, 200) : input,
-    });
+  private soapToJson(input: any, _options?: Record<string, any>): Record<string, unknown> {
+    const xmlString = typeof input === 'string' ? input : JSON.stringify(input);
+    try {
+      const parsed = xmlParser.parse(xmlString) as Record<string, unknown>;
+      // Unwrap SOAP envelope if present
+      const envelope =
+        (parsed['soap:Envelope'] as Record<string, unknown>) ??
+        (parsed['Envelope'] as Record<string, unknown>);
+      if (envelope) {
+        const body =
+          (envelope['soap:Body'] as Record<string, unknown>) ??
+          (envelope['Body'] as Record<string, unknown>);
+        if (body) return body;
+      }
+      return parsed;
+    } catch (err) {
+      throw new BadRequestException(`Failed to parse SOAP: ${err}`);
+    }
   }
 }

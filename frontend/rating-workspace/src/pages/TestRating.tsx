@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { Play, Loader2, CheckCircle, XCircle, ChevronDown, ChevronRight, Zap } from 'lucide-react';
 import { ratingApi, type RateResponse } from '../api/orchestrator';
-import { productsApi, type ProductLine } from '../api/products';
-import { cn, statusColor, formatDate } from '../lib/utils';
+import { type ProductLine } from '../api/products';
+import { cn, statusColor } from '../lib/utils';
+import { ExecutionFlowDiagram, type DiagramStep, type DiagramResult } from '../components/flow/ExecutionFlowDiagram';
+import { StepDetailPanel } from '../components/flow/StepDetailPanel';
 
 const DEFAULT_PAYLOAD = JSON.stringify({
   policy: {
@@ -34,6 +36,7 @@ export function TestRating() {
   const [result, setResult] = useState<RateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
+  const [selectedStep, setSelectedStep] = useState<{ step: DiagramStep; result?: DiagramResult } | null>(null);
 
   const handleRun = async () => {
     if (!selectedProduct) return;
@@ -218,6 +221,33 @@ export function TestRating() {
                 </dl>
               </div>
 
+              {/* Execution flow diagram */}
+              <div className="bg-white rounded-lg border border-gray-200 p-5">
+                <h2 className="text-sm font-semibold text-gray-800 mb-3">
+                  Execution Flow
+                  <span className="ml-2 text-xs font-normal text-gray-400">· click a node to inspect</span>
+                </h2>
+                <ExecutionFlowDiagram
+                  steps={result.stepResults.map((s, i) => ({
+                    id: s.stepId,
+                    name: s.stepName,
+                    stepType: s.stepType,
+                    stepOrder: i + 1,
+                  }))}
+                  results={result.stepResults.map((s) => ({
+                    stepId: s.stepId,
+                    stepName: s.stepName,
+                    stepType: s.stepType,
+                    status: s.status,
+                    durationMs: s.durationMs,
+                    error: s.error,
+                    output: s.output,
+                  }))}
+                  onStepClick={(step, res) => setSelectedStep({ step, result: res })}
+                  selectedStepId={selectedStep?.step.id}
+                />
+              </div>
+
               {/* Step trace */}
               <div className="bg-white rounded-lg border border-gray-200 p-5">
                 <h2 className="text-sm font-semibold text-gray-800 mb-3">Step Trace</h2>
@@ -268,6 +298,14 @@ export function TestRating() {
           )}
         </div>
       </div>
+
+      {selectedStep && (
+        <StepDetailPanel
+          step={selectedStep.step}
+          result={selectedStep.result}
+          onClose={() => setSelectedStep(null)}
+        />
+      )}
     </div>
   );
 }

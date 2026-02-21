@@ -9,11 +9,8 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import {
-  ProductLinesService,
-  CreateProductLineDto,
-  UpdateProductLineDto,
-} from './product-lines.service';
+import { ProductLinesService } from './product-lines.service';
+import type { CreateProductLineDto, UpdateProductLineDto } from './product-lines.service';
 
 @Controller('product-lines')
 export class ProductLinesController {

@@ -41,6 +41,7 @@ export interface RateResponse {
     status: string;
     durationMs: number;
     error?: string;
+    output?: Record<string, unknown>;
   }>;
   totalDurationMs: number;
 }

@@ -5,9 +5,10 @@ import { RegistryModule } from '../registry/registry.module';
 import { ExecutionModule } from '../execution/execution.module';
 import { HandlersModule } from '../handlers/handlers.module';
 import { RatingModule } from '../rating/rating.module';
+import { MockSystemsModule } from '../mock/mock-systems.module';
 
 @Module({
-  imports: [RegistryModule, ExecutionModule, HandlersModule, RatingModule],
+  imports: [RegistryModule, ExecutionModule, HandlersModule, RatingModule, MockSystemsModule],
   controllers: [AppController],
   providers: [AppService],
 })

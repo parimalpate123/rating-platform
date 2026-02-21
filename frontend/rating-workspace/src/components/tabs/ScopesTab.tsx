@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Loader2, Plus, X, Layers } from 'lucide-react'
+import { Loader2, Plus, X } from 'lucide-react'
 import { scopesApi, type ProductScope, type ScopeType } from '../../api/scopes'
 
 // ── Scope Column ─────────────────────────────────────────────────────────────

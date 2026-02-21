@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import axios from 'axios';
 import { ProductOrchestratorEntity } from '../entities/product-orchestrator.entity';
 import { OrchestratorStepEntity } from '../entities/orchestrator-step.entity';
 
@@ -123,6 +124,9 @@ export class OrchestratorService {
     productLineCode: string,
     targetFormat: 'xml' | 'json',
   ): Promise<any> {
+    const productConfigUrl =
+      process.env['PRODUCT_CONFIG_URL'] || 'http://localhost:4010';
+
     // Delete existing orchestrator if present
     const existing = await this.orchRepo.findOne({ where: { productLineCode } });
     if (existing) {
@@ -140,10 +144,36 @@ export class OrchestratorService {
 
     const steps: OrchestratorStepEntity[] = [];
     for (const t of template) {
+      const config: Record<string, unknown> = { ...(t.config as Record<string, unknown>) };
+
+      // For field_mapping steps, create an empty Mapping in product-config and store the ID
+      if (t.type === 'field_mapping') {
+        const direction = (config.direction as string) ?? 'request';
+        try {
+          const { data: mapping } = await axios.post(
+            `${productConfigUrl}/api/v1/mappings`,
+            {
+              name: `${productLineCode} — ${t.name}`,
+              productLineCode,
+              direction,
+              status: 'draft',
+            },
+          );
+          config.mappingId = mapping.id;
+          this.logger.log(
+            `Created mapping stub ${mapping.id} for step "${t.name}" (${direction})`,
+          );
+        } catch (err) {
+          this.logger.warn(
+            `Could not create mapping stub for step "${t.name}": ${err}`,
+          );
+        }
+      }
+
       const step = await this.addStep(orch.id, {
         stepType: t.type,
         name: t.name,
-        config: t.config as Record<string, unknown>,
+        config,
         stepOrder: t.order,
       });
       steps.push(step);

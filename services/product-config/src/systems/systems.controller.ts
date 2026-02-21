@@ -9,7 +9,8 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { SystemsService, CreateSystemDto, UpdateSystemDto } from './systems.service';
+import { SystemsService } from './systems.service';
+import type { CreateSystemDto, UpdateSystemDto } from './systems.service';
 
 @Controller('systems')
 export class SystemsController {

@@ -1,5 +1,5 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { ExecutionService, ExecutionRequest } from './execution.service';
+import { ExecutionService, type ExecutionRequest } from './execution.service';
 
 @Controller('execute')
 export class ExecutionController {

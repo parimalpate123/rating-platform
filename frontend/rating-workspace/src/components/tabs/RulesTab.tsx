@@ -4,7 +4,7 @@ import {
   Sparkles, ChevronDown, ChevronRight, Zap,
 } from 'lucide-react'
 import {
-  rulesApi, type Rule, type RuleCondition, type RuleAction,
+  rulesApi, type Rule,
   type RuleOperator, type ActionType, type ScopeTag,
 } from '../../api/rules'
 import { scopesApi, type ProductScope } from '../../api/scopes'

@@ -172,7 +172,7 @@ function formToPayload(form: SystemFormData): Partial<System> {
     name: form.name.trim(),
     type: form.type,
     format: form.format,
-    protocol: form.protocol.trim() || 'rest',
+    protocol: (form.protocol.trim() || 'rest') as 'rest' | 'soap' | 'grpc' | 'mock',
     baseUrl: form.baseUrl.trim() || undefined,
     baseUrlProd: form.baseUrlProd.trim() || undefined,
     authMethod: form.authMethod,
