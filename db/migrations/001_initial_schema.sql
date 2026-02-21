@@ -223,15 +223,15 @@ CREATE TABLE IF NOT EXISTS activity_log (
 -- Indexes
 -- ═══════════════════════════════════════════════════════════════════════════
 
-CREATE INDEX idx_mappings_product ON mappings(product_line_code);
-CREATE INDEX idx_field_mappings_mapping ON field_mappings(mapping_id);
-CREATE INDEX idx_scopes_product ON product_scopes(product_line_code);
-CREATE INDEX idx_orchestrator_product ON product_orchestrators(product_line_code);
-CREATE INDEX idx_orchestrator_steps ON orchestrator_steps(orchestrator_id);
-CREATE INDEX idx_rules_product ON rules(product_line_code);
-CREATE INDEX idx_scope_tags_entity ON entity_scope_tags(entity_type, entity_id);
-CREATE INDEX idx_transactions_product ON transactions(product_line_code);
-CREATE INDEX idx_transactions_correlation ON transactions(correlation_id);
-CREATE INDEX idx_transactions_status ON transactions(status);
-CREATE INDEX idx_step_logs_transaction ON transaction_step_logs(transaction_id);
-CREATE INDEX idx_activity_product ON activity_log(product_line_code);
+CREATE INDEX IF NOT EXISTS idx_mappings_product ON mappings(product_line_code);
+CREATE INDEX IF NOT EXISTS idx_field_mappings_mapping ON field_mappings(mapping_id);
+CREATE INDEX IF NOT EXISTS idx_scopes_product ON product_scopes(product_line_code);
+CREATE INDEX IF NOT EXISTS idx_orchestrator_product ON product_orchestrators(product_line_code);
+CREATE INDEX IF NOT EXISTS idx_orchestrator_steps ON orchestrator_steps(orchestrator_id);
+CREATE INDEX IF NOT EXISTS idx_rules_product ON rules(product_line_code);
+CREATE INDEX IF NOT EXISTS idx_scope_tags_entity ON entity_scope_tags(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_product ON transactions(product_line_code);
+CREATE INDEX IF NOT EXISTS idx_transactions_correlation ON transactions(correlation_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status);
+CREATE INDEX IF NOT EXISTS idx_step_logs_transaction ON transaction_step_logs(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_activity_product ON activity_log(product_line_code);

@@ -26,7 +26,7 @@ const iconNav = [
 function NavSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-4">
-      <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">{title}</p>
+      <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">{title}</p>
       {children}
     </div>
   );
@@ -44,8 +44,8 @@ function NavItem({ label, path, icon: Icon, indent = false }: { label: string; p
         'w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors text-left',
         indent && 'pl-6',
         active
-          ? 'bg-blue-50 text-blue-700 font-medium'
-          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+          ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium'
+          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
       )}
     >
       {Icon && <Icon className="w-3.5 h-3.5 flex-shrink-0" />}
@@ -66,7 +66,7 @@ function ProductNavItem({ product }: { product: ProductLine }) {
         onClick={() => { setOpen(!open); navigate(`/products/${product.code}`); }}
         className={cn(
           'w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-md text-sm transition-colors',
-          active ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+          active ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -76,7 +76,7 @@ function ProductNavItem({ product }: { product: ProductLine }) {
         {open ? <ChevronDown className="w-3 h-3 flex-shrink-0" /> : <ChevronRight className="w-3 h-3 flex-shrink-0" />}
       </button>
       {open && (
-        <div className="ml-2 border-l border-gray-200 pl-2 mt-0.5 space-y-0.5">
+        <div className="ml-2 border-l border-gray-200 dark:border-gray-700 pl-2 mt-0.5 space-y-0.5">
           <NavItem label="Orchestrator" path={`/products/${product.code}/orchestrator`} indent />
           <NavItem label="Mappings" path={`/products/${product.code}/mappings`} indent />
           <NavItem label="Rules" path={`/products/${product.code}/rules`} indent />
@@ -94,7 +94,7 @@ export function Sidebar({ products, onNewProduct }: SidebarProps) {
   return (
     <div className="flex h-full">
       {/* Icon strip */}
-      <div className="w-12 flex flex-col items-center py-3 gap-1 border-r border-gray-200 bg-gray-50">
+      <div className="w-12 flex flex-col items-center py-3 gap-1 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
         {iconNav.map(({ icon: Icon, label, path }) => {
           const active = path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
           return (
@@ -104,7 +104,7 @@ export function Sidebar({ products, onNewProduct }: SidebarProps) {
               onClick={() => navigate(path)}
               className={cn(
                 'w-9 h-9 flex items-center justify-center rounded-lg transition-colors',
-                active ? 'bg-blue-100 text-blue-700' : 'text-gray-400 hover:bg-gray-200 hover:text-gray-700',
+                active ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' : 'text-gray-400 hover:bg-gray-200 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300',
               )}
             >
               <Icon className="w-4 h-4" />
@@ -114,14 +114,14 @@ export function Sidebar({ products, onNewProduct }: SidebarProps) {
       </div>
 
       {/* Text panel */}
-      <div className="w-52 flex flex-col h-full overflow-hidden border-r border-gray-200 bg-white">
+      <div className="w-52 flex flex-col h-full overflow-hidden border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         {/* Header */}
-        <div className="px-3 py-3 border-b border-gray-100">
+        <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Navigator</span>
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Navigator</span>
             <button
               onClick={() => navigate('/')}
-              className="text-[10px] text-blue-600 hover:underline"
+              className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline"
             >
               Home
             </button>
@@ -139,7 +139,7 @@ export function Sidebar({ products, onNewProduct }: SidebarProps) {
               ))}
               <button
                 onClick={onNewProduct}
-                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-blue-600 hover:bg-blue-50 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>New Product</span>

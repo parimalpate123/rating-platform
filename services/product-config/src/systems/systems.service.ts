@@ -10,6 +10,8 @@ export interface CreateSystemDto {
   format: 'json' | 'xml';
   protocol?: string;
   baseUrl?: string;
+  baseUrlProd?: string;
+  authMethod?: 'none' | 'basic' | 'oauth2';
   isMock?: boolean;
   isActive?: boolean;
   config?: Record<string, unknown>;
@@ -21,9 +23,55 @@ export interface UpdateSystemDto {
   format?: 'json' | 'xml';
   protocol?: string;
   baseUrl?: string;
+  baseUrlProd?: string;
+  authMethod?: 'none' | 'basic' | 'oauth2';
   isMock?: boolean;
   isActive?: boolean;
   config?: Record<string, unknown>;
+}
+
+const HEALTH_CHECK_TIMEOUT_MS = 5000;
+
+function getEffectiveBaseUrl(entity: SystemEntity): string | null {
+  const isProd = process.env.NODE_ENV === 'production';
+  const url = isProd && entity.baseUrlProd ? entity.baseUrlProd : entity.baseUrl;
+  return url || null;
+}
+
+/** Strip credentials from config.auth before sending to client */
+function sanitizeConfig(config: Record<string, unknown> | undefined): Record<string, unknown> {
+  if (!config || !config.auth) return config ?? {};
+  const auth = config.auth as Record<string, unknown>;
+  const out: Record<string, unknown> = { ...auth };
+  if ('password' in auth) out.password = '[REDACTED]';
+  if ('clientSecret' in auth) out.clientSecret = '[REDACTED]';
+  return { ...config, auth: out };
+}
+
+async function buildAuthHeaders(entity: SystemEntity): Promise<Record<string, string>> {
+  const method = (entity.authMethod || 'none').toLowerCase();
+  const auth = (entity.config?.auth as Record<string, string> | undefined) || {};
+  if (method === 'basic' && auth.username && auth.password) {
+    const encoded = Buffer.from(`${auth.username}:${auth.password}`, 'utf8').toString('base64');
+    return { Authorization: `Basic ${encoded}` };
+  }
+  if (method === 'oauth2' && auth.clientId && auth.clientSecret && auth.tokenUrl) {
+    const body = new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: auth.clientId,
+      client_secret: auth.clientSecret,
+    });
+    const res = await fetch(auth.tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) throw new Error(`OAuth2 token failed: ${res.status}`);
+    const data = (await res.json()) as { access_token?: string };
+    if (data.access_token) return { Authorization: `Bearer ${data.access_token}` };
+  }
+  return {};
 }
 
 @Injectable()
@@ -47,24 +95,34 @@ export class SystemsService implements OnModuleInit {
   }
 
   async findAll(): Promise<SystemEntity[]> {
-    return this.repo.find({ order: { createdAt: 'DESC' } });
+    const list = await this.repo.find({ order: { createdAt: 'DESC' } });
+    return list.map((e) => ({ ...e, config: sanitizeConfig(e.config) })) as SystemEntity[];
   }
 
   async findById(id: string): Promise<SystemEntity> {
     const entity = await this.repo.findOne({ where: { id } });
     if (!entity) throw new NotFoundException(`System with id "${id}" not found`);
-    return entity;
+    return { ...entity, config: sanitizeConfig(entity.config) } as SystemEntity;
   }
 
   async create(data: Partial<SystemEntity>): Promise<SystemEntity> {
     const entity = this.repo.create(data);
-    return this.repo.save(entity);
+    const saved = await this.repo.save(entity);
+    return { ...saved, config: sanitizeConfig(saved.config) } as SystemEntity;
   }
 
   async update(id: string, data: Partial<SystemEntity>): Promise<SystemEntity> {
-    const entity = await this.findById(id);
+    const entity = await this.repo.findOne({ where: { id } });
+    if (!entity) throw new NotFoundException(`System with id "${id}" not found`);
+    if (data.config?.auth && entity.config?.auth) {
+      const incoming = data.config.auth as Record<string, unknown>;
+      const existing = entity.config.auth as Record<string, unknown>;
+      if (incoming.password === '' && existing.password) (data.config.auth as Record<string, unknown>).password = existing.password;
+      if (incoming.clientSecret === '' && existing.clientSecret) (data.config.auth as Record<string, unknown>).clientSecret = existing.clientSecret;
+    }
     Object.assign(entity, data);
-    return this.repo.save(entity);
+    const saved = await this.repo.save(entity);
+    return { ...saved, config: sanitizeConfig(saved.config) } as SystemEntity;
   }
 
   async delete(id: string): Promise<void> {
@@ -72,13 +130,50 @@ export class SystemsService implements OnModuleInit {
     await this.repo.remove(entity);
   }
 
-  async healthCheck(id: string): Promise<{ systemId: string; status: string; system: string; timestamp: string }> {
-    const entity = await this.findById(id);
-    return {
-      systemId: entity.id,
-      status: entity.isMock ? 'mock-healthy' : 'unknown',
-      system: entity.name,
-      timestamp: new Date().toISOString(),
-    };
+  async healthCheck(id: string): Promise<{ systemId: string; status: string; system: string; timestamp: string; statusCode?: number; durationMs?: number; error?: string }> {
+    const entity = await this.repo.findOne({ where: { id } });
+    if (!entity) throw new NotFoundException(`System with id "${id}" not found`);
+    const timestamp = new Date().toISOString();
+    if (entity.isMock) {
+      return { systemId: entity.id, status: 'mock-healthy', system: entity.name, timestamp };
+    }
+    const url = getEffectiveBaseUrl(entity);
+    if (!url) {
+      return { systemId: entity.id, status: 'error', system: entity.name, timestamp, error: 'No URL configured' };
+    }
+    const start = Date.now();
+    try {
+      const headers: Record<string, string> = await buildAuthHeaders(entity);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: { ...headers, Accept: 'application/json' },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      const durationMs = Date.now() - start;
+      const ok = res.ok || res.status === 401; // 401 = reachable but unauthorised
+      return {
+        systemId: entity.id,
+        status: ok ? 'healthy' : 'unhealthy',
+        system: entity.name,
+        timestamp,
+        statusCode: res.status,
+        durationMs,
+        ...(ok ? {} : { error: `HTTP ${res.status}` }),
+      };
+    } catch (err) {
+      const durationMs = Date.now() - start;
+      const error = err instanceof Error ? err.message : String(err);
+      return {
+        systemId: entity.id,
+        status: 'error',
+        system: entity.name,
+        timestamp,
+        durationMs,
+        error,
+      };
+    }
   }
 }

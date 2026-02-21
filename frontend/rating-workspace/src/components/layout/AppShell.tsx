@@ -21,11 +21,11 @@ export function AppShell() {
   useEffect(() => { loadProducts(); }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 text-gray-900">
+    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <TopBar />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar products={products} onNewProduct={() => setShowNewProduct(true)} />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto bg-white dark:bg-gray-900">
           <Outlet context={{ products, reloadProducts: loadProducts, onNewProduct: () => setShowNewProduct(true) }} />
         </main>
       </div>

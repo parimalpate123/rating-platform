@@ -9,7 +9,10 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
-  <body>
+  <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <script>
+      (function(){try{var t=localStorage.getItem('rating-workspace-theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

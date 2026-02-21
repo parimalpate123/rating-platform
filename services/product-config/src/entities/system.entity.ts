@@ -23,6 +23,15 @@ export class SystemEntity {
   @Column({ name: 'base_url', nullable: true, length: 500 })
   baseUrl: string;
 
+  @Column({ name: 'base_url_prod', nullable: true, length: 500 })
+  baseUrlProd: string;
+
+  @Column({ name: 'auth_method', length: 30, default: 'none' })
+  authMethod: string;
+
+  @Column({ name: 'auth_secret_id', nullable: true, length: 255 })
+  authSecretId: string;
+
   @Column({ name: 'is_mock', default: false })
   isMock: boolean;
 
