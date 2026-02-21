@@ -41,8 +41,17 @@ Thumbs.db
 
 .nx/cache
 .nx/workspace-data
-.cursor/rules/nx-rules.mdc
-.github/instructions/nx.instructions.md
+
+# AI / editor config (optional; not needed for build or CI)
+.codex/
+.claude/
+.gemini/
+.cursor/
+.opencode/
+.github/agents/
+.github/prompts/
+.github/skills/
+.github/instructions/
 
 vite.config.*.timestamp*
 test-output
