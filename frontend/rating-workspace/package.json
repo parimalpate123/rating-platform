@@ -1,0 +1,8 @@
+{
+  "name": "@rating-platform/rating-workspace",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "name": "rating-workspace"
+  }
+}

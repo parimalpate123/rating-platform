@@ -1,0 +1,6 @@
+source_path,target_path,transform_type,description
+coverage.bodilyInjury.limitPerPerson,BI_LIMIT_PER_PERSON,direct,Bodily injury limit per person in dollars
+coverage.bodilyInjury.limitPerOccurrence,BI_LIMIT_PER_OCCURRENCE,direct,Bodily injury limit per occurrence in dollars
+coverage.bodilyInjury.annualPremium,BI_PREMIUM,round,Annual BI premium rounded to 2 decimal places
+driver.yearsLicensed,DRIVER_EXPERIENCE_YEARS,number_format,Years since driver was first licensed
+vehicle.primaryUse,VEHICLE_USE_CODE,lookup,Map personal/commute/business to rating code using vehicle_use lookup table

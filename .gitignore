@@ -25,6 +25,7 @@ node_modules
 !.vscode/extensions.json
 
 # misc
+logs/
 /.sass-cache
 /connect.lock
 /coverage
@@ -42,3 +43,24 @@ Thumbs.db
 .nx/workspace-data
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+vite.config.*.timestamp*
+test-output
+
+# Terraform
+infra/terraform/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+infra/terraform/terraform.tfvars
+!infra/terraform/terraform.tfvars.example
+
+# Local env and credentials (do not commit)
+# Local AWS credentials: use env vars or ~/.aws/credentials; do not commit keys.
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+*.pem
+.aws-credentials

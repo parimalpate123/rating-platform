@@ -2,5 +2,54 @@
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
   "files": [],
-  "references": []
+  "references": [
+    {
+      "path": "./orchestrators/core-rating-e2e"
+    },
+    {
+      "path": "./orchestrators/core-rating"
+    },
+    {
+      "path": "./orchestrators/line-rating-e2e"
+    },
+    {
+      "path": "./orchestrators/line-rating"
+    },
+    {
+      "path": "./services/product-config-e2e"
+    },
+    {
+      "path": "./services/product-config"
+    },
+    {
+      "path": "./services/transform-service-e2e"
+    },
+    {
+      "path": "./services/transform-service"
+    },
+    {
+      "path": "./services/rules-service-e2e"
+    },
+    {
+      "path": "./services/rules-service"
+    },
+    {
+      "path": "./services/status-service-e2e"
+    },
+    {
+      "path": "./services/status-service"
+    },
+    {
+      "path": "./packages/contracts"
+    },
+    {
+      "path": "./packages/shared"
+    },
+    {
+      "path": "./frontend/rating-workspace-e2e"
+    },
+    {
+      "path": "./frontend/rating-workspace"
+    }
+  ]
 }

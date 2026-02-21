@@ -1,0 +1,27 @@
+{
+  "name": "@rating-platform/line-rating-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "name": "line-rating-e2e",
+    "implicitDependencies": [
+      "line-rating"
+    ],
+    "targets": {
+      "e2e": {
+        "executor": "@nx/jest:jest",
+        "outputs": [
+          "{projectRoot}/test-output/jest/coverage"
+        ],
+        "options": {
+          "jestConfig": "orchestrators/line-rating-e2e/jest.config.cts",
+          "passWithNoTests": true
+        },
+        "dependsOn": [
+          "line-rating:build",
+          "line-rating:serve"
+        ]
+      }
+    }
+  }
+}
