@@ -28,7 +28,7 @@ on:
         default: false
         type: boolean
       skip_build_push:
-        description: "Skip Build & Push (use existing images; run only Migrations and/or Deploy)"
+        description: "Skip Build & Push (use existing images; run only Deploy)"
         required: false
         default: false
         type: boolean
@@ -37,11 +37,6 @@ on:
         required: false
         default: "latest"
         type: string
-      run_migrations:
-        description: "Run DB migrations after Terraform apply (in deploy job)"
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   id-token: write
@@ -317,21 +312,6 @@ jobs:
           TF_VAR_image_tag: ${{ needs.build-push.outputs.image_tag }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: terraform apply -input=false -auto-approve tfplan
-
-      - name: Run DB migrations
-        if: ${{ inputs.run_migrations }}
-        timeout-minutes: 3
-        env:
-          DB_USER: rating_user
-          DB_PASS: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: rating_platform
-        run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
-          DB_HOST=$(cd ${{ env.TF_DIR }} && terraform output -raw rds_endpoint)
-          DB_PORT=$(cd ${{ env.TF_DIR }} && terraform output -raw rds_port)
-          export DB_HOST DB_PORT PGPASSWORD="$DB_PASS"
-          # Fail fast if RDS unreachable (e.g. private subnet); timeout prevents runner from hanging
-          timeout 120 ./scripts/run-migrations.sh || { echo "::error::Migrations failed or timed out. If RDS is in a private subnet, run migrations from inside the VPC (e.g. bastion or one-off ECS task)."; exit 1; }
 
       - name: Force new deployment for all services
         run: |

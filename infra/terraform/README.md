@@ -71,6 +71,10 @@ State was lost (e.g. CI ran without `TF_STATE_BUCKET`), so Terraform wants to cr
 
 **Option B — Fresh start (dev only):** If this environment is disposable, delete the existing resources in the AWS console, set `TF_STATE_BUCKET`, then run the deploy workflow so Terraform creates everything and stores state in S3.
 
+### Running DB migrations when RDS is in a private subnet
+
+Migrations are not run from the Deploy workflow (the runner cannot reach private RDS). **Step-by-step:** see **[db/RUN_MIGRATIONS.md](../db/RUN_MIGRATIONS.md)**. Use `scripts/run-migrations-rds.sh` from this workspace when you have network access (VPN or bastion).
+
 ## Two-Step First Apply (when create_eks_cluster = true)
 
 When provisioning a new EKS cluster, run in two steps to avoid provider chicken-and-egg:
