@@ -188,16 +188,18 @@ jobs:
         env:
           TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
         run: |
-          if [ -z "${TF_STATE_BUCKET}" ]; then
-            echo "::error::Repo variable TF_STATE_BUCKET is not set. Create an S3 bucket for Terraform state, add variable in Settings → Variables → Actions. See infra/terraform/README.md#remote-state."
-            exit 1
+          if [ -n "${TF_STATE_BUCKET}" ]; then
+            echo "Using remote state in s3://${TF_STATE_BUCKET}"
+            terraform init -input=false \
+              -backend-config="bucket=${TF_STATE_BUCKET}" \
+              -backend-config="key=rating-platform/${{ inputs.environment || 'dev' }}/terraform.tfstate" \
+              -backend-config="region=${{ env.AWS_REGION }}" \
+              -backend-config="dynamodb_table=rating-platform-tfstate-locks" \
+              -backend-config="encrypt=true"
+          else
+            echo "::warning::TF_STATE_BUCKET not set — using local state. State will not persist between runs; add the variable for remote state. See infra/terraform/README.md#remote-state."
+            terraform init -input=false -backend=false
           fi
-          terraform init -input=false \
-            -backend-config="bucket=${TF_STATE_BUCKET}" \
-            -backend-config="key=rating-platform/${{ inputs.environment || 'dev' }}/terraform.tfstate" \
-            -backend-config="region=${{ env.AWS_REGION }}" \
-            -backend-config="dynamodb_table=rating-platform-tfstate-locks" \
-            -backend-config="encrypt=true"
 
       - name: Terraform plan
         working-directory: ${{ env.TF_DIR }}
