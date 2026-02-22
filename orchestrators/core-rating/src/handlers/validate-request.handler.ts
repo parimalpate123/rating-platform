@@ -6,7 +6,6 @@ export class ValidateRequestHandler {
   private readonly logger = new Logger(ValidateRequestHandler.name);
 
   async execute(context: any, config: any): Promise<any> {
-    const start = Date.now();
     const payload = context.working || {};
     const schema = config.schema || 'default';
     const strict = config.strictMode === 'true' || config.strictMode === true;

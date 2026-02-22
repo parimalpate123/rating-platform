@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Moon, Sun, Zap, X, Info } from 'lucide-react';
+import { Search, Moon, Sun, Zap, X } from 'lucide-react';
 
 const THEME_KEY = 'rating-workspace-theme';
 

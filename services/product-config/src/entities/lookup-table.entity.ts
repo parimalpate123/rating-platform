@@ -4,23 +4,23 @@ import { LookupEntryEntity } from './lookup-entry.entity';
 @Entity('lookup_tables')
 export class LookupTableEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({ name: 'product_line_code', nullable: true })
-  productLineCode: string;
+  productLineCode!: string;
 
   @Column({ nullable: true })
-  description: string;
+  description!: string;
 
   @OneToMany(() => LookupEntryEntity, (e) => e.table, { eager: true, cascade: true })
-  entries: LookupEntryEntity[];
+  entries!: LookupEntryEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 }

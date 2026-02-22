@@ -11,7 +11,6 @@ export class CallExternalApiHandler {
     process.env['CORE_RATING_URL'] || 'http://localhost:4000';
 
   async execute(context: any, config: any): Promise<any> {
-    const start = Date.now();
     const systemCode: string = config.systemCode || '';
     const endpoint: string = config.endpoint || '';
     const method: string = (config.method || 'POST').toUpperCase();

@@ -23,7 +23,7 @@ export class ActivityLogService {
     const entry = this.repo.create({
       productLineCode: dto.productLineCode,
       entityType: dto.entityType,
-      entityId: dto.entityId ?? null,
+      entityId: dto.entityId ?? undefined,
       action: dto.action,
       actor: dto.actor ?? 'system',
       details: dto.details ?? {},

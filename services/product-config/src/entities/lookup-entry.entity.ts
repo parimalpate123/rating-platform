@@ -4,21 +4,21 @@ import { LookupTableEntity } from './lookup-table.entity';
 @Entity('lookup_entries')
 export class LookupEntryEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ name: 'lookup_table_id' })
-  lookupTableId: string;
+  lookupTableId!: string;
 
   @ManyToOne(() => LookupTableEntity, (t) => t.entries, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'lookup_table_id' })
-  table: LookupTableEntity;
+  table!: LookupTableEntity;
 
   @Column()
-  key: string;
+  key!: string;
 
   @Column({ type: 'jsonb' })
-  value: Record<string, unknown>;
+  value!: Record<string, unknown>;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 }
