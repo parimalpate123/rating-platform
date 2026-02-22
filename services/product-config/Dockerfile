@@ -17,7 +17,8 @@ FROM node:${NODE_VERSION}-alpine AS runner
 WORKDIR /app
 
 COPY --from=builder /app/services/product-config/dist ./
-RUN npm ci --omit=dev
+# Pruned lockfile can be out of sync for this project (Nx nested deps); install from package.json
+RUN npm install --omit=dev
 
 EXPOSE 4010
 
