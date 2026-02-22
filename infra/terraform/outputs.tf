@@ -20,16 +20,16 @@ output "ecs_service_names" {
 output "ecr_repository_urls" {
   description = "ECR repository URLs for each service"
   value = {
-    core-rating      = aws_ecr_repository.core_rating.repository_url
-    line-rating      = aws_ecr_repository.line_rating.repository_url
-    product-config   = aws_ecr_repository.product_config.repository_url
-    transform        = aws_ecr_repository.transform.repository_url
-    rules-service    = aws_ecr_repository.rules_service.repository_url
-    status-service   = aws_ecr_repository.status_service.repository_url
-    rating-workspace = aws_ecr_repository.rating_workspace.repository_url
-    adapter-kafka    = aws_ecr_repository.adapter_kafka.repository_url
-    adapter-dnb      = aws_ecr_repository.adapter_dnb.repository_url
-    adapter-gw       = aws_ecr_repository.adapter_gw.repository_url
+    core-rating      = data.aws_ecr_repository.core_rating.repository_url
+    line-rating      = data.aws_ecr_repository.line_rating.repository_url
+    product-config   = data.aws_ecr_repository.product_config.repository_url
+    transform        = data.aws_ecr_repository.transform.repository_url
+    rules-service    = data.aws_ecr_repository.rules_service.repository_url
+    status-service   = data.aws_ecr_repository.status_service.repository_url
+    rating-workspace = data.aws_ecr_repository.rating_workspace.repository_url
+    adapter-kafka    = data.aws_ecr_repository.adapter_kafka.repository_url
+    adapter-dnb      = data.aws_ecr_repository.adapter_dnb.repository_url
+    adapter-gw       = data.aws_ecr_repository.adapter_gw.repository_url
   }
 }
 

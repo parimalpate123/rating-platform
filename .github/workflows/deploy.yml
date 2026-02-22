@@ -77,6 +77,25 @@ jobs:
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Create ECR repositories if missing
+        run: |
+          REPOS=(
+            rating-platform/core-rating
+            rating-platform/line-rating
+            rating-platform/product-config
+            rating-platform/transform-service
+            rating-platform/rules-service
+            rating-platform/status-service
+            rating-platform/rating-workspace
+            rating-platform/adapter-kafka
+            rating-platform/adapter-dnb
+            rating-platform/adapter-gw
+          )
+          for repo in "${REPOS[@]}"; do
+            aws ecr describe-repositories --repository-names "$repo" --region "${{ env.AWS_REGION }}" 2>/dev/null ||
+            aws ecr create-repository --repository-name "$repo" --region "${{ env.AWS_REGION }}" --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE
+          done
+
       - name: Build and push all images
         env:
           ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}

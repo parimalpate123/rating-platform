@@ -1,94 +1,58 @@
+# ECR repositories are created by the GitHub Actions deploy workflow (build-push job)
+# so that the first run can push images without requiring Terraform to run first.
+# Terraform references them here for outputs; it does not create them.
+
 locals {
-  ecr_repos = [
-    "core-rating",
-    "line-rating",
-    "product-config",
-    "transform-service",
-    "rules-service",
-    "status-service",
-    "rating-workspace",
-    "adapter-kafka",
-    "adapter-dnb",
-    "adapter-gw",
+  ecr_repo_names = [
+    "rating-platform/core-rating",
+    "rating-platform/line-rating",
+    "rating-platform/product-config",
+    "rating-platform/transform-service",
+    "rating-platform/rules-service",
+    "rating-platform/status-service",
+    "rating-platform/rating-workspace",
+    "rating-platform/adapter-kafka",
+    "rating-platform/adapter-dnb",
+    "rating-platform/adapter-gw",
   ]
 }
 
-resource "aws_ecr_repository" "core_rating" {
-  name                 = "rating-platform/core-rating"
-  image_tag_mutability = "MUTABLE"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+data "aws_ecr_repository" "core_rating" {
+  name = "rating-platform/core-rating"
 }
 
-resource "aws_ecr_repository" "line_rating" {
-  name                 = "rating-platform/line-rating"
-  image_tag_mutability = "MUTABLE"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+data "aws_ecr_repository" "line_rating" {
+  name = "rating-platform/line-rating"
 }
 
-resource "aws_ecr_repository" "product_config" {
-  name                 = "rating-platform/product-config"
-  image_tag_mutability = "MUTABLE"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+data "aws_ecr_repository" "product_config" {
+  name = "rating-platform/product-config"
 }
 
-resource "aws_ecr_repository" "transform" {
-  name                 = "rating-platform/transform-service"
-  image_tag_mutability = "MUTABLE"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+data "aws_ecr_repository" "transform" {
+  name = "rating-platform/transform-service"
 }
 
-resource "aws_ecr_repository" "rules_service" {
-  name                 = "rating-platform/rules-service"
-  image_tag_mutability = "MUTABLE"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+data "aws_ecr_repository" "rules_service" {
+  name = "rating-platform/rules-service"
 }
 
-resource "aws_ecr_repository" "status_service" {
-  name                 = "rating-platform/status-service"
-  image_tag_mutability = "MUTABLE"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+data "aws_ecr_repository" "status_service" {
+  name = "rating-platform/status-service"
 }
 
-resource "aws_ecr_repository" "rating_workspace" {
-  name                 = "rating-platform/rating-workspace"
-  image_tag_mutability = "MUTABLE"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+data "aws_ecr_repository" "rating_workspace" {
+  name = "rating-platform/rating-workspace"
 }
 
-resource "aws_ecr_repository" "adapter_kafka" {
-  name                 = "rating-platform/adapter-kafka"
-  image_tag_mutability = "MUTABLE"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+data "aws_ecr_repository" "adapter_kafka" {
+  name = "rating-platform/adapter-kafka"
 }
 
-resource "aws_ecr_repository" "adapter_dnb" {
-  name                 = "rating-platform/adapter-dnb"
-  image_tag_mutability = "MUTABLE"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+data "aws_ecr_repository" "adapter_dnb" {
+  name = "rating-platform/adapter-dnb"
 }
 
-resource "aws_ecr_repository" "adapter_gw" {
-  name                 = "rating-platform/adapter-gw"
-  image_tag_mutability = "MUTABLE"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+data "aws_ecr_repository" "adapter_gw" {
+  name = "rating-platform/adapter-gw"
 }
