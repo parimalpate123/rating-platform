@@ -5,6 +5,8 @@ import { ApplyRulesHandler } from './apply-rules.handler';
 import { FormatTransformHandler } from './format-transform.handler';
 import { CallRatingEngineHandler } from './call-rating-engine.handler';
 import { PublishEventHandler } from './publish-event.handler';
+import { ValidateRequestHandler } from './validate-request.handler';
+import { CallExternalApiHandler } from './call-external-api.handler';
 
 @Module({
   providers: [
@@ -13,8 +15,18 @@ import { PublishEventHandler } from './publish-event.handler';
     FormatTransformHandler,
     CallRatingEngineHandler,
     PublishEventHandler,
+    ValidateRequestHandler,
+    CallExternalApiHandler,
   ],
-  exports: [FieldMappingHandler, ApplyRulesHandler, FormatTransformHandler, CallRatingEngineHandler, PublishEventHandler],
+  exports: [
+    FieldMappingHandler,
+    ApplyRulesHandler,
+    FormatTransformHandler,
+    CallRatingEngineHandler,
+    PublishEventHandler,
+    ValidateRequestHandler,
+    CallExternalApiHandler,
+  ],
 })
 export class HandlersModule implements OnModuleInit {
   constructor(
@@ -24,6 +36,8 @@ export class HandlersModule implements OnModuleInit {
     private readonly formatTransform: FormatTransformHandler,
     private readonly callRatingEngine: CallRatingEngineHandler,
     private readonly publishEvent: PublishEventHandler,
+    private readonly validateRequest: ValidateRequestHandler,
+    private readonly callExternalApi: CallExternalApiHandler,
   ) {}
 
   onModuleInit() {
@@ -32,5 +46,7 @@ export class HandlersModule implements OnModuleInit {
     this.registry.register(this.formatTransform);
     this.registry.register(this.callRatingEngine);
     this.registry.register(this.publishEvent);
+    this.registry.register(this.validateRequest);
+    this.registry.register(this.callExternalApi);
   }
 }

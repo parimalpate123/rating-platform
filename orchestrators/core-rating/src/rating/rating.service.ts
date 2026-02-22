@@ -13,6 +13,7 @@ import { ExecutionService } from '../execution/execution.service';
 
 export interface RateRequest {
   productLineCode: string;
+  endpointPath?: string;
   scope?: { state?: string; coverage?: string; transactionType?: string };
   payload: Record<string, unknown>;
 }
@@ -30,6 +31,7 @@ export interface RateResponse {
     status: string;
     durationMs: number;
     error?: string;
+    output?: Record<string, unknown>;
   }>;
   totalDurationMs: number;
 }
@@ -45,22 +47,25 @@ export class RatingService {
   async rate(request: RateRequest): Promise<RateResponse> {
     const correlationId = randomUUID();
     const startTime = Date.now();
+    const endpointPath = request.endpointPath || 'rate';
 
-    this.logger.log(`Rating request for ${request.productLineCode} [${correlationId}]`);
+    this.logger.log(
+      `Rating request for ${request.productLineCode}/${endpointPath} [${correlationId}]`,
+    );
 
-    // Step 1: Fetch orchestrator steps from line-rating
+    // Step 1: Fetch orchestrator flow from line-rating (by product + endpoint)
     let steps: any[] = [];
     try {
       const { data: orchestrator } = await axios.get(
-        `${this.lineRatingUrl}/api/v1/orchestrators/${request.productLineCode}`,
+        `${this.lineRatingUrl}/api/v1/orchestrators/${request.productLineCode}/flow/${endpointPath}`,
         { headers: { 'x-correlation-id': correlationId } },
       );
       steps = orchestrator.steps || [];
     } catch (err: any) {
       if (err?.response?.status === 404) {
         throw new NotFoundException(
-          `No orchestrator found for product line '${request.productLineCode}'. ` +
-          `Go to the Orchestrator tab and click Auto-Generate Flow first.`,
+          `No orchestrator found for product line '${request.productLineCode}' endpoint '${endpointPath}'. ` +
+          `Go to the Orchestrator tab and configure the flow first.`,
         );
       }
       throw err;

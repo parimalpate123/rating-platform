@@ -5,6 +5,7 @@ import { SystemEntity } from '../entities/system.entity';
 import { MappingEntity } from '../entities/mapping.entity';
 import { FieldMappingEntity } from '../entities/field-mapping.entity';
 import { ProductScopeEntity } from '../entities/product-scope.entity';
+import { ActivityLogEntity } from '../entities/activity-log.entity';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { ProductScopeEntity } from '../entities/product-scope.entity';
       username: process.env['DB_USER'] || 'rating_user',
       password: process.env['DB_PASS'] || 'rating_pass',
       database: process.env['DB_NAME'] || 'rating_platform',
-      entities: [ProductLineEntity, SystemEntity, MappingEntity, FieldMappingEntity, ProductScopeEntity],
+      entities: [ProductLineEntity, SystemEntity, MappingEntity, FieldMappingEntity, ProductScopeEntity, ActivityLogEntity],
       synchronize: false,
       logging: process.env['NODE_ENV'] !== 'production',
     }),

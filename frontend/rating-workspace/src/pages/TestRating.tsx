@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { Play, Loader2, CheckCircle, XCircle, ChevronDown, ChevronRight, Zap } from 'lucide-react';
-import { ratingApi, type RateResponse } from '../api/orchestrator';
+import { ratingApi, orchestratorApi, type RateResponse, type ProductOrchestrator } from '../api/orchestrator';
 import { type ProductLine } from '../api/products';
 import { cn, statusColor } from '../lib/utils';
 import { ExecutionFlowDiagram, type DiagramStep, type DiagramResult } from '../components/flow/ExecutionFlowDiagram';
 import { StepDetailPanel } from '../components/flow/StepDetailPanel';
+import { TestingFlowCircles } from '../components/flow/TestingFlowCircles';
 
 const DEFAULT_PAYLOAD = JSON.stringify({
   policy: {
@@ -27,10 +28,25 @@ export function TestRating() {
   const navigate = useNavigate();
 
   const [selectedProduct, setSelectedProduct] = useState('');
+  const [availableFlows, setAvailableFlows] = useState<ProductOrchestrator[]>([]);
+  const [selectedEndpoint, setSelectedEndpoint] = useState('rate');
   const [payload, setPayload] = useState(DEFAULT_PAYLOAD);
   const [state, setState] = useState('');
   const [coverage, setCoverage] = useState('');
   const [transactionType, setTransactionType] = useState('new_business');
+
+  // Fetch available flows when product changes
+  const loadFlows = (productCode: string) => {
+    if (!productCode) { setAvailableFlows([]); return; }
+    orchestratorApi.getAll(productCode)
+      .then(flows => {
+        setAvailableFlows(flows);
+        if (flows.length > 0 && !flows.find(f => f.endpointPath === selectedEndpoint)) {
+          setSelectedEndpoint(flows[0].endpointPath);
+        }
+      })
+      .catch(() => setAvailableFlows([]));
+  };
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RateResponse | null>(null);
@@ -58,7 +74,7 @@ export function TestRating() {
       if (coverage) scope['coverage'] = coverage;
       if (transactionType) scope['transactionType'] = transactionType;
 
-      const res = await ratingApi.rate(selectedProduct, parsedPayload, Object.keys(scope).length > 0 ? scope : undefined);
+      const res = await ratingApi.rate(selectedProduct, parsedPayload, Object.keys(scope).length > 0 ? scope : undefined, selectedEndpoint);
       setResult(res);
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || 'Rating request failed');
@@ -99,7 +115,7 @@ export function TestRating() {
               <label className="block text-xs font-medium text-gray-600 mb-1">Product Line</label>
               <select
                 value={selectedProduct}
-                onChange={e => setSelectedProduct(e.target.value)}
+                onChange={e => { setSelectedProduct(e.target.value); loadFlows(e.target.value); setResult(null); setError(null); }}
                 className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select product...</option>
@@ -114,6 +130,24 @@ export function TestRating() {
                 </p>
               )}
             </div>
+
+            {/* Endpoint / flow selector */}
+            {availableFlows.length > 0 && (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Endpoint Flow</label>
+                <select
+                  value={selectedEndpoint}
+                  onChange={e => { setSelectedEndpoint(e.target.value); setResult(null); setError(null); }}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {availableFlows.map(f => (
+                    <option key={f.endpointPath} value={f.endpointPath}>
+                      /{f.endpointPath} — {f.name} ({f.steps.length} steps)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Scope */}
             <div className="grid grid-cols-3 gap-2">
@@ -219,6 +253,21 @@ export function TestRating() {
                     <dd className="font-mono text-xs text-gray-700 truncate">{result.correlationId.slice(0, 8)}...</dd>
                   </div>
                 </dl>
+              </div>
+
+              {/* Testing flow — circles per service, click for request/response */}
+              <div className="bg-white rounded-lg border border-gray-200 p-5">
+                <h2 className="text-sm font-semibold text-gray-800 mb-1">Testing flow</h2>
+                <p className="text-xs text-gray-400 mb-3">Click a step to see request and response</p>
+                <TestingFlowCircles
+                  steps={result.stepResults.map((s, i) => ({
+                    id: s.stepId ?? `step-${i}`,
+                    name: s.stepName ?? `Step ${i + 1}`,
+                    stepType: s.stepType ?? 'unknown',
+                    stepOrder: i + 1,
+                  }))}
+                  stepResults={result.stepResults}
+                />
               </div>
 
               {/* Execution flow diagram */}

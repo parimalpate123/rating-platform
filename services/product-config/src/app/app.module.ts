@@ -6,9 +6,10 @@ import { ProductLinesModule } from '../product-lines/product-lines.module';
 import { SystemsModule } from '../systems/systems.module';
 import { MappingsModule } from '../mappings/mappings.module';
 import { ScopesModule } from '../scopes/scopes.module';
+import { ActivityLogModule } from '../activity-log/activity-log.module';
 
 @Module({
-  imports: [DatabaseModule, ProductLinesModule, SystemsModule, MappingsModule, ScopesModule],
+  imports: [DatabaseModule, ProductLinesModule, SystemsModule, MappingsModule, ScopesModule, ActivityLogModule],
   controllers: [AppController],
   providers: [AppService],
 })

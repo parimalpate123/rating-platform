@@ -74,6 +74,29 @@ export class MockSystemsController {
     return xml;
   }
 
+  // ── Mock GW PolicyCenter init-rate ──────────────────────────────────────────
+  @Post('gw-policycenter/v1/init-rate')
+  gwInitRate(@Body() body: any) {
+    this.logger.log(`[Mock GW PolicyCenter] Received init-rate request`);
+    const payload = body?.payload ?? body ?? {};
+    const policyNumber = payload?.policyNumber || `POL-${Date.now()}`;
+    const productLineCode = payload?.productLineCode || 'unknown';
+    const transactionType = payload?.transactionType || 'new_business';
+
+    return {
+      system: 'gw-policycenter',
+      endpoint: '/v1/init-rate',
+      status: 'accepted',
+      transactionId: `GW-${Date.now()}`,
+      policyNumber,
+      productLineCode,
+      transactionType,
+      ratingSessionId: `RS-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+      message: 'Rating session initialized successfully',
+      createdAt: new Date().toISOString(),
+    };
+  }
+
   // ── Mock Duck Creek (JSON in / JSON out) ──────────────────────────────────
   @Post('duck-creek/rate')
   duckCreekRate(@Body() body: any) {

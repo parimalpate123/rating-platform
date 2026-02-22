@@ -13,4 +13,14 @@ export class RatingController {
   ) {
     return this.ratingService.rate({ productLineCode, ...body });
   }
+
+  @Post(':productLineCode/:endpointPath')
+  @HttpCode(200)
+  async rateWithEndpoint(
+    @Param('productLineCode') productLineCode: string,
+    @Param('endpointPath') endpointPath: string,
+    @Body() body: Omit<RateRequest, 'productLineCode' | 'endpointPath'>,
+  ) {
+    return this.ratingService.rate({ productLineCode, endpointPath, ...body });
+  }
 }

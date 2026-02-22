@@ -35,11 +35,30 @@ export class OrchestratorService {
     private stepRepo: Repository<OrchestratorStepEntity>,
   ) {}
 
-  async findByProduct(productLineCode: string): Promise<any | null> {
-    const orch = await this.orchRepo.findOne({ where: { productLineCode } });
-    if (!orch) {
-      return null;
+  async findAllByProduct(productLineCode: string): Promise<any[]> {
+    const orchs = await this.orchRepo.find({
+      where: { productLineCode },
+      order: { createdAt: 'ASC' },
+    });
+    const results: any[] = [];
+    for (const orch of orchs) {
+      const steps = await this.stepRepo.find({
+        where: { orchestratorId: orch.id },
+        order: { stepOrder: 'ASC' },
+      });
+      results.push({ ...orch, steps });
     }
+    return results;
+  }
+
+  async findByProductAndEndpoint(
+    productLineCode: string,
+    endpointPath: string,
+  ): Promise<any | null> {
+    const orch = await this.orchRepo.findOne({
+      where: { productLineCode, endpointPath },
+    });
+    if (!orch) return null;
     const steps = await this.stepRepo.find({
       where: { orchestratorId: orch.id },
       order: { stepOrder: 'ASC' },
@@ -47,11 +66,22 @@ export class OrchestratorService {
     return { ...orch, steps };
   }
 
+  // Backward-compatible: returns first flow (defaults to 'rate')
+  async findByProduct(productLineCode: string): Promise<any | null> {
+    return this.findByProductAndEndpoint(productLineCode, 'rate');
+  }
+
   async create(
     productLineCode: string,
     name: string,
+    endpointPath = 'rate',
   ): Promise<ProductOrchestratorEntity> {
-    const orch = this.orchRepo.create({ productLineCode, name, status: 'draft' });
+    const orch = this.orchRepo.create({
+      productLineCode,
+      name,
+      endpointPath,
+      status: 'draft',
+    });
     return this.orchRepo.save(orch);
   }
 
@@ -102,13 +132,31 @@ export class OrchestratorService {
     await this.stepRepo.remove(step);
   }
 
-  async deleteOrchestrator(productLineCode: string): Promise<void> {
-    const existing = await this.orchRepo.findOne({ where: { productLineCode } });
-    if (!existing) {
-      throw new NotFoundException(`Orchestrator not found for product: ${productLineCode}`);
+  async deleteOrchestrator(
+    productLineCode: string,
+    endpointPath?: string,
+  ): Promise<void> {
+    if (endpointPath) {
+      const existing = await this.orchRepo.findOne({
+        where: { productLineCode, endpointPath },
+      });
+      if (!existing) {
+        throw new NotFoundException(
+          `Orchestrator not found for product: ${productLineCode}, endpoint: ${endpointPath}`,
+        );
+      }
+      await this.stepRepo.delete({ orchestratorId: existing.id });
+      await this.orchRepo.remove(existing);
+    } else {
+      const orchs = await this.orchRepo.find({ where: { productLineCode } });
+      if (orchs.length === 0) {
+        throw new NotFoundException(`Orchestrator not found for product: ${productLineCode}`);
+      }
+      for (const orch of orchs) {
+        await this.stepRepo.delete({ orchestratorId: orch.id });
+        await this.orchRepo.remove(orch);
+      }
     }
-    await this.stepRepo.delete({ orchestratorId: existing.id });
-    await this.orchRepo.remove(existing);
   }
 
   async reorderSteps(
@@ -123,21 +171,24 @@ export class OrchestratorService {
   async autoGenerate(
     productLineCode: string,
     targetFormat: 'xml' | 'json',
+    endpointPath = 'rate',
   ): Promise<any> {
     const productConfigUrl =
       process.env['PRODUCT_CONFIG_URL'] || 'http://localhost:4010';
 
-    // Delete existing orchestrator if present
-    const existing = await this.orchRepo.findOne({ where: { productLineCode } });
+    // Delete existing orchestrator for this product + endpoint if present
+    const existing = await this.orchRepo.findOne({
+      where: { productLineCode, endpointPath },
+    });
     if (existing) {
       await this.stepRepo.delete({ orchestratorId: existing.id });
       await this.orchRepo.remove(existing);
     }
 
-    // Create new orchestrator
     const orch = await this.create(
       productLineCode,
-      `${productLineCode} Rating Flow`,
+      `${productLineCode} ${endpointPath === 'rate' ? 'Rating' : endpointPath} Flow`,
+      endpointPath,
     );
 
     const template = targetFormat === 'xml' ? XML_TARGET_STEPS : JSON_TARGET_STEPS;
@@ -146,7 +197,6 @@ export class OrchestratorService {
     for (const t of template) {
       const config: Record<string, unknown> = { ...(t.config as Record<string, unknown>) };
 
-      // For field_mapping steps, create an empty Mapping in product-config and store the ID
       if (t.type === 'field_mapping') {
         const direction = (config.direction as string) ?? 'request';
         try {
@@ -180,7 +230,7 @@ export class OrchestratorService {
     }
 
     this.logger.log(
-      `Auto-generated ${targetFormat.toUpperCase()} orchestrator for ${productLineCode} with ${steps.length} steps`,
+      `Auto-generated ${targetFormat.toUpperCase()} orchestrator for ${productLineCode}/${endpointPath} with ${steps.length} steps`,
     );
 
     return { ...orch, steps };

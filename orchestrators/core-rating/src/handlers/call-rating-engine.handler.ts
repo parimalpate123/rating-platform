@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 
-// System code → local mock endpoint path (used when isMock=true or no baseUrl set)
 const MOCK_ENDPOINT: Record<string, string> = {
   earnix: 'mock/earnix/rate',
   'cgi-ratabase': 'mock/ratabase/rate',
@@ -46,33 +45,37 @@ export class CallRatingEngineHandler {
     const format: string = system?.format ?? 'json';
     const isXmlTarget = format === 'xml';
 
+    let targetUrl: string;
+    let requestBody: any;
     let engineResponse: any;
     let rawResponse: string | null = null;
+    let httpStatus = 200;
 
     if (isMock) {
-      // Route to local mock endpoint
       const mockPath = MOCK_ENDPOINT[systemCode.toLowerCase()] ?? 'mock/earnix/rate';
-      const mockUrl = `${this.selfUrl}/api/v1/${mockPath}`;
-      this.logger.log(`[Mock] Routing to ${mockUrl}`);
+      targetUrl = `${this.selfUrl}/api/v1/${mockPath}`;
+      requestBody = { payload: context.working, scope: context.scope };
 
-      const { data } = await axios.post(
-        mockUrl,
-        { payload: context.working, scope: context.scope },
+      this.logger.log(`[Mock] Routing to ${targetUrl}`);
+
+      const response = await axios.post(
+        targetUrl,
+        requestBody,
         { headers: { 'Content-Type': 'application/json' } },
       );
+      httpStatus = response.status;
 
-      if (typeof data === 'string') {
-        // XML response from mock ratabase
-        rawResponse = data;
-        engineResponse = { _xmlResponse: data };
+      if (typeof response.data === 'string') {
+        rawResponse = response.data;
+        engineResponse = { _xmlResponse: response.data };
       } else {
-        engineResponse = data;
+        engineResponse = response.data;
       }
     } else {
-      // Route to real system baseUrl
       const baseUrl = system.baseUrl as string;
       const ratingPath = (system.config?.ratingPath as string) ?? '/rate';
-      const targetUrl = `${baseUrl}${ratingPath}`;
+      targetUrl = `${baseUrl}${ratingPath}`;
+      requestBody = context.working;
 
       this.logger.log(`Calling real system at ${targetUrl}`);
 
@@ -81,24 +84,20 @@ export class CallRatingEngineHandler {
         Accept: isXmlTarget ? 'application/xml' : 'application/json',
       };
 
-      const { data } = await axios.post(
-        targetUrl,
-        context.working,
-        { headers },
-      );
+      const response = await axios.post(targetUrl, requestBody, { headers });
+      httpStatus = response.status;
 
-      if (typeof data === 'string' && isXmlTarget) {
-        rawResponse = data;
-        engineResponse = { _xmlResponse: data };
+      if (typeof response.data === 'string' && isXmlTarget) {
+        rawResponse = response.data;
+        engineResponse = { _xmlResponse: response.data };
       } else {
-        engineResponse = data;
+        engineResponse = response.data;
       }
     }
 
-    // 3 — Store on context: keep working data and set response
+    // 3 — Store on context
     context.response = engineResponse;
 
-    // If the engine returned a numeric premium, surface it for status recording
     const premium =
       engineResponse?.premium ??
       engineResponse?.RatingResult?.Premium ??
@@ -107,11 +106,13 @@ export class CallRatingEngineHandler {
     return {
       status: 'completed',
       output: {
+        serviceRequest: { url: targetUrl, method: 'POST', body: requestBody },
+        serviceResponse: engineResponse,
+        httpStatus,
         ratingEngine: systemCode,
         isMock,
         premium,
         rawXml: rawResponse ?? undefined,
-        response: engineResponse,
       },
       durationMs: Date.now() - start,
     };

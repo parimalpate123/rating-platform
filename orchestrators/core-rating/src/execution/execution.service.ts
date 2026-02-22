@@ -24,7 +24,7 @@ export interface StepResultEntry {
   stepId: string;
   stepType: string;
   stepName: string;
-  status: 'completed' | 'failed' | 'skipped';
+  status: 'completed' | 'failed';
   durationMs: number;
   error?: string;
   output?: Record<string, unknown>;
@@ -73,16 +73,22 @@ export class ExecutionService {
 
       const handler = this.registry.get(step.stepType);
       if (!handler) {
-        this.logger.warn(`No handler registered for step type: ${step.stepType}`, request.correlationId);
+        this.logger.error(`No handler registered for step type: ${step.stepType}`, request.correlationId);
         stepResults.push({
           stepId: step.id,
           stepType: step.stepType,
           stepName: step.name,
-          status: 'skipped',
+          status: 'failed',
           durationMs: 0,
           error: `No handler registered for type: ${step.stepType}`,
         });
-        continue;
+        return {
+          correlationId: request.correlationId,
+          status: 'failed',
+          stepResults,
+          response: context.response,
+          totalDurationMs: Date.now() - startTime,
+        };
       }
 
       const stepStart = Date.now();

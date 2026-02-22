@@ -16,41 +16,84 @@ import { OrchestratorService } from './orchestrator.service';
 export class OrchestratorController {
   constructor(private readonly orchestratorService: OrchestratorService) {}
 
+  // ── Multi-flow: list all flows for a product ────────────────────────────────
   @Get(':productLineCode')
-  async getByProductCode(@Param('productLineCode') code: string) {
-    const result = await this.orchestratorService.findByProduct(code);
+  async getAllFlows(@Param('productLineCode') code: string) {
+    return this.orchestratorService.findAllByProduct(code);
+  }
+
+  // ── Single flow by endpoint path ────────────────────────────────────────────
+  @Get(':productLineCode/flow/:endpointPath')
+  async getFlow(
+    @Param('productLineCode') code: string,
+    @Param('endpointPath') endpointPath: string,
+  ) {
+    const result = await this.orchestratorService.findByProductAndEndpoint(code, endpointPath);
     if (!result) {
-      throw new NotFoundException(`Orchestrator not found for product: ${code}`);
+      throw new NotFoundException(
+        `Orchestrator not found for product: ${code}, endpoint: ${endpointPath}`,
+      );
     }
     return result;
   }
 
-  @Delete(':productLineCode')
+  // ── Delete a specific flow ──────────────────────────────────────────────────
+  @Delete(':productLineCode/flow/:endpointPath')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteOrchestrator(@Param('productLineCode') code: string) {
-    return this.orchestratorService.deleteOrchestrator(code);
+  deleteFlow(
+    @Param('productLineCode') code: string,
+    @Param('endpointPath') endpointPath: string,
+  ) {
+    return this.orchestratorService.deleteOrchestrator(code, endpointPath);
   }
 
+  // ── Auto-generate a flow ────────────────────────────────────────────────────
   @Post(':productLineCode/auto-generate')
   autoGenerate(
     @Param('productLineCode') code: string,
-    @Body() body: { targetFormat: 'xml' | 'json' },
+    @Body() body: { targetFormat: 'xml' | 'json'; endpointPath?: string },
   ) {
-    return this.orchestratorService.autoGenerate(code, body.targetFormat);
+    return this.orchestratorService.autoGenerate(
+      code,
+      body.targetFormat,
+      body.endpointPath || 'rate',
+    );
   }
 
-  @Get(':productLineCode/steps')
-  async getSteps(@Param('productLineCode') code: string) {
-    const orch = await this.orchestratorService.findByProduct(code);
+  // ── Create empty flow ───────────────────────────────────────────────────────
+  @Post(':productLineCode/flows')
+  async createFlow(
+    @Param('productLineCode') code: string,
+    @Body() body: { name: string; endpointPath: string },
+  ) {
+    const orch = await this.orchestratorService.create(
+      code,
+      body.name,
+      body.endpointPath,
+    );
+    return { ...orch, steps: [] };
+  }
+
+  // ── Steps CRUD (scoped by flow endpoint path) ──────────────────────────────
+
+  @Get(':productLineCode/flow/:endpointPath/steps')
+  async getSteps(
+    @Param('productLineCode') code: string,
+    @Param('endpointPath') endpointPath: string,
+  ) {
+    const orch = await this.orchestratorService.findByProductAndEndpoint(code, endpointPath);
     if (!orch) {
-      throw new NotFoundException(`Orchestrator not found for product: ${code}`);
+      throw new NotFoundException(
+        `Orchestrator not found for product: ${code}, endpoint: ${endpointPath}`,
+      );
     }
     return this.orchestratorService.getSteps(orch.id);
   }
 
-  @Post(':productLineCode/steps')
+  @Post(':productLineCode/flow/:endpointPath/steps')
   async addStep(
     @Param('productLineCode') code: string,
+    @Param('endpointPath') endpointPath: string,
     @Body()
     body: {
       stepType: string;
@@ -59,14 +102,16 @@ export class OrchestratorController {
       stepOrder?: number;
     },
   ) {
-    const orch = await this.orchestratorService.findByProduct(code);
+    const orch = await this.orchestratorService.findByProductAndEndpoint(code, endpointPath);
     if (!orch) {
-      throw new NotFoundException(`Orchestrator not found for product: ${code}`);
+      throw new NotFoundException(
+        `Orchestrator not found for product: ${code}, endpoint: ${endpointPath}`,
+      );
     }
     return this.orchestratorService.addStep(orch.id, body);
   }
 
-  @Put(':productLineCode/steps/:stepId')
+  @Put(':productLineCode/flow/:endpointPath/steps/:stepId')
   updateStep(
     @Param('stepId') stepId: string,
     @Body()
@@ -81,19 +126,22 @@ export class OrchestratorController {
     return this.orchestratorService.updateStep(stepId, body);
   }
 
-  @Delete(':productLineCode/steps/:stepId')
+  @Delete(':productLineCode/flow/:endpointPath/steps/:stepId')
   deleteStep(@Param('stepId') stepId: string) {
     return this.orchestratorService.deleteStep(stepId);
   }
 
-  @Post(':productLineCode/steps/reorder')
+  @Post(':productLineCode/flow/:endpointPath/steps/reorder')
   async reorderSteps(
     @Param('productLineCode') code: string,
+    @Param('endpointPath') endpointPath: string,
     @Body() body: { stepIds: string[] },
   ) {
-    const orch = await this.orchestratorService.findByProduct(code);
+    const orch = await this.orchestratorService.findByProductAndEndpoint(code, endpointPath);
     if (!orch) {
-      throw new NotFoundException(`Orchestrator not found for product: ${code}`);
+      throw new NotFoundException(
+        `Orchestrator not found for product: ${code}, endpoint: ${endpointPath}`,
+      );
     }
     await this.orchestratorService.reorderSteps(orch.id, body.stepIds);
     return { success: true };

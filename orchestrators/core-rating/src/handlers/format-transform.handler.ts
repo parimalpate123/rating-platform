@@ -9,21 +9,38 @@ export class FormatTransformHandler {
 
   async execute(context: any, config: any): Promise<any> {
     const start = Date.now();
+    const requestBody = {
+      input: context.working,
+      direction: config.formatDirection,
+    };
+
     try {
-      const { data: result } = await axios.post(`${this.transformUrl}/api/v1/transform`, {
-        input: context.working,
-        direction: config.formatDirection,
-      });
+      const response = await axios.post(`${this.transformUrl}/api/v1/transform`, requestBody);
+      const result = response.data;
 
       context.working = result.output;
+
       return {
         status: 'completed',
-        output: { format: result.format },
+        output: {
+          serviceRequest: requestBody,
+          serviceResponse: result,
+          httpStatus: response.status,
+        },
         durationMs: Date.now() - start,
       };
-    } catch (err) {
-      this.logger.error(`FormatTransformHandler error: ${err}`);
-      return { status: 'failed', error: String(err), durationMs: Date.now() - start };
+    } catch (err: any) {
+      this.logger.error(`FormatTransformHandler error: ${err.message}`);
+      return {
+        status: 'failed',
+        error: err.message,
+        output: {
+          serviceRequest: requestBody,
+          serviceResponse: { error: err.message },
+          httpStatus: err?.response?.status ?? 503,
+        },
+        durationMs: Date.now() - start,
+      };
     }
   }
 

@@ -11,8 +11,11 @@ export class ProductOrchestratorEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ type: 'varchar', length: 50, unique: true, name: 'product_line_code' })
+  @Column({ type: 'varchar', length: 50, name: 'product_line_code' })
   productLineCode!: string;
+
+  @Column({ type: 'varchar', length: 50, name: 'endpoint_path', default: 'rate' })
+  endpointPath!: string;
 
   @Column({ type: 'varchar', length: 255 })
   name!: string;

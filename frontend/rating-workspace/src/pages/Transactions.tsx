@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, Activity, ChevronDown, ChevronRight, AlertCircle, CheckCircle, Clock } from 'lucide-react'
+import { Loader2, Activity, ChevronDown, ChevronRight, AlertCircle, CheckCircle, Clock, RefreshCw } from 'lucide-react'
 import { transactionsApi, type Transaction, type StepLog } from '../api/transactions'
 import { cn, statusColor, formatDate } from '../lib/utils'
 import { ExecutionFlowDiagram, type DiagramStep, type DiagramResult } from '../components/flow/ExecutionFlowDiagram'
 import { StepDetailPanel } from '../components/flow/StepDetailPanel'
+
+// ── Step status icon ──────────────────────────────────────────────────────────
 
 function StepStatusIcon({ status }: { status: string }) {
   if (status === 'COMPLETED') return <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
   if (status === 'FAILED') return <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
   return <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
 }
+
+// ── Expanded step logs row ────────────────────────────────────────────────────
 
 function StepLogsRow({ txId }: { txId: string }) {
   const [steps, setSteps] = useState<StepLog[]>([])
@@ -31,7 +35,7 @@ function StepLogsRow({ txId }: { txId: string }) {
   if (loading) {
     return (
       <tr>
-        <td colSpan={7} className="px-6 py-3 bg-gray-50">
+        <td colSpan={8} className="px-6 py-3 bg-gray-50">
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
             Loading step logs...
@@ -44,7 +48,7 @@ function StepLogsRow({ txId }: { txId: string }) {
   if (error) {
     return (
       <tr>
-        <td colSpan={7} className="px-6 py-3 bg-red-50">
+        <td colSpan={8} className="px-6 py-3 bg-red-50">
           <p className="text-xs text-red-600">{error}</p>
         </td>
       </tr>
@@ -63,6 +67,7 @@ function StepLogsRow({ txId }: { txId: string }) {
     status: log.status,
     durationMs: log.durationMs,
     error: log.errorMessage,
+    output: log.outputSnapshot,
     startedAt: log.startedAt,
     completedAt: log.completedAt,
   }))
@@ -70,8 +75,8 @@ function StepLogsRow({ txId }: { txId: string }) {
   return (
     <>
       <tr>
-        <td colSpan={7} className="px-0 pb-0">
-          <div className="bg-gray-50 border-t border-gray-100 px-6 py-3 space-y-4">
+        <td colSpan={8} className="px-0 pb-0">
+          <div className="bg-gray-50 border-t border-gray-100 px-6 py-4 space-y-4">
             {steps.length === 0 ? (
               <p className="text-xs text-gray-400">No step logs available.</p>
             ) : (
@@ -106,7 +111,7 @@ function StepLogsRow({ txId }: { txId: string }) {
                         <StepStatusIcon status={step.status} />
                         <div className="flex-1 min-w-0">
                           <span className="font-medium text-gray-800">{step.stepName}</span>
-                          <span className="ml-2 text-gray-400 text-[11px]">{step.stepType}</span>
+                          <span className="ml-2 text-gray-400 text-[11px] font-mono">{step.stepType}</span>
                           {step.errorMessage && (
                             <p className="text-red-500 text-[11px] mt-0.5 truncate">{step.errorMessage}</p>
                           )}
@@ -120,7 +125,7 @@ function StepLogsRow({ txId }: { txId: string }) {
                           {step.status}
                         </span>
                         {step.durationMs != null && (
-                          <span className="text-gray-400 text-[11px] flex-shrink-0">
+                          <span className="text-gray-400 text-[11px] flex-shrink-0 font-mono">
                             {step.durationMs}ms
                           </span>
                         )}
@@ -146,71 +151,78 @@ function StepLogsRow({ txId }: { txId: string }) {
   )
 }
 
+// ── Transactions page ─────────────────────────────────────────────────────────
+
+const STATUS_OPTIONS: Transaction['status'][] = [
+  'RECEIVED',
+  'VALIDATING',
+  'PROCESSING',
+  'COMPLETED',
+  'FAILED',
+]
+
 export function Transactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
-  // Filters
   const [productFilter, setProductFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true)
+    setError(null)
     transactionsApi
-      .list()
+      .list({ productLineCode: productFilter || undefined, status: statusFilter || undefined })
       .then(setTransactions)
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : 'Failed to load transactions.')
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [productFilter, statusFilter])
+
+  useEffect(() => {
+    load()
+  }, [load])
 
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
 
-  const filtered = transactions.filter((tx) => {
-    const matchProduct =
-      !productFilter ||
-      tx.productLineCode.toLowerCase().includes(productFilter.toLowerCase())
-    const matchStatus = !statusFilter || tx.status === statusFilter
-    return matchProduct && matchStatus
-  })
-
-  const STATUS_OPTIONS: Transaction['status'][] = [
-    'RECEIVED',
-    'VALIDATING',
-    'PROCESSING',
-    'COMPLETED',
-    'FAILED',
-  ]
+  const hasFilters = productFilter || statusFilter
 
   return (
     <div className="px-6 py-6 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="mb-5">
-        <h1 className="text-xl font-bold text-gray-900">Transactions</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Monitor rating request execution across all product lines
-        </p>
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Transactions</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Monitor rating request execution across all product lines
+          </p>
+        </div>
+        <button
+          onClick={load}
+          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+          Refresh
+        </button>
       </div>
 
       {/* Filter bar */}
-      <div className="flex items-center gap-3 mb-5">
+      <div className="flex items-center gap-3 mb-5 flex-wrap">
         <input
           value={productFilter}
           onChange={(e) => setProductFilter(e.target.value)}
           placeholder="Filter by product line..."
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-56"
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-52"
         />
         <select
           value={statusFilter}
@@ -219,12 +231,10 @@ export function Transactions() {
         >
           <option value="">All statuses</option>
           {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
+            <option key={s} value={s}>{s}</option>
           ))}
         </select>
-        {(productFilter || statusFilter) && (
+        {hasFilters && (
           <button
             onClick={() => { setProductFilter(''); setStatusFilter('') }}
             className="text-xs text-gray-400 hover:text-gray-600 underline"
@@ -233,7 +243,7 @@ export function Transactions() {
           </button>
         )}
         <span className="ml-auto text-xs text-gray-400">
-          {filtered.length} of {transactions.length} transactions
+          {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
         </span>
       </div>
 
@@ -255,22 +265,17 @@ export function Transactions() {
       {!loading && transactions.length === 0 && !error && (
         <div className="bg-white rounded-lg border border-dashed border-gray-300 p-12 text-center">
           <Activity className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm font-medium text-gray-600">No transactions yet</p>
+          <p className="text-sm font-medium text-gray-600">
+            {hasFilters ? 'No transactions match the current filters' : 'No transactions yet'}
+          </p>
           <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto leading-relaxed">
-            Transactions appear here after executing a rating request through the orchestrator API.
+            {!hasFilters && 'Transactions appear here after executing a rating request through the orchestrator.'}
           </p>
         </div>
       )}
 
-      {/* Filtered empty */}
-      {!loading && transactions.length > 0 && filtered.length === 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-10 text-center">
-          <p className="text-sm text-gray-500">No transactions match the current filters.</p>
-        </div>
-      )}
-
       {/* Table */}
-      {!loading && filtered.length > 0 && (
+      {!loading && transactions.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -286,18 +291,21 @@ export function Transactions() {
                   Status
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Scope
+                </th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Premium
+                </th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Steps
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Duration
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Created At
+                  Duration · Created
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filtered.map((tx) => (
+              {transactions.map((tx) => (
                 <React.Fragment key={tx.id}>
                   <tr
                     onClick={() => toggleExpand(tx.id)}
@@ -310,10 +318,10 @@ export function Transactions() {
                         <ChevronRight className="w-3.5 h-3.5" />
                       )}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-600 max-w-[140px]">
+                    <td className="px-4 py-3 font-mono text-xs text-gray-600 max-w-[130px]">
                       <span title={tx.correlationId} className="truncate block">
-                        {tx.correlationId.length > 20
-                          ? `${tx.correlationId.slice(0, 8)}...${tx.correlationId.slice(-4)}`
+                        {tx.correlationId.length > 18
+                          ? `${tx.correlationId.slice(0, 8)}…${tx.correlationId.slice(-4)}`
                           : tx.correlationId}
                       </span>
                     </td>
@@ -330,13 +338,37 @@ export function Transactions() {
                         {tx.status}
                       </span>
                     </td>
+                    <td className="px-4 py-3 text-xs text-gray-500">
+                      {tx.scope ? (
+                        <span className="space-x-1">
+                          {tx.scope.state && <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-medium">{tx.scope.state}</span>}
+                          {tx.scope.coverage && <span className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-[10px] font-medium">{tx.scope.coverage}</span>}
+                          {tx.scope.transactionType && <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px]">{tx.scope.transactionType}</span>}
+                        </span>
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      {tx.premiumResult != null ? (
+                        <span className="font-semibold text-green-700">${Number(tx.premiumResult).toLocaleString()}</span>
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-xs text-gray-600">
                       {tx.completedSteps}/{tx.stepCount}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500">
-                      {tx.durationMs != null ? `${tx.durationMs}ms` : <span className="text-gray-300">—</span>}
+                    <td className="px-4 py-3 text-xs text-gray-400">
+                      <div>
+                        {tx.durationMs != null ? (
+                          <span className="font-mono text-gray-600">{tx.durationMs}ms</span>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </div>
+                      <div>{formatDate(tx.createdAt)}</div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-400">{formatDate(tx.createdAt)}</td>
                   </tr>
                   {expanded.has(tx.id) && <StepLogsRow txId={tx.id} />}
                 </React.Fragment>

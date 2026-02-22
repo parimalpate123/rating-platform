@@ -15,19 +15,22 @@ import {
   Settings,
   RefreshCw,
   Trash2,
-  Check,
   Play,
   ChevronDown,
   ChevronRight,
+  Plus,
 } from 'lucide-react'
 import { productsApi, type ProductLine } from '../api/products'
 import { cn, statusColor, formatDate } from '../lib/utils'
 import { orchestratorApi, ratingApi, type ProductOrchestrator, type RateResponse } from '../api/orchestrator'
+import { systemsApi, type System } from '../api/systems'
 import { MappingsTab } from '../components/tabs/MappingsTab'
 import { RulesTab } from '../components/tabs/RulesTab'
 import { ScopesTab } from '../components/tabs/ScopesTab'
 import { ExecutionFlowDiagram, type DiagramStep, type DiagramResult } from '../components/flow/ExecutionFlowDiagram'
 import { StepDetailPanel } from '../components/flow/StepDetailPanel'
+import { TestingFlowCircles } from '../components/flow/TestingFlowCircles'
+import { ActivityFeed } from '../components/ActivityFeed'
 
 // --------------- Edit Modal ---------------
 
@@ -475,6 +478,12 @@ function OverviewTab({ product }: { product: ProductLine }) {
           )}
         </dl>
       </div>
+
+      {/* Activity feed */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <h3 className="text-sm font-semibold text-gray-800 mb-4">Recent Activity</h3>
+        <ActivityFeed productCode={product.code} />
+      </div>
     </div>
   )
 }
@@ -482,6 +491,7 @@ function OverviewTab({ product }: { product: ProductLine }) {
 // --------------- Step type color map ---------------
 
 const STEP_TYPE_COLORS: Record<string, string> = {
+  validate_request: 'bg-cyan-100 text-cyan-700 border-cyan-200',
   field_mapping: 'bg-blue-100 text-blue-700 border-blue-200',
   apply_rules: 'bg-green-100 text-green-700 border-green-200',
   format_transform: 'bg-orange-100 text-orange-700 border-orange-200',
@@ -489,7 +499,6 @@ const STEP_TYPE_COLORS: Record<string, string> = {
   call_external_api: 'bg-indigo-100 text-indigo-700 border-indigo-200',
   call_orchestrator: 'bg-teal-100 text-teal-700 border-teal-200',
   publish_event: 'bg-pink-100 text-pink-700 border-pink-200',
-  enrich: 'bg-yellow-100 text-yellow-700 border-yellow-200',
 }
 
 const CONFIG_PREVIEW_KEYS = ['direction', 'systemCode', 'formatDirection', 'format', 'engine', 'url', 'event']
@@ -510,6 +519,139 @@ function stepConfigPreview(config: Record<string, unknown>): string {
   return parts.join('  ·  ')
 }
 
+// --------------- Step types & config field definitions ---------------
+
+const STEP_TYPES = [
+  { value: 'validate_request', label: 'Validate Request' },
+  { value: 'field_mapping', label: 'Field Mapping' },
+  { value: 'apply_rules', label: 'Apply Rules' },
+  { value: 'call_rating_engine', label: 'Call Rating Engine' },
+  { value: 'format_transform', label: 'Format Transform' },
+  { value: 'call_external_api', label: 'Call External API' },
+  { value: 'publish_event', label: 'Publish Event' },
+]
+
+interface ConfigField {
+  key: string
+  label: string
+  type: 'text' | 'select' | 'system-select'
+  options?: string[]
+  placeholder?: string
+}
+
+const STEP_CONFIG_FIELDS: Record<string, ConfigField[]> = {
+  validate_request: [
+    { key: 'schema', label: 'Schema Name', type: 'text', placeholder: 'e.g. rate-request, init-rate-request' },
+    { key: 'strictMode', label: 'Strict Mode', type: 'select', options: ['true', 'false'] },
+  ],
+  field_mapping: [
+    { key: 'direction', label: 'Direction', type: 'select', options: ['request', 'response'] },
+    { key: 'mappingId', label: 'Mapping ID', type: 'text', placeholder: 'UUID of mapping' },
+  ],
+  apply_rules: [
+    { key: 'scope', label: 'Scope', type: 'select', options: ['pre_rating', 'post_rating'] },
+  ],
+  call_rating_engine: [
+    { key: 'systemCode', label: 'Target System', type: 'system-select' },
+  ],
+  format_transform: [
+    { key: 'formatDirection', label: 'Format Direction', type: 'select', options: ['json_to_xml', 'xml_to_json'] },
+  ],
+  call_external_api: [
+    { key: 'systemCode', label: 'System', type: 'system-select' },
+    { key: 'endpoint', label: 'Endpoint Path', type: 'text', placeholder: '/v1/rate' },
+    { key: 'method', label: 'HTTP Method', type: 'select', options: ['GET', 'POST', 'PUT', 'DELETE'] },
+  ],
+  publish_event: [
+    { key: 'topic', label: 'Topic', type: 'text', placeholder: 'e.g. rating.completed' },
+  ],
+}
+
+function StepConfigForm({
+  stepType,
+  config,
+  onChange,
+  systems,
+}: {
+  stepType: string
+  config: Record<string, unknown>
+  onChange: (config: Record<string, unknown>) => void
+  systems: System[]
+}) {
+  const fields = STEP_CONFIG_FIELDS[stepType] ?? []
+  if (fields.length === 0) return null
+
+  const selectedSystem = systems.find(s => s.code === config['systemCode'])
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        {fields.map((f) => (
+          <div key={f.key}>
+            <label className="block text-xs font-medium text-gray-500 mb-1">{f.label}</label>
+            {f.type === 'system-select' ? (
+              <select
+                value={(config[f.key] as string) ?? ''}
+                onChange={(e) => onChange({ ...config, [f.key]: e.target.value })}
+                className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select system...</option>
+                {systems.map((s) => (
+                  <option key={s.code} value={s.code}>
+                    {s.name} ({s.code})
+                  </option>
+                ))}
+              </select>
+            ) : f.type === 'select' ? (
+              <select
+                value={(config[f.key] as string) ?? ''}
+                onChange={(e) => onChange({ ...config, [f.key]: e.target.value })}
+                className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select...</option>
+                {f.options?.map((o) => (
+                  <option key={o} value={o}>{o.replace(/_/g, ' ')}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                value={(config[f.key] as string) ?? ''}
+                onChange={(e) => onChange({ ...config, [f.key]: e.target.value })}
+                placeholder={f.placeholder}
+                className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* URL preview when a system is selected */}
+      {selectedSystem && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs space-y-1">
+          <div className="flex items-center gap-4 text-gray-500">
+            <span>Base URL: <span className="font-mono text-gray-700">{selectedSystem.baseUrl || '—'}</span></span>
+            <span className="w-px h-3 bg-gray-300" />
+            <span>Auth: <span className="font-medium text-gray-700">{selectedSystem.authMethod || 'none'}</span></span>
+            <span className="w-px h-3 bg-gray-300" />
+            <span>Format: <span className="font-medium text-gray-700">{selectedSystem.format}</span></span>
+            {selectedSystem.isMock && (
+              <>
+                <span className="w-px h-3 bg-gray-300" />
+                <span className="px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 font-medium">Mock</span>
+              </>
+            )}
+          </div>
+          {!!config['endpoint'] && (
+            <div className="text-gray-500">
+              Full URL: <span className="font-mono text-gray-700">{selectedSystem.baseUrl}{config['endpoint'] as string}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // --------------- OrchestratorTab ---------------
 
 interface OrchestratorTabProps {
@@ -517,8 +659,8 @@ interface OrchestratorTabProps {
   targetSystem: string
 }
 
-const DEFAULT_TEST_PAYLOAD = JSON.stringify(
-  {
+const FLOW_PAYLOADS: Record<string, object> = {
+  rate: {
     policy: {
       insuredName: 'ACME Corporation',
       annualRevenue: 5000000,
@@ -527,64 +669,98 @@ const DEFAULT_TEST_PAYLOAD = JSON.stringify(
       effectiveDate: new Date().toISOString().split('T')[0],
     },
     coverage: { type: 'BOP', limit: 1000000, deductible: 5000 },
+    scope: { state: 'NY', transactionType: 'new_business' },
   },
-  null,
-  2,
-)
+  'init-rate': {
+    policyNumber: 'POL-2026-001',
+    productLineCode: '',
+    transactionType: 'new_business',
+    effectiveDate: new Date().toISOString().split('T')[0],
+    requestedBy: 'system',
+  },
+  renew: {
+    policyNumber: 'POL-2026-001',
+    renewalDate: new Date().toISOString().split('T')[0],
+    adjustments: {},
+  },
+  quote: {
+    quoteId: '',
+    applicant: { name: '', state: '' },
+    coverages: [],
+  },
+}
+
+function getDefaultPayload(endpointPath: string): string {
+  const payload = FLOW_PAYLOADS[endpointPath] ?? { payload: {} }
+  return JSON.stringify(payload, null, 2)
+}
 
 function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
-  const [orchestrator, setOrchestrator] = useState<ProductOrchestrator | null>(null)
+  const [flows, setFlows] = useState<ProductOrchestrator[]>([])
+  const [activeEndpoint, setActiveEndpoint] = useState<string>('rate')
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [notFound, setNotFound] = useState(false)
+  const [systems, setSystems] = useState<System[]>([])
+  const [showNewFlowForm, setShowNewFlowForm] = useState(false)
+  const [newFlowEndpoint, setNewFlowEndpoint] = useState('')
+  const [newFlowName, setNewFlowName] = useState('')
+
+  // Add step state
+  const [showAddStep, setShowAddStep] = useState(false)
+  const [newStepType, setNewStepType] = useState(STEP_TYPES[0].value)
+  const [newStepName, setNewStepName] = useState('')
+  const [newStepConfig, setNewStepConfig] = useState<Record<string, unknown>>({})
+
+  // Edit step state (full config editing)
   const [editingStepId, setEditingStepId] = useState<string | null>(null)
-  const [editName, setEditName] = useState('')
+  const [editStepData, setEditStepData] = useState<{
+    name: string; stepType: string; config: Record<string, unknown>; isActive: boolean
+  }>({ name: '', stepType: '', config: {}, isActive: true })
 
   // Test panel state
-  const [testPayload, setTestPayload] = useState(DEFAULT_TEST_PAYLOAD)
-  const [testState, setTestState] = useState('')
-  const [testCoverage, setTestCoverage] = useState('')
-  const [testTxType, setTestTxType] = useState('new_business')
+  const [testPayload, setTestPayload] = useState(() => getDefaultPayload('rate'))
   const [testRunning, setTestRunning] = useState(false)
   const [testResult, setTestResult] = useState<RateResponse | null>(null)
   const [testError, setTestError] = useState<string | null>(null)
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set())
   const [selectedStep, setSelectedStep] = useState<{ step: DiagramStep; result?: DiagramResult } | null>(null)
 
+  const orchestrator = flows.find(f => f.endpointPath === activeEndpoint) ?? null
+
   const load = () => {
     setLoading(true)
     setError(null)
-    setNotFound(false)
     orchestratorApi
-      .get(productCode)
-      .then((data) => { setOrchestrator(data) })
+      .getAll(productCode)
+      .then((data) => {
+        setFlows(data)
+        if (data.length > 0 && !data.find(f => f.endpointPath === activeEndpoint)) {
+          setActiveEndpoint(data[0].endpointPath)
+        }
+      })
       .catch((err: unknown) => {
-        const status =
-          err && typeof err === 'object' && 'response' in err
-            ? (err as { response?: { status?: number } }).response?.status
-            : undefined
-        if (status === 404) setNotFound(true)
-        else setError(err instanceof Error ? err.message : 'Failed to load orchestrator.')
+        setError(err instanceof Error ? err.message : 'Failed to load orchestrators.')
       })
       .finally(() => setLoading(false))
   }
 
   useEffect(() => {
     load()
+    systemsApi.list().then(setSystems).catch(() => {})
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productCode])
 
-  const handleAutoGenerate = async () => {
+  const handleAutoGenerate = async (endpointPath = 'rate') => {
     const ts = targetSystem.toLowerCase()
     const targetFormat: 'xml' | 'json' =
       ts.includes('ratabase') || ts.includes('cgi') ? 'xml' : 'json'
     setGenerating(true)
     setError(null)
     try {
-      const data = await orchestratorApi.autoGenerate(productCode, targetFormat)
-      setOrchestrator(data)
-      setNotFound(false)
+      await orchestratorApi.autoGenerate(productCode, targetFormat, endpointPath)
+      load()
+      setActiveEndpoint(endpointPath)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to auto-generate orchestrator.')
     } finally {
@@ -592,21 +768,37 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
     }
   }
 
-  const handleDeleteOrchestrator = async () => {
-    if (!confirm('Delete this orchestrator? All steps will be removed. You can re-generate it after.')) return
+  const handleDeleteFlow = async () => {
+    if (!orchestrator) return
+    if (!confirm(`Delete the "${orchestrator.endpointPath}" flow? All steps will be removed.`)) return
     try {
-      await orchestratorApi.delete(productCode)
-      setOrchestrator(null)
-      setNotFound(true)
+      await orchestratorApi.deleteFlow(productCode, orchestrator.endpointPath)
+      load()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to delete orchestrator.')
+      setError(err instanceof Error ? err.message : 'Failed to delete flow.')
+    }
+  }
+
+  const handleCreateFlow = async () => {
+    const ep = newFlowEndpoint.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-')
+    if (!ep) return
+    try {
+      await orchestratorApi.createFlow(productCode, newFlowName.trim() || `${productCode} ${ep} Flow`, ep)
+      setShowNewFlowForm(false)
+      setNewFlowEndpoint('')
+      setNewFlowName('')
+      setActiveEndpoint(ep)
+      load()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to create flow.')
     }
   }
 
   const handleDeleteStep = async (stepId: string, stepName: string) => {
+    if (!orchestrator) return
     if (!confirm(`Delete step "${stepName}"?`)) return
     try {
-      await orchestratorApi.deleteStep(productCode, stepId)
+      await orchestratorApi.deleteStep(productCode, orchestrator.endpointPath, stepId)
       load()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to delete step.')
@@ -614,9 +806,14 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
   }
 
   const handleSaveStep = async (stepId: string) => {
-    if (!editName.trim()) return
+    if (!editStepData.name.trim() || !orchestrator) return
     try {
-      await orchestratorApi.updateStep(productCode, stepId, { name: editName.trim() })
+      await orchestratorApi.updateStep(productCode, orchestrator.endpointPath, stepId, {
+        name: editStepData.name.trim(),
+        stepType: editStepData.stepType,
+        config: editStepData.config,
+        isActive: editStepData.isActive,
+      })
       setEditingStepId(null)
       load()
     } catch (err: unknown) {
@@ -624,7 +821,30 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
     }
   }
 
+  const handleAddStep = async () => {
+    if (!newStepName.trim() || !orchestrator) return
+    const nextOrder = orchestrator.steps.length > 0
+      ? Math.max(...orchestrator.steps.map((s: { stepOrder: number }) => s.stepOrder)) + 1
+      : 1
+    try {
+      await orchestratorApi.addStep(productCode, orchestrator.endpointPath, {
+        stepType: newStepType,
+        name: newStepName.trim(),
+        config: newStepConfig,
+        stepOrder: nextOrder,
+      } as any)
+      setShowAddStep(false)
+      setNewStepName('')
+      setNewStepType(STEP_TYPES[0].value)
+      setNewStepConfig({})
+      load()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to add step.')
+    }
+  }
+
   const handleRunTest = async () => {
+    if (!orchestrator) return
     setTestRunning(true)
     setTestResult(null)
     setTestError(null)
@@ -638,11 +858,12 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
         setTestRunning(false)
         return
       }
-      const scope: Record<string, string> = {}
-      if (testState) scope['state'] = testState
-      if (testCoverage) scope['coverage'] = testCoverage
-      if (testTxType) scope['transactionType'] = testTxType
-      const res = await ratingApi.rate(productCode, parsed, Object.keys(scope).length ? scope : undefined)
+      const res = await ratingApi.rate(
+        productCode,
+        parsed,
+        undefined,
+        orchestrator.endpointPath,
+      )
       setTestResult(res)
     } catch (err: any) {
       setTestError(err?.response?.data?.message || err?.message || 'Rating request failed')
@@ -684,322 +905,529 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
     )
   }
 
-  if (notFound || !orchestrator) {
+  // No flows at all
+  if (flows.length === 0 && !showNewFlowForm) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
         <GitBranch className="w-10 h-10 text-gray-300 mx-auto mb-4" />
-        <p className="text-sm font-semibold text-gray-600 mb-1">No Orchestrator Configured</p>
+        <p className="text-sm font-semibold text-gray-600 mb-1">No Orchestrator Flows</p>
         <p className="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed mb-6">
-          There is no orchestrator flow for this product line yet. Auto-generate one based on the
-          target system configuration.
+          Create your first flow for this product line. Each flow maps to an endpoint (e.g. /rate, /init-rate).
         </p>
-        <button
-          onClick={handleAutoGenerate}
-          disabled={generating}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
-        >
-          {generating ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Zap className="w-4 h-4" />
-          )}
-          {generating ? 'Generating...' : 'Auto-Generate Flow'}
-        </button>
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => handleAutoGenerate('rate')}
+            disabled={generating}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
+          >
+            {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+            {generating ? 'Generating...' : 'Auto-Generate /rate Flow'}
+          </button>
+          <button
+            onClick={() => setShowNewFlowForm(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Create Custom Flow
+          </button>
+        </div>
       </div>
     )
   }
 
-  const statusBadgeClass =
-    orchestrator.status === 'active'
-      ? 'bg-green-100 text-green-700 border-green-200'
-      : orchestrator.status === 'draft'
-      ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
-      : 'bg-gray-100 text-gray-600 border-gray-200'
-
   return (
     <div className="space-y-4">
-      {/* Orchestrator header card */}
-      <div className="bg-white rounded-lg border border-gray-200 px-5 py-4 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
-            <GitBranch className="w-[18px] h-[18px] text-blue-600" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-900">{orchestrator.name}</p>
-            <p className="text-xs text-gray-400 font-mono mt-0.5">{orchestrator.id}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium border', statusBadgeClass)}>
-            {orchestrator.status}
-          </span>
-          <span className="text-xs text-gray-400">
-            {orchestrator.steps.length} step{orchestrator.steps.length !== 1 ? 's' : ''}
-          </span>
+      {/* ── Flow selector tabs ── */}
+      <div className="bg-white rounded-lg border border-gray-200 px-4 py-3">
+        <div className="flex items-center gap-1 flex-wrap">
+          {flows.map(f => (
+            <button
+              key={f.endpointPath}
+              onClick={() => { setActiveEndpoint(f.endpointPath); setTestPayload(getDefaultPayload(f.endpointPath)); setTestResult(null); setTestError(null); setSelectedStep(null) }}
+              className={cn(
+                'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
+                activeEndpoint === f.endpointPath
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100',
+              )}
+            >
+              /{f.endpointPath}
+            </button>
+          ))}
           <button
-            onClick={handleDeleteOrchestrator}
-            className="p-1.5 text-gray-300 hover:text-red-500 rounded transition-colors"
-            title="Delete orchestrator"
+            onClick={() => setShowNewFlowForm(true)}
+            className="px-2 py-1.5 text-xs font-medium text-gray-400 hover:text-blue-600 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1"
           >
-            <Trash2 className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
+            Add Flow
           </button>
         </div>
       </div>
 
-      {/* Flow diagram — static topology */}
-      {orchestrator.steps.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <h3 className="text-sm font-semibold text-gray-800">Execution Flow</h3>
-            <span className="ml-auto text-xs text-gray-400">click a node to inspect</span>
+      {/* ── New flow form ── */}
+      {showNewFlowForm && (
+        <div className="bg-white rounded-lg border border-blue-200 p-5">
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">Create New Flow</h3>
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Endpoint Path</label>
+              <input
+                autoFocus
+                value={newFlowEndpoint}
+                onChange={e => setNewFlowEndpoint(e.target.value)}
+                placeholder="e.g. init-rate, renew, quote"
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Display Name</label>
+              <input
+                value={newFlowName}
+                onChange={e => setNewFlowName(e.target.value)}
+                placeholder="e.g. Initiate Rating Flow"
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
-          <ExecutionFlowDiagram
-            steps={orchestrator.steps}
-            results={testResult?.stepResults.map((r) => ({
-              stepId: r.stepId,
-              stepName: r.stepName,
-              stepType: r.stepType,
-              status: r.status,
-              durationMs: r.durationMs,
-              error: r.error,
-              output: r.output,
-            }))}
-            onStepClick={(step, result) => setSelectedStep({ step, result })}
-            selectedStepId={selectedStep?.step.id}
-          />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCreateFlow}
+              disabled={!newFlowEndpoint.trim()}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              Create Empty Flow
+            </button>
+            <button
+              onClick={() => {
+                const ep = newFlowEndpoint.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-')
+                if (ep) handleAutoGenerate(ep)
+                setShowNewFlowForm(false)
+                setNewFlowEndpoint('')
+                setNewFlowName('')
+              }}
+              disabled={!newFlowEndpoint.trim() || generating}
+              className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50"
+            >
+              {generating ? 'Generating...' : 'Auto-Generate'}
+            </button>
+            <button
+              onClick={() => { setShowNewFlowForm(false); setNewFlowEndpoint(''); setNewFlowName('') }}
+              className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Steps list */}
-      {orchestrator.steps.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-          <Settings className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">No steps defined yet.</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {[...orchestrator.steps]
-            .sort((a, b) => a.stepOrder - b.stepOrder)
-            .map((step) => {
-              const typeColor =
-                STEP_TYPE_COLORS[step.stepType] ?? 'bg-gray-100 text-gray-600 border-gray-200'
-              const preview = stepConfigPreview(step.config ?? {})
-              const isEditing = editingStepId === step.id
-              return (
-                <div key={step.id} className="bg-white rounded-lg border border-gray-200 px-5 py-4">
-                  <div className="flex items-center gap-4">
-                    {/* Step number */}
-                    <div className="w-7 h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-gray-600">{step.stepOrder}</span>
-                    </div>
+      {/* ── Selected flow content ── */}
+      {orchestrator && (
+        <>
+          {/* Flow header card */}
+          <div className="bg-white rounded-lg border border-gray-200 px-5 py-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
+                <GitBranch className="w-[18px] h-[18px] text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{orchestrator.name}</p>
+                <p className="text-xs text-gray-400 font-mono mt-0.5">/{orchestrator.endpointPath} · {orchestrator.id}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={cn(
+                'inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium border',
+                orchestrator.status === 'active' ? 'bg-green-100 text-green-700 border-green-200'
+                  : orchestrator.status === 'draft' ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                  : 'bg-gray-100 text-gray-600 border-gray-200',
+              )}>
+                {orchestrator.status}
+              </span>
+              <span className="text-xs text-gray-400">
+                {orchestrator.steps.length} step{orchestrator.steps.length !== 1 ? 's' : ''}
+              </span>
+              <button
+                onClick={handleDeleteFlow}
+                className="p-1.5 text-gray-300 hover:text-red-500 rounded transition-colors"
+                title="Delete this flow"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
 
-                    {/* Step info */}
-                    <div className="flex-1 min-w-0">
-                      {isEditing ? (
-                        <input
-                          autoFocus
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') handleSaveStep(step.id); if (e.key === 'Escape') setEditingStepId(null) }}
-                          className="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      ) : (
-                        <>
+          {/* Flow diagram */}
+          {orchestrator.steps.length > 0 && (
+            <div className="bg-white rounded-lg border border-gray-200 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="text-sm font-semibold text-gray-800">Execution Flow</h3>
+                <span className="ml-auto text-xs text-gray-400">click a node to inspect</span>
+              </div>
+              <ExecutionFlowDiagram
+                steps={orchestrator.steps}
+                results={testResult?.stepResults.map((r) => ({
+                  stepId: r.stepId,
+                  stepName: r.stepName,
+                  stepType: r.stepType,
+                  status: r.status,
+                  durationMs: r.durationMs,
+                  error: r.error,
+                  output: r.output,
+                }))}
+                onStepClick={(step, result) => setSelectedStep({ step, result })}
+                selectedStepId={selectedStep?.step.id}
+              />
+            </div>
+          )}
+
+          {/* Steps list */}
+          {orchestrator.steps.length === 0 && !showAddStep ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+              <Settings className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm text-gray-500 mb-3">No steps defined yet for /{orchestrator.endpointPath}.</p>
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => handleAutoGenerate(orchestrator.endpointPath)}
+                  disabled={generating}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-60"
+                >
+                  {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                  Auto-Generate Steps
+                </button>
+                <button
+                  onClick={() => setShowAddStep(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Step Manually
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {[...orchestrator.steps]
+                .sort((a, b) => a.stepOrder - b.stepOrder)
+                .map((step) => {
+                  const typeColor =
+                    STEP_TYPE_COLORS[step.stepType] ?? 'bg-gray-100 text-gray-600 border-gray-200'
+                  const preview = stepConfigPreview(step.config ?? {})
+                  const isEditing = editingStepId === step.id
+                  return (
+                    <div key={step.id} className={cn('bg-white rounded-lg border px-5 py-4', isEditing ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-200')}>
+                      <div className="flex items-center gap-4">
+                        <div className="w-7 h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-bold text-gray-600">{step.stepOrder}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className={cn('inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border', typeColor)}>
                               {step.stepType.replace(/_/g, ' ')}
                             </span>
                             <span className="text-sm font-medium text-gray-800 truncate">{step.name}</span>
                           </div>
-                          {preview && <p className="text-xs text-gray-400 mt-1 truncate">{preview}</p>}
-                        </>
-                      )}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {isEditing ? (
-                        <>
-                          <button onClick={() => handleSaveStep(step.id)} className="p-1.5 text-green-600 hover:bg-green-50 rounded" title="Save"><Check className="w-3.5 h-3.5" /></button>
-                          <button onClick={() => setEditingStepId(null)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded" title="Cancel"><X className="w-3.5 h-3.5" /></button>
-                        </>
-                      ) : (
-                        <>
+                          {!isEditing && preview && <p className="text-xs text-gray-400 mt-1 truncate">{preview}</p>}
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
                           {step.isActive ? <CheckCircle className="w-4 h-4 text-green-500 mr-1" aria-label="Active" /> : <Circle className="w-4 h-4 text-gray-300 mr-1" aria-label="Inactive" />}
-                          <button onClick={() => { setEditingStepId(step.id); setEditName(step.name) }} className="p-1.5 text-gray-300 hover:text-blue-600 rounded transition-colors" title="Rename step"><Pencil className="w-3.5 h-3.5" /></button>
+                          <button
+                            onClick={() => {
+                              if (isEditing) {
+                                setEditingStepId(null)
+                              } else {
+                                setEditingStepId(step.id)
+                                setEditStepData({
+                                  name: step.name,
+                                  stepType: step.stepType,
+                                  config: { ...(step.config ?? {}) },
+                                  isActive: step.isActive,
+                                })
+                              }
+                            }}
+                            className={cn('p-1.5 rounded transition-colors', isEditing ? 'text-blue-600 bg-blue-50' : 'text-gray-300 hover:text-blue-600')}
+                            title={isEditing ? 'Close editor' : 'Edit step'}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
                           <button onClick={() => handleDeleteStep(step.id, step.name)} className="p-1.5 text-gray-300 hover:text-red-500 rounded transition-colors" title="Delete step"><Trash2 className="w-3.5 h-3.5" /></button>
-                        </>
+                        </div>
+                      </div>
+
+                      {/* Expanded config editor */}
+                      {isEditing && (
+                        <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 mb-1">Step Name</label>
+                              <input
+                                autoFocus
+                                value={editStepData.name}
+                                onChange={(e) => setEditStepData(prev => ({ ...prev, name: e.target.value }))}
+                                className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 mb-1">Step Type</label>
+                              <select
+                                value={editStepData.stepType}
+                                onChange={(e) => setEditStepData(prev => ({ ...prev, stepType: e.target.value, config: {} }))}
+                                className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                {STEP_TYPES.map((t) => (
+                                  <option key={t.value} value={t.value}>{t.label}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          <StepConfigForm
+                            stepType={editStepData.stepType}
+                            config={editStepData.config}
+                            onChange={(c) => setEditStepData(prev => ({ ...prev, config: c }))}
+                            systems={systems}
+                          />
+
+                          <div className="flex items-center gap-4">
+                            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={editStepData.isActive}
+                                onChange={(e) => setEditStepData(prev => ({ ...prev, isActive: e.target.checked }))}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                              Active
+                            </label>
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-1">
+                            <button
+                              onClick={() => handleSaveStep(step.id)}
+                              disabled={!editStepData.name.trim()}
+                              className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                            >
+                              Save Changes
+                            </button>
+                            <button
+                              onClick={() => setEditingStepId(null)}
+                              className="px-4 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
                       )}
                     </div>
+                  )
+                })}
+
+              {/* Add Step button / form */}
+              {showAddStep ? (
+                <div className="bg-white rounded-lg border border-blue-200 ring-1 ring-blue-100 px-5 py-4 space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-800">Add New Step</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Step Name</label>
+                      <input
+                        autoFocus
+                        value={newStepName}
+                        onChange={(e) => setNewStepName(e.target.value)}
+                        placeholder="e.g. Map Request Fields"
+                        className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Step Type</label>
+                      <select
+                        value={newStepType}
+                        onChange={(e) => { setNewStepType(e.target.value); setNewStepConfig({}) }}
+                        className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {STEP_TYPES.map((t) => (
+                          <option key={t.value} value={t.value}>{t.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <StepConfigForm
+                    stepType={newStepType}
+                    config={newStepConfig}
+                    onChange={setNewStepConfig}
+                    systems={systems}
+                  />
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      onClick={handleAddStep}
+                      disabled={!newStepName.trim()}
+                      className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                      Add Step
+                    </button>
+                    <button
+                      onClick={() => { setShowAddStep(false); setNewStepName(''); setNewStepType(STEP_TYPES[0].value); setNewStepConfig({}) }}
+                      className="px-4 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
-              )
-            })}
-        </div>
-      )}
-
-      {/* ── Test Rating Panel ── */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-          <Zap className="w-4 h-4 text-blue-500" />
-          <h3 className="text-sm font-semibold text-gray-800">Test Rating</h3>
-          <span className="ml-auto text-xs text-gray-400">{productCode}</span>
-        </div>
-
-        <div className="p-5 grid grid-cols-2 gap-5">
-          {/* Left — inputs */}
-          <div className="space-y-3">
-            {/* Scope */}
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">State</label>
-                <input
-                  value={testState} onChange={e => setTestState(e.target.value)}
-                  placeholder="NY"
-                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Coverage</label>
-                <input
-                  value={testCoverage} onChange={e => setTestCoverage(e.target.value)}
-                  placeholder="BOP"
-                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Tx Type</label>
-                <select
-                  value={testTxType} onChange={e => setTestTxType(e.target.value)}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              ) : (
+                <button
+                  onClick={() => setShowAddStep(true)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-400 bg-white border border-dashed border-gray-300 rounded-lg hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
                 >
-                  <option value="new_business">New Business</option>
-                  <option value="renewal">Renewal</option>
-                  <option value="endorsement">Endorsement</option>
-                </select>
-              </div>
+                  <Plus className="w-4 h-4" />
+                  Add Step
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── Test Flow Panel ── */}
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-blue-500" />
+              <h3 className="text-sm font-semibold text-gray-800">Test /{orchestrator.endpointPath}</h3>
+              <span className="ml-auto text-xs text-gray-400 font-mono">{productCode} · /{orchestrator.endpointPath} · {orchestrator.steps.length} step{orchestrator.steps.length !== 1 ? 's' : ''}</span>
             </div>
 
-            {/* Payload editor */}
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Payload (JSON)</label>
-              <textarea
-                value={testPayload}
-                onChange={e => setTestPayload(e.target.value)}
-                rows={10}
-                className="w-full px-3 py-2 text-xs font-mono border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              />
-            </div>
-
-            <button
-              onClick={handleRunTest}
-              disabled={testRunning || orchestrator.steps.length === 0}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {testRunning ? <><Loader2 className="w-4 h-4 animate-spin" /> Running...</> : <><Play className="w-4 h-4" /> Run Test</>}
-            </button>
-          </div>
-
-          {/* Right — results */}
-          <div className="space-y-3">
-            {testError && (
-              <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-xs text-red-700 flex items-start gap-2">
-                <XCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                {testError}
-              </div>
-            )}
-
-            {testResult && (
-              <>
-                {/* Summary */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-gray-700">Result</span>
-                    <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium', statusColor(testResult.status.toUpperCase()))}>
-                      {testResult.status === 'completed' ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                      {testResult.status}
-                    </span>
-                  </div>
-                  {(testResult.response as any)?.premium && (
-                    <div className="bg-green-50 border border-green-200 rounded px-3 py-2">
-                      <p className="text-xs text-green-600 font-medium uppercase tracking-wide">Premium</p>
-                      <p className="text-xl font-bold text-green-700">${(testResult.response as any).premium.toLocaleString()}</p>
-                    </div>
-                  )}
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-gray-400">Duration</span>
-                      <p className="font-medium text-gray-700">{testResult.totalDurationMs}ms</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Steps run</span>
-                      <p className="font-medium text-gray-700">{testResult.stepResults.length}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-gray-400">Transaction ID</span>
-                      <p className="font-mono text-gray-700 truncate">{testResult.transactionId}</p>
-                    </div>
-                  </div>
+            <div className="p-5 grid grid-cols-2 gap-5">
+              {/* Left — inputs */}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Request Payload (JSON)</label>
+                  <textarea
+                    value={testPayload}
+                    onChange={e => setTestPayload(e.target.value)}
+                    rows={14}
+                    className="w-full px-3 py-2 text-xs font-mono border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
                 </div>
+                <button
+                  onClick={handleRunTest}
+                  disabled={testRunning || orchestrator.steps.length === 0}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {testRunning ? <><Loader2 className="w-4 h-4 animate-spin" /> Running /{orchestrator.endpointPath}...</> : <><Play className="w-4 h-4" /> Run /{orchestrator.endpointPath}</>}
+                </button>
+              </div>
 
-                {/* Step trace */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <p className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-100">
-                    Step Trace
-                  </p>
-                  <div className="divide-y divide-gray-100">
-                    {testResult.stepResults.map((step, i) => (
-                      <div key={i}>
-                        <button
-                          onClick={() => toggleStep(i)}
-                          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 transition-colors text-left"
-                        >
-                          <span className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 flex-shrink-0">
-                            {i + 1}
-                          </span>
-                          {step.status === 'completed'
-                            ? <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
-                            : step.status === 'skipped'
-                            ? <Circle className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
-                            : <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
-                          <span className="text-xs text-gray-800 flex-1 truncate">{step.stepName}</span>
-                          <span className="text-xs text-gray-400">{step.durationMs}ms</span>
-                          {expandedSteps.has(i) ? <ChevronDown className="w-3 h-3 text-gray-400" /> : <ChevronRight className="w-3 h-3 text-gray-400" />}
-                        </button>
-                        {expandedSteps.has(i) && (
-                          <div className="px-3 pb-3 pt-1 bg-gray-50 border-t border-gray-100">
-                            <p className="text-xs text-gray-500 mb-1">Type: <span className="font-mono">{step.stepType}</span></p>
-                            {step.error && <p className="text-xs text-red-600">Error: {step.error}</p>}
-                            {step.output && (
-                              <pre className="text-xs bg-white border border-gray-200 rounded p-2 mt-1 overflow-auto max-h-28">
-                                {JSON.stringify(step.output, null, 2)}
-                              </pre>
+              {/* Right — results */}
+              <div className="space-y-3">
+                {testError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-xs text-red-700 flex items-start gap-2">
+                    <XCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    {testError}
+                  </div>
+                )}
+
+                {testResult && (
+                  <>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-gray-700">Result</span>
+                        <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium', statusColor(testResult.status.toUpperCase()))}>
+                          {testResult.status === 'completed' ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                          {testResult.status}
+                        </span>
+                      </div>
+                      {(testResult.response as any)?.premium && (
+                        <div className="bg-green-50 border border-green-200 rounded px-3 py-2">
+                          <p className="text-xs text-green-600 font-medium uppercase tracking-wide">Premium</p>
+                          <p className="text-xl font-bold text-green-700">${(testResult.response as any).premium.toLocaleString()}</p>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-gray-400">Duration</span>
+                          <p className="font-medium text-gray-700">{testResult.totalDurationMs}ms</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Steps run</span>
+                          <p className="font-medium text-gray-700">{testResult.stepResults.length}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-gray-400">Transaction ID</span>
+                          <p className="font-mono text-gray-700 truncate">{testResult.transactionId}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Testing flow</p>
+                      <p className="text-[11px] text-gray-400 mb-2">Click a step to see request and response</p>
+                      <TestingFlowCircles
+                        steps={orchestrator.steps.map((s) => ({
+                          id: s.id,
+                          name: s.name,
+                          stepType: s.stepType,
+                          stepOrder: s.stepOrder,
+                          config: s.config,
+                        }))}
+                        stepResults={testResult.stepResults}
+                      />
+                    </div>
+
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <p className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-100">Step Trace</p>
+                      <div className="divide-y divide-gray-100">
+                        {testResult.stepResults.map((step, i) => (
+                          <div key={i}>
+                            <button
+                              onClick={() => toggleStep(i)}
+                              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 transition-colors text-left"
+                            >
+                              <span className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 flex-shrink-0">{i + 1}</span>
+                              {step.status === 'completed'
+                                ? <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+                                : <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
+                              <span className="text-xs text-gray-800 flex-1 truncate">{step.stepName}</span>
+                              <span className="text-xs text-gray-400">{step.durationMs}ms</span>
+                              {expandedSteps.has(i) ? <ChevronDown className="w-3 h-3 text-gray-400" /> : <ChevronRight className="w-3 h-3 text-gray-400" />}
+                            </button>
+                            {expandedSteps.has(i) && (
+                              <div className="px-3 pb-3 pt-1 bg-gray-50 border-t border-gray-100">
+                                <p className="text-xs text-gray-500 mb-1">Type: <span className="font-mono">{step.stepType}</span></p>
+                                {step.error && <p className="text-xs text-red-600">Error: {step.error}</p>}
+                                {step.output && (
+                                  <pre className="text-xs bg-white border border-gray-200 rounded p-2 mt-1 overflow-auto max-h-28">
+                                    {JSON.stringify(step.output, null, 2)}
+                                  </pre>
+                                )}
+                              </div>
                             )}
                           </div>
-                        )}
+                        ))}
                       </div>
-                    ))}
+                    </div>
+                  </>
+                )}
+
+                {!testResult && !testError && !testRunning && (
+                  <div className="border border-dashed border-gray-200 rounded-lg p-8 text-center">
+                    <Zap className="w-6 h-6 text-gray-300 mx-auto mb-2" />
+                    <p className="text-xs text-gray-400">Results will appear here after running a test</p>
                   </div>
-                </div>
-              </>
-            )}
-
-            {!testResult && !testError && !testRunning && (
-              <div className="border border-dashed border-gray-200 rounded-lg p-8 text-center">
-                <Zap className="w-6 h-6 text-gray-300 mx-auto mb-2" />
-                <p className="text-xs text-gray-400">Results will appear here after running a test</p>
+                )}
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      </div>
 
-      {selectedStep && (
-        <StepDetailPanel
-          step={selectedStep.step}
-          result={selectedStep.result}
-          onClose={() => setSelectedStep(null)}
-        />
+          {selectedStep && (
+            <StepDetailPanel
+              step={selectedStep.step}
+              result={selectedStep.result}
+              onClose={() => setSelectedStep(null)}
+            />
+          )}
+        </>
+      )}
+
+      {/* No flow selected but flows exist */}
+      {!orchestrator && flows.length > 0 && !showNewFlowForm && (
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+          <p className="text-sm text-gray-500">Select a flow tab above to view its configuration.</p>
+        </div>
       )}
     </div>
   )

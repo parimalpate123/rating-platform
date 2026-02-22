@@ -28,8 +28,11 @@ export class TransactionsController {
   @Get()
   findAll(
     @Query('productLineCode') productLineCode?: string,
+    @Query('status') status?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ): Promise<Transaction[]> {
-    return this.transactionsService.findAll(productLineCode);
+    return this.transactionsService.findAll(productLineCode, status as any, from, to);
   }
 
   @Get(':id')

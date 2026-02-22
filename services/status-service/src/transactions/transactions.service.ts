@@ -75,13 +75,18 @@ export class TransactionsService {
     return this.txRepo.save(tx);
   }
 
-  async findAll(productLineCode?: string): Promise<TransactionEntity[]> {
-    const where = productLineCode ? { productLineCode } : {};
-    return this.txRepo.find({
-      where,
-      order: { createdAt: 'DESC' },
-      take: 100,
-    });
+  async findAll(
+    productLineCode?: string,
+    status?: TransactionStatus,
+    from?: string,
+    to?: string,
+  ): Promise<TransactionEntity[]> {
+    const qb = this.txRepo.createQueryBuilder('tx').orderBy('tx.created_at', 'DESC').take(200);
+    if (productLineCode) qb.andWhere('tx.product_line_code = :productLineCode', { productLineCode });
+    if (status) qb.andWhere('tx.status = :status', { status });
+    if (from) qb.andWhere('tx.created_at >= :from', { from: new Date(from) });
+    if (to) qb.andWhere('tx.created_at <= :to', { to: new Date(to) });
+    return qb.getMany();
   }
 
   async findOne(id: string): Promise<TransactionEntity> {
