@@ -10,6 +10,9 @@ services=(
   "transform-service"
   "rules-service"
   "status-service"
+  "adapter-kafka"
+  "adapter-dnb"
+  "adapter-gw"
 )
 
 echo "Stopping all services..."

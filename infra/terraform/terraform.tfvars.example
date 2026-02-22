@@ -1,16 +1,63 @@
-# Copy to terraform.tfvars and fill in values.
-# Required: cluster_name (your existing EKS cluster name)
+# ── Copy this file to terraform.tfvars and fill in your values ────────────────
+# cp terraform.tfvars.example terraform.tfvars
+# !! terraform.tfvars is gitignored — never commit secrets !!
 
-cluster_name = "my-eks-cluster"
-aws_region   = "us-east-1"
-environment  = "dev"
-namespace    = "rating-platform"
-image_tag    = "latest"
+# ── AWS ──────────────────────────────────────────────────────────────────────
+aws_region  = "us-east-1"
+environment = "dev"   # dev | staging | prod
 
-# Optional: if you have an existing RDS/Postgres, set these so the DB Secret is created.
-# Services that need DB (line-rating, product-config, rules-service, status-service) will use it.
-# db_host     = "your-rds-endpoint.region.rds.amazonaws.com"
-# db_port     = "5432"
-# db_name     = "rating_platform"
-# db_user     = "rating_user"
-# db_password = "your-secure-password"
+# ── Networking ────────────────────────────────────────────────────────────────
+# Get these from your VPC:
+#   aws ec2 describe-vpcs
+#   aws ec2 describe-subnets --filters "Name=vpc-id,Values=<vpc-id>"
+vpc_id             = "vpc-0123456789abcdef0"
+private_subnet_ids = ["subnet-0aaaa111111111111", "subnet-0bbbb222222222222"]
+public_subnet_ids  = ["subnet-0cccc333333333333", "subnet-0dddd444444444444"]
+
+# ── EKS ───────────────────────────────────────────────────────────────────────
+cluster_name = "rating-platform-dev"
+
+# Set to true to CREATE a new EKS cluster via Terraform.
+# Set to false (default) to use an EXISTING cluster identified by cluster_name.
+create_eks_cluster = false
+
+# Only used when create_eks_cluster = true:
+eks_kubernetes_version  = "1.29"
+eks_node_instance_type  = "t3.medium"
+eks_node_desired_size   = 2
+eks_node_min_size       = 1
+eks_node_max_size       = 4
+
+# ── Kubernetes ────────────────────────────────────────────────────────────────
+namespace = "rating-platform"
+image_tag = "latest"   # Set to a specific tag in CI (e.g. git SHA)
+
+# ── Database (RDS PostgreSQL) ──────────────────────────────────────────────────
+# Option A — let Terraform create RDS (set create_rds = true):
+create_rds           = true
+db_instance_class    = "db.t3.medium"   # db.t3.micro for dev, db.r6g.large for prod
+db_allocated_storage = 20               # GB
+
+# Option B — use an existing DB (set create_rds = false, supply db_host):
+# create_rds = false
+# db_host    = "my-postgres.cluster-xxxx.us-east-1.rds.amazonaws.com"
+
+# Always required:
+db_name     = "rating_platform"
+db_user     = "rating_user"
+db_password = "CHANGE_ME_use_secrets_manager"   # Rotate after first apply!
+db_port     = "5432"
+
+# ── Ingress / TLS ─────────────────────────────────────────────────────────────
+ingress_enabled    = true
+ingress_class_name = "alb"           # alb | nginx
+ingress_scheme     = "internet-facing"  # internet-facing | internal
+
+# Optional — leave empty for HTTP-only:
+domain_name         = ""   # e.g. "rating.example.com"
+acm_certificate_arn = ""   # e.g. "arn:aws:acm:us-east-1:123456789:certificate/abc-123"
+
+# ── Scaling ───────────────────────────────────────────────────────────────────
+enable_hpa       = true
+hpa_min_replicas = 2
+hpa_max_replicas = 6

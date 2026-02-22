@@ -41,8 +41,11 @@ SVC_TRANSFORM="services/transform-service/Dockerfile:transform-service:rating-pl
 SVC_RULES="services/rules-service/Dockerfile:rules-service:rating-platform/rules-service"
 SVC_STATUS="services/status-service/Dockerfile:status-service:rating-platform/status-service"
 SVC_WORKSPACE="frontend/rating-workspace/Dockerfile:rating-workspace:rating-platform/rating-workspace"
+SVC_ADAPTER_KAFKA="services/adapters/kafka/Dockerfile:adapter-kafka:rating-platform/adapter-kafka"
+SVC_ADAPTER_DNB="services/adapters/dnb/Dockerfile:adapter-dnb:rating-platform/adapter-dnb"
+SVC_ADAPTER_GW="services/adapters/gw/Dockerfile:adapter-gw:rating-platform/adapter-gw"
 
-ALL_SERVICES="$SVC_CORE_RATING $SVC_LINE_RATING $SVC_PRODUCT_CONFIG $SVC_TRANSFORM $SVC_RULES $SVC_STATUS $SVC_WORKSPACE"
+ALL_SERVICES="$SVC_CORE_RATING $SVC_LINE_RATING $SVC_PRODUCT_CONFIG $SVC_TRANSFORM $SVC_RULES $SVC_STATUS $SVC_WORKSPACE $SVC_ADAPTER_KAFKA $SVC_ADAPTER_DNB $SVC_ADAPTER_GW"
 
 if [ -n "$SERVICES" ]; then
   BUILD_LIST=""

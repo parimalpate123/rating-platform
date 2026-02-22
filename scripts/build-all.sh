@@ -13,6 +13,9 @@ declare -a services=(
   "transform-service"
   "rules-service"
   "status-service"
+  "adapter-kafka"
+  "adapter-dnb"
+  "adapter-gw"
 )
 
 if [ -n "$1" ]; then

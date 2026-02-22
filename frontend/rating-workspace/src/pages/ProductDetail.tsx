@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
   Pencil,
@@ -262,13 +262,24 @@ const TABS = [
 
 // --------------- Main ProductDetail ---------------
 
+const VALID_TABS = ['overview', 'orchestrator', 'mappings', 'rules', 'scopes'] as const
+
 export function ProductDetail() {
-  const { code } = useParams<{ code: string }>()
+  const { code, tab } = useParams<{ code: string; tab?: string }>()
+  const navigate = useNavigate()
   const [product, setProduct] = useState<ProductLine | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState('overview')
+  const activeTab = (tab && VALID_TABS.includes(tab as any)) ? tab : 'overview'
   const [showEdit, setShowEdit] = useState(false)
+
+  const setActiveTabAndNavigate = (tabId: string) => {
+    if (tabId === 'overview') {
+      navigate(`/products/${code}`)
+    } else {
+      navigate(`/products/${code}/${tabId}`)
+    }
+  }
 
   useEffect(() => {
     if (!code) return
@@ -385,18 +396,18 @@ export function ProductDetail() {
       {/* Tabs */}
       <div>
         <div className="flex border-b border-gray-200 gap-0">
-          {TABS.map((tab) => (
+          {TABS.map((t) => (
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              key={t.id}
+              onClick={() => setActiveTabAndNavigate(t.id)}
               className={cn(
                 'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
-                activeTab === tab.id
+                activeTab === t.id
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300',
               )}
             >
-              {tab.label}
+              {t.label}
             </button>
           ))}
         </div>
@@ -996,19 +1007,6 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
               Create Empty Flow
-            </button>
-            <button
-              onClick={() => {
-                const ep = newFlowEndpoint.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-')
-                if (ep) handleAutoGenerate(ep)
-                setShowNewFlowForm(false)
-                setNewFlowEndpoint('')
-                setNewFlowName('')
-              }}
-              disabled={!newFlowEndpoint.trim() || generating}
-              className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50"
-            >
-              {generating ? 'Generating...' : 'Auto-Generate'}
             </button>
             <button
               onClick={() => { setShowNewFlowForm(false); setNewFlowEndpoint(''); setNewFlowName('') }}

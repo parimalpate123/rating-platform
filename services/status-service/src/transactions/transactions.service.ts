@@ -75,17 +75,84 @@ export class TransactionsService {
     return this.txRepo.save(tx);
   }
 
-  async findAll(
-    productLineCode?: string,
-    status?: TransactionStatus,
-    from?: string,
-    to?: string,
-  ): Promise<TransactionEntity[]> {
-    const qb = this.txRepo.createQueryBuilder('tx').orderBy('tx.created_at', 'DESC').take(200);
-    if (productLineCode) qb.andWhere('tx.product_line_code = :productLineCode', { productLineCode });
-    if (status) qb.andWhere('tx.status = :status', { status });
-    if (from) qb.andWhere('tx.created_at >= :from', { from: new Date(from) });
-    if (to) qb.andWhere('tx.created_at <= :to', { to: new Date(to) });
+  async findAll(params: {
+    productLineCode?: string;
+    status?: TransactionStatus;
+    from?: string;
+    to?: string;
+    policyNumber?: string;
+    accountNumber?: string;
+    instanceId?: string;
+    correlationId?: string;
+  }): Promise<TransactionEntity[]> {
+    const {
+      productLineCode,
+      status,
+      from,
+      to,
+      policyNumber,
+      accountNumber,
+      instanceId,
+      correlationId,
+    } = params;
+
+    const statusVal = typeof status === 'string' ? status.trim() : status;
+
+    const qb = this.txRepo
+      .createQueryBuilder('tx')
+      .orderBy('tx.created_at', 'DESC')
+      .take(200);
+
+    // Build WHERE conditions; use .where() for first, .andWhere() for rest
+    const conditions: string[] = [];
+    const parameters: Record<string, unknown> = {};
+
+    if (productLineCode) {
+      conditions.push('tx.product_line_code = :productLineCode');
+      parameters.productLineCode = productLineCode;
+    }
+    if (statusVal) {
+      conditions.push('tx.status = :filterStatus');
+      parameters.filterStatus = statusVal;
+    }
+    if (from) {
+      conditions.push('tx.created_at >= :from');
+      parameters.from = new Date(from);
+    }
+    if (to) {
+      conditions.push('tx.created_at <= :to');
+      parameters.to = new Date(to);
+    }
+    if (correlationId) {
+      conditions.push('tx.correlation_id = :correlationId');
+      parameters.correlationId = correlationId;
+    }
+    if (policyNumber) {
+      const term = `%${policyNumber}%`;
+      conditions.push(
+        "(tx.request_payload->>'policyNumber' ILIKE :policyTerm OR tx.request_payload->'policy'->>'policyNumber' ILIKE :policyTerm)",
+      );
+      parameters.policyTerm = term;
+    }
+    if (accountNumber) {
+      const term = `%${accountNumber}%`;
+      conditions.push(
+        "(tx.request_payload->>'accountNumber' ILIKE :accountTerm OR tx.request_payload->'account'->>'accountNumber' ILIKE :accountTerm)",
+      );
+      parameters.accountTerm = term;
+    }
+    if (instanceId) {
+      const term = `%${instanceId}%`;
+      conditions.push(
+        "(tx.request_payload->>'instanceId' ILIKE :instanceTerm OR tx.request_payload->>'instance_id' ILIKE :instanceTerm)",
+      );
+      parameters.instanceTerm = term;
+    }
+
+    if (conditions.length > 0) {
+      qb.where(conditions.join(' AND '), parameters);
+    }
+
     return qb.getMany();
   }
 

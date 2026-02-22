@@ -21,7 +21,8 @@ export class FieldMappingHandler {
       if (config.mappingId) {
         try {
           const { data } = await axios.get(
-            `${this.productConfigUrl}/api/v1/mappings/${config.mappingId}`
+            `${this.productConfigUrl}/api/v1/mappings/${config.mappingId}`,
+            { headers: { 'x-correlation-id': context.correlationId }, timeout: 30000 }
           );
           mapping = data;
         } catch {
@@ -32,7 +33,11 @@ export class FieldMappingHandler {
       if (!mapping) {
         const { data: mappings } = await axios.get(
           `${this.productConfigUrl}/api/v1/mappings`,
-          { params: { productLineCode: context.productLineCode } }
+          {
+            params: { productLineCode: context.productLineCode },
+            headers: { 'x-correlation-id': context.correlationId },
+            timeout: 30000,
+          }
         );
         mapping = mappings.find(
           (m: any) => m.direction === direction && (m.status === 'active' || m.status === 'draft')
@@ -53,7 +58,8 @@ export class FieldMappingHandler {
       }
 
       const { data: fields } = await axios.get(
-        `${this.productConfigUrl}/api/v1/mappings/${mapping.id}/fields`
+        `${this.productConfigUrl}/api/v1/mappings/${mapping.id}/fields`,
+        { headers: { 'x-correlation-id': context.correlationId }, timeout: 30000 }
       );
 
       const target = { ...context.working };

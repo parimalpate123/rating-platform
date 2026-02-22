@@ -34,6 +34,18 @@ export default defineConfig(() => ({
         target: 'http://localhost:4001',
         rewrite: (path) => path.replace(/^\/api\/line-rating/, '/api/v1'),
       },
+      '/api/adapter-kafka': {
+        target: 'http://localhost:3010',
+        rewrite: (path) => path.replace(/^\/api\/adapter-kafka/, '/api/v1'),
+      },
+      '/api/adapter-dnb': {
+        target: 'http://localhost:3011',
+        rewrite: (path) => path.replace(/^\/api\/adapter-dnb/, '/api/v1'),
+      },
+      '/api/adapter-gw': {
+        target: 'http://localhost:3012',
+        rewrite: (path) => path.replace(/^\/api\/adapter-gw/, '/api/v1'),
+      },
     },
   },
   preview: {

@@ -25,6 +25,7 @@ export class CallExternalApiHandler {
     try {
       const { data: systems } = await axios.get(
         `${this.productConfigUrl}/api/v1/systems`,
+        { headers: { 'x-correlation-id': context.correlationId }, timeout: 30000 },
       );
       system = systems.find(
         (s: any) => s.code === systemCode || s.code === systemCode.toLowerCase(),
@@ -66,6 +67,7 @@ export class CallExternalApiHandler {
     const headers: Record<string, string> = {
       'Content-Type': system.format === 'xml' ? 'application/xml' : 'application/json',
       Accept: system.format === 'xml' ? 'application/xml' : 'application/json',
+      'x-correlation-id': context.correlationId,
     };
 
     if (!isMock && system.authMethod === 'basic' && system.config?.auth) {

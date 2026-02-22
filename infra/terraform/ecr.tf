@@ -6,7 +6,10 @@ locals {
     "transform-service",
     "rules-service",
     "status-service",
-    "rating-workspace"
+    "rating-workspace",
+    "adapter-kafka",
+    "adapter-dnb",
+    "adapter-gw",
   ]
 }
 
@@ -60,6 +63,30 @@ resource "aws_ecr_repository" "status_service" {
 
 resource "aws_ecr_repository" "rating_workspace" {
   name                 = "rating-platform/rating-workspace"
+  image_tag_mutability = "MUTABLE"
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
+resource "aws_ecr_repository" "adapter_kafka" {
+  name                 = "rating-platform/adapter-kafka"
+  image_tag_mutability = "MUTABLE"
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
+resource "aws_ecr_repository" "adapter_dnb" {
+  name                 = "rating-platform/adapter-dnb"
+  image_tag_mutability = "MUTABLE"
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
+resource "aws_ecr_repository" "adapter_gw" {
+  name                 = "rating-platform/adapter-gw"
   image_tag_mutability = "MUTABLE"
   image_scanning_configuration {
     scan_on_push = true

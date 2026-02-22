@@ -18,7 +18,10 @@ export class ApplyRulesHandler {
     };
 
     try {
-      const response = await axios.post(`${this.rulesUrl}/api/v1/rules/evaluate`, requestBody);
+      const response = await axios.post(`${this.rulesUrl}/api/v1/rules/evaluate`, requestBody, {
+        headers: { 'x-correlation-id': context.correlationId },
+        timeout: 30000,
+      });
       const result = response.data;
 
       if (result.modifiedFields && Object.keys(result.modifiedFields).length > 0) {

@@ -65,6 +65,7 @@ export function getEndpointLabel(stepType: string, config?: Record<string, unkno
 // ── Step type visual styles ───────────────────────────────────────────────────
 
 const STEP_NODE_STYLES: Record<string, string> = {
+  validate_request: 'border-l-cyan-400',
   field_mapping: 'border-l-blue-400',
   apply_rules: 'border-l-green-400',
   format_transform: 'border-l-orange-400',
@@ -76,6 +77,7 @@ const STEP_NODE_STYLES: Record<string, string> = {
 }
 
 const STEP_BADGE_STYLES: Record<string, string> = {
+  validate_request: 'bg-cyan-100 text-cyan-700',
   field_mapping: 'bg-blue-100 text-blue-700',
   apply_rules: 'bg-green-100 text-green-700',
   format_transform: 'bg-orange-100 text-orange-700',

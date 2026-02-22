@@ -61,7 +61,10 @@ export class CallRatingEngineHandler {
       const response = await axios.post(
         targetUrl,
         requestBody,
-        { headers: { 'Content-Type': 'application/json' } },
+        {
+          headers: { 'Content-Type': 'application/json', 'x-correlation-id': context.correlationId },
+          timeout: 30000,
+        },
       );
       httpStatus = response.status;
 
@@ -82,9 +85,10 @@ export class CallRatingEngineHandler {
       const headers: Record<string, string> = {
         'Content-Type': isXmlTarget ? 'application/xml' : 'application/json',
         Accept: isXmlTarget ? 'application/xml' : 'application/json',
+        'x-correlation-id': context.correlationId,
       };
 
-      const response = await axios.post(targetUrl, requestBody, { headers });
+      const response = await axios.post(targetUrl, requestBody, { headers, timeout: 30000 });
       httpStatus = response.status;
 
       if (typeof response.data === 'string' && isXmlTarget) {

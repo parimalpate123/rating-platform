@@ -50,6 +50,15 @@
     },
     {
       "path": "./frontend/rating-workspace"
+    },
+    {
+      "path": "./services/adapters/kafka"
+    },
+    {
+      "path": "./services/adapters/dnb"
+    },
+    {
+      "path": "./services/adapters/gw"
     }
   ]
 }

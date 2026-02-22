@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Package, GitBranch, Map, BookOpen,
   Database, Server, Activity, ChevronRight, ChevronDown,
-  Plus, Layers, Zap,
+  Plus, Layers, Zap, BarChart3,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { ProductLine } from '../../api/products';
@@ -19,6 +19,7 @@ const iconNav = [
   { icon: Server, label: 'Systems', path: '/systems' },
   { icon: GitBranch, label: 'Rules', path: '/rules' },
   { icon: Map, label: 'Mappings', path: '/mappings' },
+  { icon: BarChart3, label: 'Insights', path: '/insights' },
   { icon: Activity, label: 'Transactions', path: '/transactions' },
   { icon: Zap, label: 'Test Rating', path: '/test' },
 ];
@@ -41,8 +42,8 @@ function NavItem({ label, path, icon: Icon, indent = false }: { label: string; p
     <button
       onClick={() => navigate(path)}
       className={cn(
-        'w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors text-left',
-        indent && 'pl-6',
+        'w-full flex items-center gap-2 py-1.5 rounded-md text-sm transition-colors text-left',
+        indent ? 'pl-5 pr-3' : 'px-3',
         active
           ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium'
           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
@@ -76,7 +77,7 @@ function ProductNavItem({ product }: { product: ProductLine }) {
         {open ? <ChevronDown className="w-3 h-3 flex-shrink-0" /> : <ChevronRight className="w-3 h-3 flex-shrink-0" />}
       </button>
       {open && (
-        <div className="ml-2 border-l border-gray-200 dark:border-gray-700 pl-2 mt-0.5 space-y-0.5">
+        <div className="mt-0.5 space-y-0.5">
           <NavItem label="Orchestrator" path={`/products/${product.code}/orchestrator`} indent />
           <NavItem label="Mappings" path={`/products/${product.code}/mappings`} indent />
           <NavItem label="Rules" path={`/products/${product.code}/rules`} indent />
@@ -154,6 +155,7 @@ export function Sidebar({ products, onNewProduct }: SidebarProps) {
             </NavSection>
 
             <NavSection title="Monitoring">
+              <NavItem label="Insights" path="/insights" icon={BarChart3} />
               <NavItem label="Transactions" path="/transactions" icon={Activity} />
               <NavItem label="Test Rating" path="/test" icon={Zap} />
             </NavSection>

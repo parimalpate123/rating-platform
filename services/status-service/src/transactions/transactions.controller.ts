@@ -28,11 +28,25 @@ export class TransactionsController {
   @Get()
   findAll(
     @Query('productLineCode') productLineCode?: string,
-    @Query('status') status?: string,
+    @Query('status') status?: string | string[],
     @Query('from') from?: string,
     @Query('to') to?: string,
+    @Query('policyNumber') policyNumber?: string,
+    @Query('accountNumber') accountNumber?: string,
+    @Query('instanceId') instanceId?: string,
+    @Query('correlationId') correlationId?: string,
   ): Promise<Transaction[]> {
-    return this.transactionsService.findAll(productLineCode, status as any, from, to);
+    const statusVal = Array.isArray(status) ? status[0] : status;
+    return this.transactionsService.findAll({
+      productLineCode,
+      status: statusVal as any,
+      from,
+      to,
+      policyNumber,
+      accountNumber,
+      instanceId,
+      correlationId,
+    });
   }
 
   @Get(':id')

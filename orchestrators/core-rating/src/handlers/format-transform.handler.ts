@@ -15,7 +15,10 @@ export class FormatTransformHandler {
     };
 
     try {
-      const response = await axios.post(`${this.transformUrl}/api/v1/transform`, requestBody);
+      const response = await axios.post(`${this.transformUrl}/api/v1/transform`, requestBody, {
+        headers: { 'x-correlation-id': context.correlationId },
+        timeout: 30000,
+      });
       const result = response.data;
 
       context.working = result.output;

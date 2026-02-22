@@ -7,6 +7,7 @@ import { CallRatingEngineHandler } from './call-rating-engine.handler';
 import { PublishEventHandler } from './publish-event.handler';
 import { ValidateRequestHandler } from './validate-request.handler';
 import { CallExternalApiHandler } from './call-external-api.handler';
+import { EnrichHandler } from './enrich.handler';
 
 @Module({
   providers: [
@@ -17,6 +18,7 @@ import { CallExternalApiHandler } from './call-external-api.handler';
     PublishEventHandler,
     ValidateRequestHandler,
     CallExternalApiHandler,
+    EnrichHandler,
   ],
   exports: [
     FieldMappingHandler,
@@ -26,6 +28,7 @@ import { CallExternalApiHandler } from './call-external-api.handler';
     PublishEventHandler,
     ValidateRequestHandler,
     CallExternalApiHandler,
+    EnrichHandler,
   ],
 })
 export class HandlersModule implements OnModuleInit {
@@ -38,6 +41,7 @@ export class HandlersModule implements OnModuleInit {
     private readonly publishEvent: PublishEventHandler,
     private readonly validateRequest: ValidateRequestHandler,
     private readonly callExternalApi: CallExternalApiHandler,
+    private readonly enrich: EnrichHandler,
   ) {}
 
   onModuleInit() {
@@ -48,5 +52,6 @@ export class HandlersModule implements OnModuleInit {
     this.registry.register(this.publishEvent);
     this.registry.register(this.validateRequest);
     this.registry.register(this.callExternalApi);
+    this.registry.register(this.enrich);
   }
 }

@@ -13,6 +13,9 @@ pkill -f "services/transform-service/dist/main.js" 2>/dev/null || true
 pkill -f "services/status-service/dist/main.js" 2>/dev/null || true
 pkill -f "orchestrators/core-rating/dist/main.js" 2>/dev/null || true
 pkill -f "orchestrators/line-rating/dist/main.js" 2>/dev/null || true
+pkill -f "adapters/kafka/dist/main.js" 2>/dev/null || true
+pkill -f "adapters/dnb/dist/main.js" 2>/dev/null || true
+pkill -f "adapters/gw/dist/main.js" 2>/dev/null || true
 sleep 1
 
 echo "Starting all services..."
@@ -25,6 +28,9 @@ declare -a svc_defs=(
   "transform-service:services/transform-service/dist/main.js:4011"
   "rules-service:services/rules-service/dist/main.js:4012"
   "status-service:services/status-service/dist/main.js:4013"
+  "adapter-kafka:services/adapters/kafka/dist/main.js:3010"
+  "adapter-dnb:services/adapters/dnb/dist/main.js:3011"
+  "adapter-gw:services/adapters/gw/dist/main.js:3012"
 )
 
 for def in "${svc_defs[@]}"; do

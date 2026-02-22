@@ -1,10 +1,101 @@
 import axios from 'axios';
 
-describe('GET /api', () => {
-  it('should return a message', async () => {
-    const res = await axios.get(`/api`);
+// Service URLs — core-rating base URL comes from axios.defaults.baseURL (set in test-setup.ts).
+// Sibling services are addressed explicitly so the test is self-contained.
+const PRODUCT_CONFIG =
+  `http://localhost:${process.env['PRODUCT_CONFIG_PORT'] || 4010}/api/v1`;
+const LINE_RATING =
+  `http://localhost:${process.env['LINE_RATING_PORT'] || 4001}/api/v1`;
+
+const TEST_PRODUCT = 'e2e-smoke-test';
+
+// ── Fixture setup / teardown ──────────────────────────────────────────────────
+
+beforeAll(async () => {
+  // 1. Create the product line (idempotent — ignore 409 conflict)
+  await axios
+    .post(`${PRODUCT_CONFIG}/product-lines`, {
+      code: TEST_PRODUCT,
+      name: 'E2E Smoke Test',
+      description: 'Created by core-rating-e2e smoke test',
+    })
+    .catch(() => {});
+
+  // 2. Create an orchestrator flow (idempotent — ignore conflicts)
+  await axios
+    .post(`${LINE_RATING}/orchestrators/${TEST_PRODUCT}/flows`, {
+      name: 'Smoke Flow',
+      endpointPath: 'rate',
+    })
+    .catch(() => {});
+
+  // 3. Add one apply_rules step — it gracefully no-ops if rules-service is down
+  await axios
+    .post(`${LINE_RATING}/orchestrators/${TEST_PRODUCT}/flow/rate/steps`, {
+      stepType: 'apply_rules',
+      name: 'Apply Rules',
+      config: { scope: 'pre_rating' },
+      stepOrder: 1,
+    })
+    .catch(() => {});
+});
+
+afterAll(async () => {
+  // Remove the orchestrator flow so successive runs start clean
+  await axios
+    .delete(`${LINE_RATING}/orchestrators/${TEST_PRODUCT}/flow/rate`)
+    .catch(() => {});
+});
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+describe('Health', () => {
+  it('GET /api/v1/health returns 200', async () => {
+    const res = await axios.get('/api/v1/health');
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('POST /api/v1/rate/:productLineCode — happy path', () => {
+  it('returns a structured response with at least one step result', async () => {
+    const res = await axios.post(`/api/v1/rate/${TEST_PRODUCT}`, {
+      scope: { state: 'CA', coverage: 'comprehensive', transactionType: 'new_business' },
+      payload: {
+        insured: { name: 'Jane Smoke', age: 35 },
+        vehicle: { year: 2022, make: 'Honda', model: 'Civic' },
+      },
+    });
 
     expect(res.status).toBe(200);
-    expect(res.data).toEqual({ message: 'Hello API' });
+
+    // Top-level shape
+    expect(res.data).toMatchObject({
+      productLineCode: TEST_PRODUCT,
+      correlationId: expect.any(String),
+      status: expect.stringMatching(/^(completed|failed)$/),
+      stepResults: expect.any(Array),
+      totalDurationMs: expect.any(Number),
+    });
+
+    // At least one step was executed
+    expect(res.data.stepResults.length).toBeGreaterThan(0);
+
+    // Every step carries the required fields
+    for (const step of res.data.stepResults) {
+      expect(step).toMatchObject({
+        stepType: expect.any(String),
+        stepName: expect.any(String),
+        status: expect.stringMatching(/^(completed|failed)$/),
+        durationMs: expect.any(Number),
+      });
+    }
+  });
+
+  it('returns 404 when product has no orchestrator', async () => {
+    await expect(
+      axios.post('/api/v1/rate/no-such-product-xyz', {
+        payload: {},
+      }),
+    ).rejects.toMatchObject({ response: { status: 404 } });
   });
 });
