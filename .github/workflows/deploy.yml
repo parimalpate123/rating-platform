@@ -38,7 +38,7 @@ on:
         default: "latest"
         type: string
       run_migrations:
-        description: "Run DB migrations before deploy"
+        description: "Run DB migrations after Terraform apply (in deploy job)"
         required: false
         default: false
         type: boolean
@@ -156,73 +156,17 @@ jobs:
           done
 
   # ────────────────────────────────────────────────────────────────────────────
-  # 2. Run DB migrations (optional, gated by manual dispatch input)
-  # ────────────────────────────────────────────────────────────────────────────
-  migrate:
-    name: Run Migrations
-    needs: []
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_migrations == true }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.7"
-
-      - name: Get RDS endpoint from Terraform
-        id: rds
-        working-directory: ${{ env.TF_DIR }}
-        run: |
-          terraform init -input=false
-          # Use -json + jq so we never capture Terraform's "No outputs found" (which -raw prints to stdout when state is empty)
-          OUT=$(terraform output -json 2>/dev/null || echo "{}")
-          DB_HOST=$(echo "$OUT" | jq -r '.rds_endpoint.value // empty')
-          DB_PORT=$(echo "$OUT" | jq -r '.rds_port.value // empty')
-          DB_PORT=${DB_PORT:-5432}
-          echo "host=$DB_HOST" >> "$GITHUB_OUTPUT"
-          echo "port=$DB_PORT" >> "$GITHUB_OUTPUT"
-
-      - name: Ensure RDS endpoint is available
-        run: |
-          if [ -z "${{ steps.rds.outputs.host }}" ]; then
-            echo "::error::RDS endpoint not found in Terraform state. Run the Deploy workflow once without 'Run migrations' (and without 'Skip Terraform') to create RDS, then re-run with 'Run migrations'."
-            exit 1
-          fi
-          echo "RDS endpoint: ${{ steps.rds.outputs.host }}:${{ steps.rds.outputs.port }}"
-
-      - name: Install psql
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
-
-      - name: Run migrations
-        env:
-          DB_HOST: ${{ steps.rds.outputs.host }}
-          DB_PORT: ${{ steps.rds.outputs.port }}
-          DB_USER: rating_user
-          DB_PASS: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: rating_platform
-        run: ./scripts/run-migrations.sh
-
-  # ────────────────────────────────────────────────────────────────────────────
-  # 3. Terraform plan + apply (deploys ECS services)
+  # 2. Terraform plan + apply (deploys ECS); migrations run after apply when requested
   # ────────────────────────────────────────────────────────────────────────────
   deploy:
     name: Terraform Deploy
-    needs: [build-push, migrate]
+    needs: [build-push]
     if: |
       always() &&
       needs.build-push.result == 'success' &&
-      (needs.migrate.result == 'success' || needs.migrate.result == 'skipped') &&
       inputs.skip_terraform != true
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     environment: ${{ inputs.environment || 'dev' }}
     steps:
       - uses: actions/checkout@v4
@@ -256,6 +200,21 @@ jobs:
           TF_VAR_image_tag: ${{ needs.build-push.outputs.image_tag }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Run DB migrations
+        if: ${{ inputs.run_migrations }}
+        timeout-minutes: 3
+        env:
+          DB_USER: rating_user
+          DB_PASS: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: rating_platform
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          DB_HOST=$(cd ${{ env.TF_DIR }} && terraform output -raw rds_endpoint)
+          DB_PORT=$(cd ${{ env.TF_DIR }} && terraform output -raw rds_port)
+          export DB_HOST DB_PORT PGPASSWORD="$DB_PASS"
+          # Fail fast if RDS unreachable (e.g. private subnet); timeout prevents runner from hanging
+          timeout 120 ./scripts/run-migrations.sh || { echo "::error::Migrations failed or timed out. If RDS is in a private subnet, run migrations from inside the VPC (e.g. bastion or one-off ECS task)."; exit 1; }
 
       - name: Force new deployment for all services
         run: |
@@ -292,6 +251,7 @@ jobs:
     needs: [build-push, deploy]
     if: needs.deploy.result == 'success'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
