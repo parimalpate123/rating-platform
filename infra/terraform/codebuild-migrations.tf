@@ -87,6 +87,7 @@ resource "aws_iam_role_policy" "codebuild_migrations" {
       {
         Effect = "Allow"
         Action = [
+          "ssm:GetParameter",
           "ssm:GetParameters"
         ]
         Resource = [
