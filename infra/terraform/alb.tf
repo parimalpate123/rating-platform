@@ -276,6 +276,7 @@ resource "aws_lb_listener_rule" "rules" {
   }
 }
 
+# ALB allows max 5 path patterns per rule; product_config has 10 paths → split into 2 rules
 resource "aws_lb_listener_rule" "product_config" {
   count        = var.ingress_enabled ? 1 : 0
   listener_arn = local.active_listener_arn
@@ -291,7 +292,26 @@ resource "aws_lb_listener_rule" "product_config" {
       values = [
         "/api/v1/product-lines", "/api/v1/product-lines/*",
         "/api/v1/mappings", "/api/v1/mappings/*",
-        "/api/v1/lookup-tables", "/api/v1/lookup-tables/*",
+        "/api/v1/lookup-tables",
+      ]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "product_config_2" {
+  count        = var.ingress_enabled ? 1 : 0
+  listener_arn = local.active_listener_arn
+  priority     = 51
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.product_config[0].arn
+  }
+
+  condition {
+    path_pattern {
+      values = [
+        "/api/v1/lookup-tables/*",
         "/api/v1/systems", "/api/v1/systems/*",
         "/api/v1/scopes", "/api/v1/scopes/*",
       ]

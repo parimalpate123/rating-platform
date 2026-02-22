@@ -58,7 +58,7 @@ terraform apply
 | `db_host` | No | "" | External DB host (when create_rds=false) |
 | `db_name` | No | rating_platform | PostgreSQL DB name |
 | `db_user` | No | rating_user | PostgreSQL user (sensitive) |
-| `db_password` | No | "" | PostgreSQL password (sensitive) |
+| `db_password` | No | "" | PostgreSQL password (sensitive). RDS forbids `/`, `@`, `"`, space — use e.g. letters, numbers, `- _ ! # $ & *` |
 | `namespace` | No | rating-platform | Kubernetes namespace |
 | `image_tag` | No | latest | Docker image tag for all services |
 | `ingress_enabled` | No | true | Create Kubernetes Ingress |

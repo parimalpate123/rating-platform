@@ -112,10 +112,15 @@ variable "db_user" {
 }
 
 variable "db_password" {
-  description = "PostgreSQL password (sensitive)"
+  description = "PostgreSQL password (sensitive). RDS allows only printable ASCII except /, @, \", and space."
   type        = string
   default     = ""
   sensitive   = true
+
+  validation {
+    condition     = var.db_password == "" || can(regex("^[^/@\" ]+$", var.db_password))
+    error_message = "RDS MasterUserPassword cannot contain /, @, \", or space. Use only letters, numbers, and safe punctuation (e.g. - _ ! # $ & *). Update DB_PASSWORD in GitHub Secrets."
+  }
 }
 
 # ── Ingress / TLS ─────────────────────────────────────────────────────────────
