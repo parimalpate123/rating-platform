@@ -17,8 +17,8 @@ Provisions AWS infrastructure and Kubernetes workloads for the rating-platform. 
 cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars — at minimum: cluster_name, vpc_id, subnet IDs, db_password
 
-# 2. Initialize (downloads providers: aws, kubernetes, helm, tls)
-terraform init
+# 2. Initialize (backend config required; use same bucket as CI or a local one)
+terraform init -backend-config=bucket=YOUR_STATE_BUCKET -backend-config=key=rating-platform/dev/terraform.tfstate -backend-config=region=us-east-1 -backend-config=dynamodb_table=rating-platform-tfstate-locks -backend-config=encrypt=true
 
 # 3. Plan and review
 terraform plan -out=tfplan
@@ -26,6 +26,36 @@ terraform plan -out=tfplan
 # 4. Apply
 terraform apply tfplan
 ```
+
+## Remote state (required for CI)
+
+The deploy workflow **requires** remote state so Terraform state is shared across runs. Without it, each run starts with empty state and fails with "already exists" errors.
+
+### One-time setup
+
+1. **Create an S3 bucket** for state (e.g. `rating-platform-tfstate-551481644633`). Enable versioning (recommended).
+2. **Create a DynamoDB table** for locking:
+   - Name: `rating-platform-tfstate-locks`
+   - Partition key: `LockID` (String)
+   - Region: same as your deploy (e.g. `us-east-1`)
+3. **Add a GitHub repo variable**: Settings → Secrets and variables → Actions → Variables → New variable:
+   - Name: `TF_STATE_BUCKET`
+   - Value: your S3 bucket name
+
+The workflow runs `terraform init` with `-backend-config=bucket=$TF_STATE_BUCKET`, `key=rating-platform/<env>/terraform.tfstate`, and the DynamoDB table above.
+
+### If you already created resources without remote state
+
+You're seeing "already exists" because state was lost (e.g. local state on a previous runner). Options:
+
+- **Option A — Import into new state (recommended):** Create the S3 bucket and DynamoDB table above, add `TF_STATE_BUCKET`, then run the deploy workflow once. It will still try to create and fail. From your machine (with AWS and Terraform configured), run `terraform init` with the same backend config, then **import** each resource that already exists, e.g.:
+  ```bash
+  cd infra/terraform
+  terraform init -backend-config=bucket=YOUR_BUCKET -backend-config=key=rating-platform/dev/terraform.tfstate -backend-config=region=us-east-1 -backend-config=dynamodb_table=rating-platform-tfstate-locks -backend-config=encrypt=true
+  terraform import 'aws_lb_target_group.frontend[0]' arn:aws:elasticloadbalancing:us-east-1:ACCOUNT:targetgroup/rp-frontend-dev/ID
+  # ... repeat for each resource (see Terraform docs for import IDs)
+  ```
+- **Option B — Fresh start (dev only):** If this environment is disposable, delete the existing resources in the AWS console (or via CLI), add `TF_STATE_BUCKET` as above, then run the deploy workflow again so Terraform creates everything and stores state in S3.
 
 ## Two-Step First Apply (when create_eks_cluster = true)
 

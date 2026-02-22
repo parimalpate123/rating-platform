@@ -8,14 +8,8 @@ terraform {
     }
   }
 
-  # Uncomment and configure for remote state (recommended for team use):
-  # backend "s3" {
-  #   bucket         = "your-terraform-state-bucket"
-  #   key            = "rating-platform/terraform.tfstate"
-  #   region         = "us-east-1"
-  #   dynamodb_table = "terraform-locks"
-  #   encrypt        = true
-  # }
+  # Backend config supplied at init (e.g. -backend-config=bucket=...). Required for CI.
+  backend "s3" {}
 }
 
 locals {
