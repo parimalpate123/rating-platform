@@ -197,8 +197,9 @@ jobs:
               -backend-config="dynamodb_table=rating-platform-tfstate-locks" \
               -backend-config="encrypt=true"
           else
-            echo "::warning::TF_STATE_BUCKET not set — using local state. State will not persist between runs; add the variable for remote state. See infra/terraform/README.md#remote-state."
-            terraform init -input=false -backend=false
+            echo "::warning::TF_STATE_BUCKET not set — using local state for this run. State will not persist between runs; add the variable for remote state. See infra/terraform/README.md#remote-state."
+            sed -i.bak 's|backend "s3" {}|backend "local" { path = "terraform.tfstate" }|' main.tf
+            terraform init -input=false
           fi
 
       - name: Terraform plan
