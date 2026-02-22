@@ -33,29 +33,43 @@ The deploy workflow **requires** remote state so Terraform state is shared acros
 
 ### One-time setup
 
-1. **Create an S3 bucket** for state (e.g. `rating-platform-tfstate-551481644633`). Enable versioning (recommended).
-2. **Create a DynamoDB table** for locking:
-   - Name: `rating-platform-tfstate-locks`
-   - Partition key: `LockID` (String)
-   - Region: same as your deploy (e.g. `us-east-1`)
-3. **Add a GitHub repo variable**: Settings → Secrets and variables → Actions → Variables → New variable:
+1. **Create the S3 bucket and DynamoDB table** (run once with AWS CLI configured for your deploy account/region):
+   ```bash
+   cd infra/terraform
+   export AWS_REGION=us-east-1
+   ./bootstrap-remote-state.sh
+   ```
+   This creates bucket `rating-platform-tfstate-<account-id>` (with versioning) and table `rating-platform-tfstate-locks`. The script prints the bucket name and the exact `terraform init` command to run next.
+
+2. **Add a GitHub repo variable**: Settings → Secrets and variables → Actions → Variables → New variable:
    - Name: `TF_STATE_BUCKET`
-   - Value: your S3 bucket name
+   - Value: the bucket name printed by the script (e.g. `rating-platform-tfstate-551481644633`)
 
 The workflow runs `terraform init` with `-backend-config=bucket=$TF_STATE_BUCKET`, `key=rating-platform/<env>/terraform.tfstate`, and the DynamoDB table above.
 
-### If you already created resources without remote state
+### If you already created resources without remote state ("already exists" errors)
 
-You're seeing "already exists" because state was lost (e.g. local state on a previous runner). Options:
+State was lost (e.g. CI ran without `TF_STATE_BUCKET`), so Terraform wants to create resources that already exist. Fix it once by importing them:
 
-- **Option A — Import into new state (recommended):** Create the S3 bucket and DynamoDB table above, add `TF_STATE_BUCKET`, then run the deploy workflow once. It will still try to create and fail. From your machine (with AWS and Terraform configured), run `terraform init` with the same backend config, then **import** each resource that already exists, e.g.:
-  ```bash
-  cd infra/terraform
-  terraform init -backend-config=bucket=YOUR_BUCKET -backend-config=key=rating-platform/dev/terraform.tfstate -backend-config=region=us-east-1 -backend-config=dynamodb_table=rating-platform-tfstate-locks -backend-config=encrypt=true
-  terraform import 'aws_lb_target_group.frontend[0]' arn:aws:elasticloadbalancing:us-east-1:ACCOUNT:targetgroup/rp-frontend-dev/ID
-  # ... repeat for each resource (see Terraform docs for import IDs)
-  ```
-- **Option B — Fresh start (dev only):** If this environment is disposable, delete the existing resources in the AWS console (or via CLI), add `TF_STATE_BUCKET` as above, then run the deploy workflow again so Terraform creates everything and stores state in S3.
+1. **Create S3 bucket + DynamoDB table** (run `./bootstrap-remote-state.sh` in infra/terraform) and add the **`TF_STATE_BUCKET`** repo variable (see above).
+2. **From your machine** (with AWS CLI and Terraform 1.5+ installed, and credentials for the same account):
+   ```bash
+   cd infra/terraform
+   export AWS_REGION=us-east-1   # or your region
+   # Use your REAL bucket name (same as TF_STATE_BUCKET in GitHub), not the literal "YOUR_TF_STATE_BUCKET"
+   terraform init -input=false -reconfigure \
+     -backend-config=bucket=YOUR_ACTUAL_BUCKET_NAME \
+     -backend-config=key=rating-platform/dev/terraform.tfstate \
+     -backend-config=region=us-east-1 \
+     -backend-config=dynamodb_table=rating-platform-tfstate-locks \
+     -backend-config=encrypt=true
+   # Only after init succeeds:
+   ./import-existing.sh dev
+   ```
+   The script imports IAM roles, CloudWatch log group, DB subnet group, Secrets Manager secrets, ALB security group, target groups, and Service Discovery namespace into state. If you see "Backend initialization required", init did not succeed—fix the init command (use your real bucket name and Terraform 1.5+).
+3. **Re-run the Deploy workflow** in GitHub Actions. It will use the S3 state (because `TF_STATE_BUCKET` is set) and no longer try to create duplicates.
+
+**Option B — Fresh start (dev only):** If this environment is disposable, delete the existing resources in the AWS console, set `TF_STATE_BUCKET`, then run the deploy workflow so Terraform creates everything and stores state in S3.
 
 ## Two-Step First Apply (when create_eks_cluster = true)
 

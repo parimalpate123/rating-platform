@@ -8,9 +8,10 @@ import { MappingsModule } from '../mappings/mappings.module';
 import { ScopesModule } from '../scopes/scopes.module';
 import { ActivityLogModule } from '../activity-log/activity-log.module';
 import { LookupTablesModule } from '../lookup-tables/lookup-tables.module';
+import { KnowledgeBaseModule } from '../knowledge-base/knowledge-base.module';
 
 @Module({
-  imports: [DatabaseModule, ProductLinesModule, SystemsModule, MappingsModule, ScopesModule, ActivityLogModule, LookupTablesModule],
+  imports: [DatabaseModule, ProductLinesModule, SystemsModule, MappingsModule, ScopesModule, ActivityLogModule, LookupTablesModule, KnowledgeBaseModule],
   controllers: [AppController],
   providers: [AppService],
 })
