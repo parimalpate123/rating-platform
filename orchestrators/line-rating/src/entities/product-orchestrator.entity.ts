@@ -23,6 +23,9 @@ export class ProductOrchestratorEntity {
   @Column({ type: 'varchar', length: 20, default: 'draft' })
   status!: string;
 
+  @Column({ type: 'int', default: 1 })
+  version!: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

@@ -29,13 +29,27 @@ beforeAll(async () => {
     })
     .catch(() => {});
 
-  // 3. Add one apply_rules step — it gracefully no-ops if rules-service is down
+  // 3. Add step 1: apply_rules — no condition, always runs
   await axios
     .post(`${LINE_RATING}/orchestrators/${TEST_PRODUCT}/flow/rate/steps`, {
       stepType: 'apply_rules',
       name: 'Apply Rules',
       config: { scope: 'pre_rating' },
       stepOrder: 1,
+    })
+    .catch(() => {});
+
+  // 4. Add step 2: apply_rules with a condition that will NOT be met when state='CA'
+  //    (condition: state must equal 'TX') — should be skipped in tests
+  await axios
+    .post(`${LINE_RATING}/orchestrators/${TEST_PRODUCT}/flow/rate/steps`, {
+      stepType: 'apply_rules',
+      name: 'Texas-Only Rules',
+      config: {
+        scope: 'pre_rating',
+        condition: { field: 'state', operator: 'eq', value: 'TX' },
+      },
+      stepOrder: 2,
     })
     .catch(() => {});
 });
@@ -47,7 +61,7 @@ afterAll(async () => {
     .catch(() => {});
 });
 
-// ── Tests ─────────────────────────────────────────────────────────────────────
+// ── Health ────────────────────────────────────────────────────────────────────
 
 describe('Health', () => {
   it('GET /api/v1/health returns 200', async () => {
@@ -56,11 +70,14 @@ describe('Health', () => {
   });
 });
 
+// ── Happy path ────────────────────────────────────────────────────────────────
+
 describe('POST /api/v1/rate/:productLineCode — happy path', () => {
   it('returns a structured response with at least one step result', async () => {
     const res = await axios.post(`/api/v1/rate/${TEST_PRODUCT}`, {
       scope: { state: 'CA', coverage: 'comprehensive', transactionType: 'new_business' },
       payload: {
+        state: 'CA',
         insured: { name: 'Jane Smoke', age: 35 },
         vehicle: { year: 2022, make: 'Honda', model: 'Civic' },
       },
@@ -85,7 +102,7 @@ describe('POST /api/v1/rate/:productLineCode — happy path', () => {
       expect(step).toMatchObject({
         stepType: expect.any(String),
         stepName: expect.any(String),
-        status: expect.stringMatching(/^(completed|failed)$/),
+        status: expect.stringMatching(/^(completed|failed|skipped)$/),
         durationMs: expect.any(Number),
       });
     }
@@ -93,9 +110,57 @@ describe('POST /api/v1/rate/:productLineCode — happy path', () => {
 
   it('returns 404 when product has no orchestrator', async () => {
     await expect(
-      axios.post('/api/v1/rate/no-such-product-xyz', {
-        payload: {},
-      }),
+      axios.post('/api/v1/rate/no-such-product-xyz', { payload: {} }),
     ).rejects.toMatchObject({ response: { status: 404 } });
+  });
+});
+
+// ── Conditional steps ─────────────────────────────────────────────────────────
+
+describe('Conditional steps', () => {
+  it('skips a step whose condition is not met', async () => {
+    // state='CA' — "Texas-Only Rules" step has condition state eq 'TX', so it must be skipped
+    const res = await axios.post(`/api/v1/rate/${TEST_PRODUCT}`, {
+      payload: { state: 'CA' },
+    });
+
+    expect(res.status).toBe(200);
+
+    const texasStep = res.data.stepResults.find(
+      (s: any) => s.stepName === 'Texas-Only Rules',
+    );
+    expect(texasStep).toBeDefined();
+    expect(texasStep.status).toBe('skipped');
+    expect(texasStep.durationMs).toBe(0);
+  });
+
+  it('runs a conditional step when its condition is met', async () => {
+    // state='TX' — "Texas-Only Rules" step condition IS met, so it must execute
+    const res = await axios.post(`/api/v1/rate/${TEST_PRODUCT}`, {
+      payload: { state: 'TX' },
+    });
+
+    expect(res.status).toBe(200);
+
+    const texasStep = res.data.stepResults.find(
+      (s: any) => s.stepName === 'Texas-Only Rules',
+    );
+    expect(texasStep).toBeDefined();
+    expect(texasStep.status).not.toBe('skipped');
+  });
+});
+
+// ── Orchestrator versioning ───────────────────────────────────────────────────
+
+describe('Orchestrator versioning', () => {
+  it('orchestrator response includes a version field', async () => {
+    const res = await axios.get(
+      `${LINE_RATING}/orchestrators/${TEST_PRODUCT}/flow/rate`,
+    );
+    expect(res.status).toBe(200);
+    expect(res.data).toMatchObject({
+      version: expect.any(Number),
+    });
+    expect(res.data.version).toBeGreaterThanOrEqual(1);
   });
 });
