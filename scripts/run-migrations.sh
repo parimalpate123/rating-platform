@@ -9,6 +9,10 @@
 # localhost with default dev credentials, so you don't need PostgreSQL installed on the host.
 # Options:
 #   RUN_SEEDS=1  - also run db/seeds/*.sql after migrations (default: 0)
+#
+# CI (GitHub Actions): the deploy workflow passes DB_HOST/DB_PORT from Terraform output;
+# the workflow fails before calling this script if RDS is not in state. Local defaults below
+# are only used when those env vars are unset (e.g. local testing).
 
 set -e
 
@@ -32,6 +36,7 @@ if [ -n "$DATABASE_URL" ]; then
   PSQL_ARGS=(-q "$DATABASE_URL")
   RUN_VIA_CONTAINER=0
 else
+  # Local dev defaults; CI always passes DB_HOST/DB_PORT from Terraform (workflow fails if missing)
   DB_HOST="${DB_HOST:-localhost}"
   DB_PORT="${DB_PORT:-5433}"
   DB_USER="${DB_USER:-rating_user}"

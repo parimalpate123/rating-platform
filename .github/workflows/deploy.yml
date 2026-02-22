@@ -191,6 +191,14 @@ jobs:
           echo "host=$DB_HOST" >> "$GITHUB_OUTPUT"
           echo "port=$DB_PORT" >> "$GITHUB_OUTPUT"
 
+      - name: Ensure RDS endpoint is available
+        run: |
+          if [ -z "${{ steps.rds.outputs.host }}" ]; then
+            echo "::error::RDS endpoint not found in Terraform state. Run the Deploy workflow once without 'Run migrations' (and without 'Skip Terraform') to create RDS, then re-run with 'Run migrations'."
+            exit 1
+          fi
+          echo "RDS endpoint: ${{ steps.rds.outputs.host }}:${{ steps.rds.outputs.port }}"
+
       - name: Install psql
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
