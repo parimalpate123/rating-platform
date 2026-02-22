@@ -246,12 +246,20 @@ jobs:
           # ── CloudWatch Log Group ──────────────────────────────────────────────
           tf_import "aws_cloudwatch_log_group.ecs" "/ecs/rating-platform"
 
-          # ── Security Group ────────────────────────────────────────────────────
+          # ── Security Groups (ALB + ECS tasks) ─────────────────────────────────
           VPC_ID=$(grep 'default.*vpc-' variables.tf | grep -o 'vpc-[a-z0-9]*' | head -1)
-          SG_ID=$(aws ec2 describe-security-groups \
+          SG_ALB=$(aws ec2 describe-security-groups \
             --filters "Name=group-name,Values=rating-platform-alb-${ENV}" "Name=vpc-id,Values=${VPC_ID}" \
             --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || true)
-          [ -n "$SG_ID" ] && [ "$SG_ID" != "None" ] && tf_import "aws_security_group.alb[0]" "$SG_ID"
+          [ -n "$SG_ALB" ] && [ "$SG_ALB" != "None" ] && tf_import "aws_security_group.alb[0]" "$SG_ALB"
+          SG_ECS=$(aws ec2 describe-security-groups \
+            --filters "Name=group-name,Values=rating-platform-ecs-tasks-${ENV}" "Name=vpc-id,Values=${VPC_ID}" \
+            --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || true)
+          [ -n "$SG_ECS" ] && [ "$SG_ECS" != "None" ] && tf_import "aws_security_group.ecs_tasks" "$SG_ECS"
+          SG_RDS=$(aws ec2 describe-security-groups \
+            --filters "Name=group-name,Values=rating-platform-rds-${ENV}" "Name=vpc-id,Values=${VPC_ID}" \
+            --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || true)
+          [ -n "$SG_RDS" ] && [ "$SG_RDS" != "None" ] && tf_import "aws_security_group.rds[0]" "$SG_RDS"
 
           # ── ALB Target Groups (look up ARN by name) ───────────────────────────
           import_tg() {
@@ -288,13 +296,13 @@ jobs:
           import_secret "rating-platform/aws-credentials" "aws_secretsmanager_secret.aws_credentials"
           import_secret "rating-platform/db-credentials"  "aws_secretsmanager_secret.db_credentials"
 
-          # ── Service Discovery Namespace ───────────────────────────────────────
+          # ── Service Discovery Namespace (import ID = NAMESPACE_ID:VPC_ID) ─────
           SD_NS=$(grep 'default.*rating-platform.local' variables.tf | grep -o 'rating-platform\.local' | head -1)
           NS_ID=$(aws servicediscovery list-namespaces \
             --query "Namespaces[?Name=='${SD_NS:-rating-platform.local}'].Id | [0]" \
             --output text 2>/dev/null || true)
-          [ -n "$NS_ID" ] && [ "$NS_ID" != "None" ] && \
-            tf_import "aws_service_discovery_private_dns_namespace.main" "$NS_ID"
+          [ -n "$NS_ID" ] && [ "$NS_ID" != "None" ] && [ -n "$VPC_ID" ] && \
+            tf_import "aws_service_discovery_private_dns_namespace.main" "${NS_ID}:${VPC_ID}"
 
       - name: Terraform plan
         working-directory: ${{ env.TF_DIR }}
