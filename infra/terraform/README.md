@@ -10,6 +10,8 @@ Provisions AWS infrastructure and Kubernetes workloads for the rating-platform. 
 - `kubectl` (for smoke tests after deploy)
 - An existing EKS cluster OR set `create_eks_cluster = true` to provision one
 
+**Terraform runner IAM:** The identity that runs `terraform apply` (your IAM user/role or GHA OIDC role) needs, in addition to CodeBuild/ECS/RDS etc., **EC2 read for VPC config**: `ec2:DescribeSecurityGroups`, `ec2:DescribeVpcs`, `ec2:DescribeSubnets`. CodeBuild validates the project’s VPC config using the caller’s credentials; without these, creating the migrations CodeBuild project fails with "Not authorized to perform DescribeSecurityGroups".
+
 ## Quick Start
 
 ```bash
@@ -73,7 +75,10 @@ State was lost (e.g. CI ran without `TF_STATE_BUCKET`), so Terraform wants to cr
 
 ### Running DB migrations when RDS is in a private subnet
 
-Migrations are not run from the Deploy workflow (the runner cannot reach private RDS). **Step-by-step:** see **[db/RUN_MIGRATIONS.md](../db/RUN_MIGRATIONS.md)**. Use `scripts/run-migrations-rds.sh` from this workspace when you have network access (VPN or bastion).
+Migrations are not run from the Deploy workflow (the runner cannot reach private RDS). You can:
+
+- **From AWS Console:** Run the CodeBuild project **rating-platform-migrations-{env}** (Start build). It runs inside the VPC and can reach RDS. See **[db/RUN_MIGRATIONS.md](../db/RUN_MIGRATIONS.md)** (section "Run from AWS Console").
+- **From this workspace (VPN/bastion):** Use `scripts/run-migrations-rds.sh`. See **[db/RUN_MIGRATIONS.md](../db/RUN_MIGRATIONS.md)**.
 
 ## Two-Step First Apply (when create_eks_cluster = true)
 

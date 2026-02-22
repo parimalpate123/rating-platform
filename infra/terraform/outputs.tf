@@ -80,3 +80,10 @@ output "service_discovery_namespace" {
   description = "Cloud Map namespace for service discovery"
   value       = aws_service_discovery_private_dns_namespace.main.name
 }
+
+# ── CodeBuild (migrations) ───────────────────────────────────────────────────
+
+output "codebuild_migrations_project" {
+  description = "CodeBuild project name to run DB migrations from AWS Console"
+  value       = try(aws_codebuild_project.migrations[0].name, null)
+}

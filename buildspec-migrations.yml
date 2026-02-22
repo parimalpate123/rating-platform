@@ -1,0 +1,39 @@
+# CodeBuild buildspec: run DB migrations against RDS from AWS Console.
+# Used by the "rating-platform-migrations-{env}" CodeBuild project (runs inside VPC).
+# Requires: SSM params /rating-platform/{env}/rds-endpoint and rds-port, and
+# Secrets Manager secret rating-platform/db-credentials with DB_PASS (and optionally DB_USER, DB_NAME).
+
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - apt-get update -qq && apt-get install -y -qq postgresql-client jq
+  build:
+    commands:
+      - export AWS_DEFAULT_REGION=$AWS_REGION
+      - |
+        export DB_HOST=$(aws ssm get-parameter --name "/rating-platform/${ENVIRONMENT}/rds-endpoint" --query 'Parameter.Value' --output text)
+        export DB_PORT=$(aws ssm get-parameter --name "/rating-platform/${ENVIRONMENT}/rds-port" --query 'Parameter.Value' --output text)
+        SECRET=$(aws secretsmanager get-secret-value --secret-id "rating-platform/db-credentials" --query 'SecretString' --output text)
+        export DB_USER=$(echo "$SECRET" | jq -r '.DB_USER // "rating_user"')
+        export DB_PASS=$(echo "$SECRET" | jq -r '.DB_PASS')
+        export DB_NAME=$(echo "$SECRET" | jq -r '.DB_NAME // "rating_platform"')
+      - |
+        if [ -z "$DB_HOST" ] || [ -z "$DB_PASS" ]; then
+          echo "Missing DB_HOST or DB_PASS. Ensure SSM params and rating-platform/db-credentials secret are set."
+          exit 1
+        fi
+      - echo "Running migrations against $DB_HOST:$DB_PORT ..."
+      - export PGPASSWORD="$DB_PASS"
+      - |
+        for f in $(ls -1 db/migrations/*.sql 2>/dev/null | sort); do
+          echo "Running migration $(basename "$f")..."
+          psql -q -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$f" || exit 1
+        done
+      - echo "Migrations complete."
+
+artifacts:
+  files: []
+cache:
+  paths: []

@@ -148,3 +148,17 @@ variable "acm_certificate_arn" {
   type        = string
   default     = ""
 }
+
+# ── CodeBuild (run DB migrations from console) ─────────────────────────────────
+
+variable "create_codebuild_migrations" {
+  description = "Create CodeBuild project to run DB migrations from AWS Console (VPC-attached, reaches private RDS)"
+  type        = bool
+  default     = true
+}
+
+variable "codebuild_github_repo" {
+  description = "GitHub repo URL for CodeBuild migrations source"
+  type        = string
+  default     = "https://github.com/parimalpate123/rating-platform"
+}

@@ -55,3 +55,29 @@ export DB_PASS="your-password"
 export DB_NAME="rating_platform"
 ./scripts/run-migrations.sh
 ```
+
+---
+
+## Run from AWS Console (CodeBuild)
+
+You can run migrations from the AWS Console using CodeBuild. The job runs **inside your VPC**, so it can reach private RDS. No VPN or bastion on your machine.
+
+### Prerequisites
+
+1. **Terraform applied** with `create_codebuild_migrations = true` (default) and `create_rds = true`, so the project `rating-platform-migrations-{env}` and SSM parameters exist.
+2. **Secret `rating-platform/db-credentials`** in Secrets Manager with at least the DB password, e.g.:
+   ```json
+   {"DB_PASS":"your-rds-password","DB_USER":"rating_user","DB_NAME":"rating_platform"}
+   ```
+   Set it via CLI:  
+   `aws secretsmanager put-secret-value --secret-id rating-platform/db-credentials --secret-string '{"DB_PASS":"...","DB_USER":"rating_user","DB_NAME":"rating_platform"}'`
+3. **GitHub connected** for the CodeBuild project (if the repo is private): CodeBuild → Your project → Edit → Source → Connect to GitHub (one-time).
+
+### Steps
+
+1. Open **AWS Console** → **CodeBuild** → **Build projects**.
+2. Select **rating-platform-migrations-dev** (or your environment name).
+3. Click **Start build** (optional: leave Branch empty to use default).
+4. Wait for the build to complete. Logs show each migration file applied.
+
+If the build fails, check CloudWatch Logs for the project and ensure the secret and SSM parameters are set (Terraform writes RDS endpoint/port to SSM on apply).

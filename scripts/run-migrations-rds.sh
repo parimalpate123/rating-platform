@@ -62,4 +62,9 @@ export DB_PASS
 export DB_NAME="${DB_NAME:-rating_platform}"
 
 echo "Running migrations against RDS at $DB_HOST:$DB_PORT ..."
-"$SCRIPT_DIR/run-migrations.sh"
+if ! "$SCRIPT_DIR/run-migrations.sh"; then
+  echo ""
+  echo "If you see 'Operation timed out' or 'connection refused', this machine cannot reach RDS (it is in a private subnet)."
+  echo "Run this script from a host that can reach the VPC: VPN-connected machine or a bastion. See db/RUN_MIGRATIONS.md."
+  exit 1
+fi
