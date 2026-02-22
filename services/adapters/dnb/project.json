@@ -1,0 +1,22 @@
+{
+  "name": "adapter-dnb",
+  "targets": {
+    "prune-lockfile": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "executor": "@nx/js:prune-lockfile",
+      "outputs": [
+        "{workspaceRoot}/services/adapters/dnb/dist/package.json",
+        "{workspaceRoot}/services/adapters/dnb/dist/package-lock.json"
+      ],
+      "options": { "buildTarget": "build" }
+    },
+    "copy-workspace-modules": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "outputs": ["{workspaceRoot}/services/adapters/dnb/dist/workspace_modules"],
+      "executor": "@nx/js:copy-workspace-modules",
+      "options": { "buildTarget": "build" }
+    }
+  }
+}

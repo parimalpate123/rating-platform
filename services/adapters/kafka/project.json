@@ -1,0 +1,22 @@
+{
+  "name": "adapter-kafka",
+  "targets": {
+    "prune-lockfile": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "executor": "@nx/js:prune-lockfile",
+      "outputs": [
+        "{workspaceRoot}/services/adapters/kafka/dist/package.json",
+        "{workspaceRoot}/services/adapters/kafka/dist/package-lock.json"
+      ],
+      "options": { "buildTarget": "build" }
+    },
+    "copy-workspace-modules": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "outputs": ["{workspaceRoot}/services/adapters/kafka/dist/workspace_modules"],
+      "executor": "@nx/js:copy-workspace-modules",
+      "options": { "buildTarget": "build" }
+    }
+  }
+}

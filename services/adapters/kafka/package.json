@@ -9,25 +9,64 @@
         "executor": "nx:run-commands",
         "options": {
           "command": "webpack-cli build",
-          "args": ["--node-env=production"],
+          "args": [
+            "--node-env=production"
+          ],
           "cwd": "services/adapters/kafka"
         },
         "configurations": {
-          "development": { "args": ["--node-env=development"] }
+          "development": {
+            "args": [
+              "--node-env=development"
+            ]
+          }
         }
       },
       "serve": {
         "continuous": true,
         "executor": "@nx/js:node",
         "defaultConfiguration": "development",
-        "dependsOn": ["build"],
+        "dependsOn": [
+          "build"
+        ],
         "options": {
           "buildTarget": "adapter-kafka:build",
           "runBuildTargetDependencies": false
         },
         "configurations": {
-          "development": { "buildTarget": "adapter-kafka:build:development" },
-          "production": { "buildTarget": "adapter-kafka:build:production" }
+          "development": {
+            "buildTarget": "adapter-kafka:build:development"
+          },
+          "production": {
+            "buildTarget": "adapter-kafka:build:production"
+          }
+        }
+      },
+      "prune-lockfile": {
+        "dependsOn": [
+          "build"
+        ],
+        "cache": true,
+        "executor": "@nx/js:prune-lockfile",
+        "outputs": [
+          "{workspaceRoot}/services/adapters/kafka/dist/package.json",
+          "{workspaceRoot}/services/adapters/kafka/dist/package-lock.json"
+        ],
+        "options": {
+          "buildTarget": "build"
+        }
+      },
+      "copy-workspace-modules": {
+        "dependsOn": [
+          "build"
+        ],
+        "cache": true,
+        "outputs": [
+          "{workspaceRoot}/services/adapters/kafka/dist/workspace_modules"
+        ],
+        "executor": "@nx/js:copy-workspace-modules",
+        "options": {
+          "buildTarget": "build"
         }
       }
     }
