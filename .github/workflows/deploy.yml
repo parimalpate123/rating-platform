@@ -160,8 +160,11 @@ jobs:
         working-directory: ${{ env.TF_DIR }}
         run: |
           terraform init -input=false
-          DB_HOST=$(terraform output -raw rds_endpoint 2>/dev/null || echo "")
-          DB_PORT=$(terraform output -raw rds_port 2>/dev/null || echo "5432")
+          # Use -json + jq so we never capture Terraform's "No outputs found" (which -raw prints to stdout when state is empty)
+          OUT=$(terraform output -json 2>/dev/null || echo "{}")
+          DB_HOST=$(echo "$OUT" | jq -r '.rds_endpoint.value // empty')
+          DB_PORT=$(echo "$OUT" | jq -r '.rds_port.value // empty')
+          DB_PORT=${DB_PORT:-5432}
           echo "host=$DB_HOST" >> "$GITHUB_OUTPUT"
           echo "port=$DB_PORT" >> "$GITHUB_OUTPUT"
 
