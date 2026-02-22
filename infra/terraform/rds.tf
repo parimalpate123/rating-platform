@@ -38,9 +38,9 @@ resource "aws_db_instance" "main" {
   # Encryption
   storage_encrypted = true
 
-  # Performance & monitoring
+  # Performance & monitoring (monitoring_interval 0 = no Enhanced Monitoring; avoids needing monitoring_role_arn)
   performance_insights_enabled = true
-  monitoring_interval          = 60
+  monitoring_interval          = 0
 
   # Networking
   multi_az            = var.environment == "prod" ? true : false
