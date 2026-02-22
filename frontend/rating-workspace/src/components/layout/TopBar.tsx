@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Moon, Sun, Zap } from 'lucide-react';
+import { Search, Moon, Sun, Zap, X, Info } from 'lucide-react';
 
 const THEME_KEY = 'rating-workspace-theme';
 
@@ -20,6 +20,74 @@ function applyTheme(dark: boolean) {
   } catch {}
 }
 
+function AboutDialog({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Hero header */}
+        <div className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-700 px-8 pt-10 pb-8 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 ring-4 ring-white/10">
+            <Zap className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-white tracking-tight">InsurRateX</h2>
+          <p className="text-purple-100 text-sm mt-1.5 font-medium leading-snug">
+            The Rating Domain Interoperability Layer —<br />One Bridge for Every Rating Engine
+          </p>
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-8 py-6 space-y-5">
+          <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+            InsurRateX enables seamless integration between policy administration systems and rating engines across the insurance ecosystem. By abstracting rating logic into a unified domain layer, it eliminates point-to-point integrations and accelerates product deployment. Connect once, integrate everywhere, and scale without friction.
+          </p>
+
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg py-3 px-2">
+              <p className="text-lg font-bold text-purple-600 dark:text-purple-400">10+</p>
+              <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-0.5">Services</p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg py-3 px-2">
+              <p className="text-lg font-bold text-purple-600 dark:text-purple-400">Multi</p>
+              <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-0.5">Engines</p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg py-3 px-2">
+              <p className="text-lg font-bold text-purple-600 dark:text-purple-400">Any</p>
+              <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-0.5">Format</p>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-100 dark:border-gray-700 pt-4 flex items-center justify-between">
+            <div className="text-xs text-gray-400 dark:text-gray-500">
+              <p>v1.0.0</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface TopBarProps {
   onSearch?: (q: string) => void;
 }
@@ -27,6 +95,7 @@ interface TopBarProps {
 export function TopBar({ onSearch }: TopBarProps) {
   const [dark, setDark] = useState(false);
   const [q, setQ] = useState('');
+  const [showAbout, setShowAbout] = useState(false);
 
   useEffect(() => {
     const stored = getStoredTheme();
@@ -41,14 +110,18 @@ export function TopBar({ onSearch }: TopBarProps) {
   };
 
   return (
-    <div className="h-12 flex items-center justify-between px-4 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+    <div className="h-12 flex items-center justify-between px-4 border-b border-purple-100 bg-purple-50/60 dark:border-gray-700 dark:bg-gray-900">
       {/* Logo */}
-      <div className="flex items-center gap-2 min-w-[200px]">
-        <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
+      <button
+        onClick={() => setShowAbout(true)}
+        className="flex items-center gap-2 min-w-[200px] hover:opacity-80 transition-opacity"
+        title="About InsurRateX"
+      >
+        <div className="w-7 h-7 rounded-lg bg-purple-600 flex items-center justify-center">
           <Zap className="w-4 h-4 text-white" />
         </div>
         <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">InsurRateX</span>
-      </div>
+      </button>
 
       {/* Search */}
       <div className="flex-1 max-w-md mx-4">
@@ -76,10 +149,12 @@ export function TopBar({ onSearch }: TopBarProps) {
         >
           {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
-        <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-semibold">
+        <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-semibold">
           P
         </div>
       </div>
+
+      {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
     </div>
   );
 }

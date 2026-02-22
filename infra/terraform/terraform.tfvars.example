@@ -10,32 +10,22 @@ environment = "dev"   # dev | staging | prod
 # Get these from your VPC:
 #   aws ec2 describe-vpcs
 #   aws ec2 describe-subnets --filters "Name=vpc-id,Values=<vpc-id>"
-vpc_id             = "vpc-0123456789abcdef0"
-private_subnet_ids = ["subnet-0aaaa111111111111", "subnet-0bbbb222222222222"]
-public_subnet_ids  = ["subnet-0cccc333333333333", "subnet-0dddd444444444444"]
+vpc_id             = "vpc-066faf68d1d601ae1"
+private_subnet_ids = ["subnet-09792aa52eeb823dd", "subnet-0c7d9e6f7078ccebe"]
+public_subnet_ids  = ["subnet-027dee2920912548d", "subnet-0e9cfb87ba30b4fbd"]
 
-# ── EKS ───────────────────────────────────────────────────────────────────────
-cluster_name = "rating-platform-dev"
+# ── ECS ──────────────────────────────────────────────────────────────────────
+ecs_cluster_name           = "sre-poc-mcp-cluster"
+service_discovery_namespace = "rating-platform.local"
 
-# Set to true to CREATE a new EKS cluster via Terraform.
-# Set to false (default) to use an EXISTING cluster identified by cluster_name.
-create_eks_cluster = false
-
-# Only used when create_eks_cluster = true:
-eks_kubernetes_version  = "1.29"
-eks_node_instance_type  = "t3.medium"
-eks_node_desired_size   = 2
-eks_node_min_size       = 1
-eks_node_max_size       = 4
-
-# ── Kubernetes ────────────────────────────────────────────────────────────────
-namespace = "rating-platform"
-image_tag = "latest"   # Set to a specific tag in CI (e.g. git SHA)
+# ── Application ──────────────────────────────────────────────────────────────
+image_tag     = "latest"   # Set to a specific tag in CI (e.g. git SHA)
+desired_count = 1          # Default task count per service
 
 # ── Database (RDS PostgreSQL) ──────────────────────────────────────────────────
 # Option A — let Terraform create RDS (set create_rds = true):
 create_rds           = true
-db_instance_class    = "db.t3.medium"   # db.t3.micro for dev, db.r6g.large for prod
+db_instance_class    = "db.t3.micro"    # Free tier eligible; use db.t3.medium or db.r6g.large for prod
 db_allocated_storage = 20               # GB
 
 # Option B — use an existing DB (set create_rds = false, supply db_host):
@@ -49,15 +39,9 @@ db_password = "CHANGE_ME_use_secrets_manager"   # Rotate after first apply!
 db_port     = "5432"
 
 # ── Ingress / TLS ─────────────────────────────────────────────────────────────
-ingress_enabled    = true
-ingress_class_name = "alb"           # alb | nginx
-ingress_scheme     = "internet-facing"  # internet-facing | internal
+ingress_enabled = true
+ingress_scheme  = "internet-facing"  # internet-facing | internal
 
 # Optional — leave empty for HTTP-only:
 domain_name         = ""   # e.g. "rating.example.com"
 acm_certificate_arn = ""   # e.g. "arn:aws:acm:us-east-1:123456789:certificate/abc-123"
-
-# ── Scaling ───────────────────────────────────────────────────────────────────
-enable_hpa       = true
-hpa_min_replicas = 2
-hpa_max_replicas = 6

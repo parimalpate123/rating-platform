@@ -11,15 +11,15 @@ export function formatDate(iso: string) {
 
 export function statusColor(status: string) {
   const map: Record<string, string> = {
-    active: 'text-green-600 bg-green-50',
-    draft: 'text-yellow-600 bg-yellow-50',
-    inactive: 'text-gray-500 bg-gray-100',
-    archived: 'text-red-500 bg-red-50',
-    COMPLETED: 'text-green-600 bg-green-50',
-    FAILED: 'text-red-600 bg-red-50',
-    PROCESSING: 'text-blue-600 bg-blue-50',
-    RECEIVED: 'text-gray-600 bg-gray-100',
-    VALIDATING: 'text-yellow-600 bg-yellow-50',
+    active: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30',
+    draft: 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30',
+    inactive: 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700',
+    archived: 'text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/30',
+    COMPLETED: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30',
+    FAILED: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30',
+    PROCESSING: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30',
+    RECEIVED: 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700',
+    VALIDATING: 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30',
   };
-  return map[status] ?? 'text-gray-600 bg-gray-100';
+  return map[status] ?? 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700';
 }

@@ -271,8 +271,8 @@ export function Systems() {
     <div className="px-6 py-6 max-w-6xl mx-auto">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Systems Registry</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Systems Registry</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             Manage source and target systems used across product lines. {isProd ? 'Production endpoints shown.' : 'Local/dev endpoints shown.'}
           </p>
         </div>
@@ -344,20 +344,20 @@ export function Systems() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={cn('inline-flex px-2 py-0.5 rounded text-xs font-medium', sys.isActive ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500')}>
+                    <span className={cn('inline-flex px-2 py-0.5 rounded text-xs font-medium', sys.isActive ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400')}>
                       {sys.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td className="px-4 py-3"><HealthCheckCell systemId={sys.id} /></td>
                   <td className="px-4 py-3 flex items-center gap-1">
-                    <button onClick={() => openEdit(sys)} className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded" title="Edit"><Pencil className="w-4 h-4" /></button>
+                    <button onClick={() => openEdit(sys)} className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded" title="Edit"><Pencil className="w-4 h-4" /></button>
                     {deleteConfirm === sys.id ? (
                       <span className="flex items-center gap-1">
-                        <button onClick={() => remove(sys.id)} className="text-xs text-red-600 font-medium">Confirm</button>
-                        <button onClick={() => setDeleteConfirm(null)} className="text-xs text-gray-500">Cancel</button>
+                        <button onClick={() => remove(sys.id)} className="text-xs text-red-600 dark:text-red-400 font-medium">Confirm</button>
+                        <button onClick={() => setDeleteConfirm(null)} className="text-xs text-gray-500 dark:text-gray-400">Cancel</button>
                       </span>
                     ) : (
-                      <button onClick={() => setDeleteConfirm(sys.id)} className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => setDeleteConfirm(sys.id)} className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete"><Trash2 className="w-4 h-4" /></button>
                     )}
                   </td>
                 </tr>
@@ -395,8 +395,8 @@ export function Systems() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Format</label>
-                  <select value={form.format} onChange={(e) => setForm({ ...form, format: e.target.value as System['format'] })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Format</label>
+                  <select value={form.format} onChange={(e) => setForm({ ...form, format: e.target.value as System['format'] })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
                     <option value="json">JSON</option>
                     <option value="xml">XML</option>
                     <option value="soap">SOAP</option>
@@ -404,16 +404,16 @@ export function Systems() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Base URL (dev/local)</label>
-                <input value={form.baseUrl} onChange={(e) => setForm({ ...form, baseUrl: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="http://localhost:3020" />
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Base URL (dev/local)</label>
+                <input value={form.baseUrl} onChange={(e) => setForm({ ...form, baseUrl: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" placeholder="http://localhost:3020" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Base URL (production)</label>
-                <input value={form.baseUrlProd} onChange={(e) => setForm({ ...form, baseUrlProd: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="https://api.example.com" />
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Base URL (production)</label>
+                <input value={form.baseUrlProd} onChange={(e) => setForm({ ...form, baseUrlProd: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" placeholder="https://api.example.com" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Authentication</label>
-                <select value={form.authMethod} onChange={(e) => setForm({ ...form, authMethod: e.target.value as AuthMethod })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Authentication</label>
+                <select value={form.authMethod} onChange={(e) => setForm({ ...form, authMethod: e.target.value as AuthMethod })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
                   {AUTH_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
@@ -453,13 +453,13 @@ export function Systems() {
                   Mock system
                 </label>
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded border-gray-300" />
+                  <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded border-gray-300 dark:border-gray-600" />
                   Active
                 </label>
               </div>
             </div>
-            <div className="p-6 border-t border-gray-200 flex justify-end gap-2">
-              <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
+              <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">Cancel</button>
               <button onClick={save} disabled={saving} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {editingId ? 'Save' : 'Create'}

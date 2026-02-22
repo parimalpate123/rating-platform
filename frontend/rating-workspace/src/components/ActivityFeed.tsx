@@ -61,7 +61,7 @@ export function ActivityFeed({ productCode }: ActivityFeedProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-6">
-        <Loader2 className="w-4 h-4 animate-spin text-gray-300" />
+        <Loader2 className="w-4 h-4 animate-spin text-gray-300 dark:text-gray-600" />
       </div>
     )
   }
@@ -69,30 +69,30 @@ export function ActivityFeed({ productCode }: ActivityFeedProps) {
   if (entries.length === 0) {
     return (
       <div className="py-6 text-center">
-        <Activity className="w-6 h-6 text-gray-200 mx-auto mb-1.5" />
-        <p className="text-xs text-gray-400">No activity yet</p>
+        <Activity className="w-6 h-6 text-gray-200 dark:text-gray-600 mx-auto mb-1.5" />
+        <p className="text-xs text-gray-400 dark:text-gray-500">No activity yet</p>
       </div>
     )
   }
 
   return (
-    <ol className="relative border-l border-gray-100 ml-2 space-y-0">
+    <ol className="relative border-l border-gray-100 dark:border-gray-700 ml-2 space-y-0">
       {entries.map((entry) => {
         const style = ACTION_STYLES[entry.action] ?? { dot: 'bg-gray-300', label: entry.action }
         return (
           <li key={entry.id} className="ml-4 pb-4">
             {/* Timeline dot */}
             <span
-              className={`absolute -left-[5px] mt-1.5 w-2.5 h-2.5 rounded-full border-2 border-white ${style.dot}`}
+              className={`absolute -left-[5px] mt-1.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-gray-800 ${style.dot}`}
             />
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-xs font-medium text-gray-800">{entryDescription(entry)}</p>
+                <p className="text-xs font-medium text-gray-800 dark:text-gray-200">{entryDescription(entry)}</p>
                 {entry.actor && entry.actor !== 'system' && (
-                  <p className="text-[10px] text-gray-400 mt-0.5">by {entry.actor}</p>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">by {entry.actor}</p>
                 )}
               </div>
-              <time className="text-[10px] text-gray-400 flex-shrink-0 mt-0.5 whitespace-nowrap">
+              <time className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5 whitespace-nowrap">
                 {formatDate(entry.createdAt)}
               </time>
             </div>

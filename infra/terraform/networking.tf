@@ -1,9 +1,8 @@
 # ── Security Groups ───────────────────────────────────────────────────────────
-# Only created when we provision EKS / RDS (create_eks_cluster = true or create_rds = true).
 
 # ALB security group — internet-facing 80/443
 resource "aws_security_group" "alb" {
-  count       = var.create_eks_cluster ? 1 : 0
+  count       = var.ingress_enabled ? 1 : 0
   name        = "rating-platform-alb-${var.environment}"
   description = "ALB: allow HTTP/HTTPS from internet"
   vpc_id      = var.vpc_id
@@ -35,30 +34,31 @@ resource "aws_security_group" "alb" {
   }
 }
 
-# EKS node security group — allow inter-node + ALB → node traffic
-resource "aws_security_group" "eks_nodes" {
-  count       = var.create_eks_cluster ? 1 : 0
-  name        = "rating-platform-eks-nodes-${var.environment}"
-  description = "EKS worker nodes"
+# ECS tasks security group — allow ALB to reach container ports
+resource "aws_security_group" "ecs_tasks" {
+  name        = "rating-platform-ecs-tasks-${var.environment}"
+  description = "ECS Fargate tasks: ALB ingress + inter-service traffic"
   vpc_id      = var.vpc_id
 
-  # Allow all intra-cluster traffic
+  # Allow all traffic from ALB
+  dynamic "ingress" {
+    for_each = var.ingress_enabled ? [1] : []
+    content {
+      from_port       = 0
+      to_port         = 65535
+      protocol        = "tcp"
+      security_groups = [aws_security_group.alb[0].id]
+    }
+  }
+
+  # Allow inter-service traffic (tasks in same SG)
   ingress {
     from_port = 0
-    to_port   = 0
-    protocol  = "-1"
+    to_port   = 65535
+    protocol  = "tcp"
     self      = true
   }
 
-  # Allow ALB to reach node ports (30000–32767) and any target port
-  ingress {
-    from_port       = 0
-    to_port         = 0
-    protocol        = "-1"
-    security_groups = [aws_security_group.alb[0].id]
-  }
-
-  # Allow all egress (internet, ECR, RDS, AWS APIs)
   egress {
     from_port   = 0
     to_port     = 0
@@ -67,26 +67,23 @@ resource "aws_security_group" "eks_nodes" {
   }
 
   tags = {
-    Name                                                   = "rating-platform-eks-nodes-${var.environment}"
-    Environment                                            = var.environment
-    "kubernetes.io/cluster/${var.cluster_name}"            = "owned"
+    Name        = "rating-platform-ecs-tasks-${var.environment}"
+    Environment = var.environment
   }
 }
 
-# RDS security group — only EKS nodes can reach PostgreSQL
+# RDS security group — only ECS tasks can reach PostgreSQL
 resource "aws_security_group" "rds" {
   count       = var.create_rds ? 1 : 0
   name        = "rating-platform-rds-${var.environment}"
-  description = "RDS: allow PostgreSQL from EKS nodes only"
+  description = "RDS: allow PostgreSQL from ECS tasks only"
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port = 5432
-    to_port   = 5432
-    protocol  = "tcp"
-    # If we created the EKS SG, restrict to it; otherwise open to private subnets
-    security_groups = var.create_eks_cluster ? [aws_security_group.eks_nodes[0].id] : []
-    cidr_blocks     = var.create_eks_cluster ? [] : ["10.0.0.0/8"]
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ecs_tasks.id]
   }
 
   egress {

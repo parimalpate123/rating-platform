@@ -15,70 +15,38 @@ variable "environment" {
 # ── Networking ────────────────────────────────────────────────────────────────
 
 variable "vpc_id" {
-  description = "VPC ID where EKS and RDS will run"
+  description = "VPC ID where ECS and RDS will run"
   type        = string
+  default     = "vpc-066faf68d1d601ae1"
 }
 
 variable "private_subnet_ids" {
-  description = "Private subnet IDs (EKS nodes, RDS)"
+  description = "Private subnet IDs (ECS tasks, RDS)"
   type        = list(string)
+  default     = ["subnet-09792aa52eeb823dd", "subnet-0c7d9e6f7078ccebe"]
 }
 
 variable "public_subnet_ids" {
   description = "Public subnet IDs (ALB)"
   type        = list(string)
+  default     = ["subnet-027dee2920912548d", "subnet-0e9cfb87ba30b4fbd"]
 }
 
-# ── EKS ───────────────────────────────────────────────────────────────────────
+# ── ECS ──────────────────────────────────────────────────────────────────────
 
-variable "cluster_name" {
-  description = "EKS cluster name. If create_eks_cluster=true this is created; otherwise must already exist."
+variable "ecs_cluster_name" {
+  description = "ECS cluster name. Uses existing cluster by default."
   type        = string
+  default     = "sre-poc-mcp-cluster"
 }
 
-variable "create_eks_cluster" {
-  description = "Set to true to provision the EKS cluster via Terraform. False = use existing cluster."
-  type        = bool
-  default     = false
-}
-
-variable "eks_kubernetes_version" {
-  description = "Kubernetes version for the EKS cluster"
+variable "service_discovery_namespace" {
+  description = "Private DNS namespace for Cloud Map service discovery"
   type        = string
-  default     = "1.29"
+  default     = "rating-platform.local"
 }
 
-variable "eks_node_instance_type" {
-  description = "EC2 instance type for EKS managed node group"
-  type        = string
-  default     = "t3.medium"
-}
-
-variable "eks_node_desired_size" {
-  description = "Desired number of EKS worker nodes"
-  type        = number
-  default     = 2
-}
-
-variable "eks_node_min_size" {
-  description = "Minimum number of EKS worker nodes"
-  type        = number
-  default     = 1
-}
-
-variable "eks_node_max_size" {
-  description = "Maximum number of EKS worker nodes"
-  type        = number
-  default     = 4
-}
-
-# ── Kubernetes / Application ──────────────────────────────────────────────────
-
-variable "namespace" {
-  description = "Kubernetes namespace for rating-platform workloads"
-  type        = string
-  default     = "rating-platform"
-}
+# ── Application ──────────────────────────────────────────────────────────────
 
 variable "image_tag" {
   description = "Docker image tag applied to all services"
@@ -92,6 +60,12 @@ variable "ecr_registry_id" {
   default     = ""
 }
 
+variable "desired_count" {
+  description = "Default desired task count for each ECS service"
+  type        = number
+  default     = 1
+}
+
 # ── Database (RDS PostgreSQL) ──────────────────────────────────────────────────
 
 variable "create_rds" {
@@ -103,7 +77,7 @@ variable "create_rds" {
 variable "db_instance_class" {
   description = "RDS instance class"
   type        = string
-  default     = "db.t3.medium"
+  default     = "db.t3.micro"
 }
 
 variable "db_allocated_storage" {
@@ -131,7 +105,7 @@ variable "db_name" {
 }
 
 variable "db_user" {
-  description = "PostgreSQL username (sensitive)"
+  description = "PostgreSQL username"
   type        = string
   default     = "rating_user"
   sensitive   = true
@@ -147,27 +121,9 @@ variable "db_password" {
 # ── Ingress / TLS ─────────────────────────────────────────────────────────────
 
 variable "ingress_enabled" {
-  description = "Create Kubernetes Ingress resource"
+  description = "Create ALB for external traffic"
   type        = bool
   default     = true
-}
-
-variable "ingress_class_name" {
-  description = "Ingress class name (alb | nginx)"
-  type        = string
-  default     = "alb"
-}
-
-variable "domain_name" {
-  description = "Public domain (e.g. rating.example.com). Used for Ingress host and ACM cert. Empty = HTTP only."
-  type        = string
-  default     = ""
-}
-
-variable "acm_certificate_arn" {
-  description = "ARN of an existing ACM certificate. If empty and domain_name is set, a new cert is requested."
-  type        = string
-  default     = ""
 }
 
 variable "ingress_scheme" {
@@ -176,22 +132,14 @@ variable "ingress_scheme" {
   default     = "internet-facing"
 }
 
-# ── Scaling ───────────────────────────────────────────────────────────────────
-
-variable "enable_hpa" {
-  description = "Enable Horizontal Pod Autoscaler for key services"
-  type        = bool
-  default     = true
+variable "domain_name" {
+  description = "Public domain (e.g. rating.example.com). Empty = HTTP only."
+  type        = string
+  default     = ""
 }
 
-variable "hpa_min_replicas" {
-  description = "Minimum pod replicas (HPA)"
-  type        = number
-  default     = 2
-}
-
-variable "hpa_max_replicas" {
-  description = "Maximum pod replicas (HPA)"
-  type        = number
-  default     = 6
+variable "acm_certificate_arn" {
+  description = "ARN of an existing ACM certificate for HTTPS. Empty = HTTP only."
+  type        = string
+  default     = ""
 }

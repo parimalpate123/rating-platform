@@ -94,7 +94,7 @@ function StatusIcon({ status }: { status: string }) {
   const s = status.toLowerCase()
   if (s === 'completed') return <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
   if (s === 'failed') return <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-  return <Circle className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
+  return <Circle className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" />
 }
 
 function nodeRingClass(status?: string): string {
@@ -132,7 +132,7 @@ export function ExecutionFlowDiagram({
   }
 
   if (sorted.length === 0) {
-    return <div className="text-center py-6 text-xs text-gray-400">No steps to display</div>
+    return <div className="text-center py-6 text-xs text-gray-400 dark:text-gray-500">No steps to display</div>
   }
 
   return (
@@ -141,7 +141,7 @@ export function ExecutionFlowDiagram({
         {sorted.map((step, idx) => {
           const result = getResult(step, idx)
           const leftBorder = STEP_NODE_STYLES[step.stepType] ?? 'border-l-gray-400'
-          const badgeStyle = STEP_BADGE_STYLES[step.stepType] ?? 'bg-gray-100 text-gray-600'
+          const badgeStyle = STEP_BADGE_STYLES[step.stepType] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
           const serviceLabel = getServiceLabel(step.stepType, step.config)
           const isSelected = selectedStepId === step.id
           const ring = nodeRingClass(result?.status)
@@ -152,7 +152,7 @@ export function ExecutionFlowDiagram({
               <div
                 onClick={() => onStepClick?.(step, result)}
                 className={cn(
-                  'w-36 rounded-lg border border-gray-200 border-l-4 bg-white p-3 flex-shrink-0',
+                  'w-36 rounded-lg border border-gray-200 dark:border-gray-700 border-l-4 bg-white dark:bg-gray-800 p-3 flex-shrink-0',
                   leftBorder,
                   ring,
                   isSelected && 'ring-2 ring-blue-500',
@@ -160,7 +160,7 @@ export function ExecutionFlowDiagram({
                 )}
               >
                 {/* Name */}
-                <p className="text-xs font-semibold text-gray-800 leading-tight mb-1.5 line-clamp-2 min-h-[2rem]">
+                <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 leading-tight mb-1.5 line-clamp-2 min-h-[2rem]">
                   {step.name}
                 </p>
                 {/* Type badge */}
@@ -173,12 +173,12 @@ export function ExecutionFlowDiagram({
                   {step.stepType.replace(/_/g, ' ')}
                 </span>
                 {/* Service label */}
-                <p className="text-[10px] text-gray-400 truncate">{serviceLabel}</p>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">{serviceLabel}</p>
                 {/* Execution overlay */}
                 {result && (
-                  <div className="mt-2 pt-1.5 border-t border-gray-100 flex items-center gap-1">
+                  <div className="mt-2 pt-1.5 border-t border-gray-100 dark:border-gray-700 flex items-center gap-1">
                     <StatusIcon status={result.status} />
-                    <span className="text-[10px] text-gray-500 ml-auto font-mono">
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-auto font-mono">
                       {result.durationMs}ms
                     </span>
                   </div>
@@ -188,8 +188,8 @@ export function ExecutionFlowDiagram({
               {/* Arrow connector */}
               {idx < sorted.length - 1 && (
                 <div className="flex items-center self-center flex-shrink-0">
-                  <div className="w-5 h-px bg-gray-300" />
-                  <span className="text-gray-400 text-[11px] -ml-0.5">▶</span>
+                  <div className="w-5 h-px bg-gray-300 dark:bg-gray-600" />
+                  <span className="text-gray-400 dark:text-gray-500 text-[11px] -ml-0.5">▶</span>
                 </div>
               )}
             </React.Fragment>

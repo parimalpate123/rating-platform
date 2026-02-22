@@ -27,7 +27,7 @@ import { StepDetailPanel } from '../components/flow/StepDetailPanel'
 function StepStatusIcon({ status }: { status: string }) {
   if (status === 'COMPLETED') return <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
   if (status === 'FAILED') return <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-  return <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+  return <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
 }
 
 // ── JSON viewer with copy ──────────────────────────────────────────────────────
@@ -45,10 +45,10 @@ function JsonViewer({ data, label, defaultOpen = false }: { data: unknown; label
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-3 py-2 text-left text-xs font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
       >
         <span>{label}</span>
         {open ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -57,13 +57,13 @@ function JsonViewer({ data, label, defaultOpen = false }: { data: unknown; label
         <div className="relative">
           <button
             onClick={handleCopy}
-            className="absolute top-2 right-2 p-1.5 rounded border border-gray-200 bg-white hover:bg-gray-50 text-gray-500 text-[10px] flex items-center gap-1"
+            className="absolute top-2 right-2 p-1.5 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 text-[10px] flex items-center gap-1"
           >
             <Copy className="w-3 h-3" />
             {copied ? 'Copied' : 'Copy'}
           </button>
-          <pre className="p-4 pt-10 text-xs font-mono text-gray-700 overflow-auto max-h-64">
-            {str || <span className="text-gray-400 italic">Empty</span>}
+          <pre className="p-4 pt-10 text-xs font-mono text-gray-700 dark:text-gray-300 overflow-auto max-h-64">
+            {str || <span className="text-gray-400 dark:text-gray-500 italic">Empty</span>}
           </pre>
         </div>
       )}
@@ -104,8 +104,8 @@ function InsightDetailRow({
   if (loading) {
     return (
       <tr>
-        <td colSpan={9} className="px-6 py-4 bg-gray-50 border-t border-gray-100">
-          <div className="flex items-center gap-2 text-xs text-gray-400">
+        <td colSpan={9} className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
             Loading step logs...
           </div>
@@ -118,7 +118,7 @@ function InsightDetailRow({
     <>
       <tr>
         <td colSpan={9} className="px-0 pb-0">
-          <div className="bg-gray-50 border-t border-gray-100 px-6 py-4 space-y-4">
+          <div className="bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700 px-6 py-4 space-y-4">
             {/* Request & Response JSON */}
             <div className="grid grid-cols-2 gap-4">
               <JsonViewer
@@ -136,7 +136,7 @@ function InsightDetailRow({
             {/* Step trace flowchart */}
             {steps.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                   Step Trace · click a node to inspect
                 </p>
                 <ExecutionFlowDiagram
@@ -150,26 +150,26 @@ function InsightDetailRow({
 
             {/* Step logs list */}
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                 Step Logs
               </p>
               <div className="space-y-1.5">
                 {steps.map((step) => (
                   <div
                     key={step.id}
-                    className="flex items-center gap-3 text-xs text-gray-700 bg-white rounded border border-gray-200 px-3 py-2"
+                    className="flex items-center gap-3 text-xs text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 px-3 py-2"
                   >
-                    <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 font-mono text-[10px] flex-shrink-0">
+                    <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-mono text-[10px] flex-shrink-0">
                       {step.stepOrder}
                     </span>
                     <StepStatusIcon status={step.status} />
                     <div className="flex-1 min-w-0">
-                      <span className="font-medium text-gray-800">{step.stepName}</span>
-                      <span className="ml-2 text-gray-400 text-[11px] font-mono">
+                      <span className="font-medium text-gray-800 dark:text-gray-200">{step.stepName}</span>
+                      <span className="ml-2 text-gray-400 dark:text-gray-500 text-[11px] font-mono">
                         {getServiceLabel(step.stepType)}
                       </span>
                       {step.errorMessage && (
-                        <p className="text-red-500 text-[11px] mt-0.5 truncate">{step.errorMessage}</p>
+                        <p className="text-red-500 dark:text-red-400 text-[11px] mt-0.5 truncate">{step.errorMessage}</p>
                       )}
                     </div>
                     <span
@@ -181,7 +181,7 @@ function InsightDetailRow({
                       {step.status}
                     </span>
                     {step.durationMs != null && (
-                      <span className="text-gray-400 text-[11px] flex-shrink-0 font-mono">
+                      <span className="text-gray-400 dark:text-gray-500 text-[11px] flex-shrink-0 font-mono">
                         {step.durationMs}ms
                       </span>
                     )}
@@ -340,14 +340,14 @@ export function Insights() {
       {/* Header */}
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Insights</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Insights</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             Search transactions, view request/response payloads, and analyze execution flow
           </p>
         </div>
         <button
           onClick={load}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           Refresh
@@ -355,8 +355,8 @@ export function Insights() {
       </div>
 
       {/* Search bar */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-4">
+        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
           <Search className="w-3.5 h-3.5" />
           Search
         </p>
@@ -365,36 +365,36 @@ export function Insights() {
             value={policyNumber}
             onChange={(e) => setPolicyNumber(e.target.value)}
             placeholder="Policy Number"
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
           />
           <input
             value={accountNumber}
             onChange={(e) => setAccountNumber(e.target.value)}
             placeholder="Account Number"
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
           />
           <input
             value={instanceId}
             onChange={(e) => setInstanceId(e.target.value)}
             placeholder="Instance ID"
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
           />
           <input
             value={correlationId}
             onChange={(e) => setCorrelationId(e.target.value)}
             placeholder="Correlation ID"
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-mono text-xs"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 font-mono text-xs"
           />
           <input
             value={productFilter}
             onChange={(e) => setProductFilter(e.target.value)}
             placeholder="Product Line"
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
           />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
           >
             <option value="">All statuses</option>
             {STATUS_OPTIONS.map((s) => (
@@ -408,14 +408,14 @@ export function Insights() {
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
             placeholder="From date"
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
           />
           <input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
             placeholder="To date"
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
           />
         </div>
         <div className="flex items-center gap-3 mt-3">
@@ -428,7 +428,7 @@ export function Insights() {
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="text-xs text-gray-400 hover:text-gray-600 underline"
+              className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 underline"
             >
               Clear filters
             </button>
@@ -439,31 +439,31 @@ export function Insights() {
       {/* Summary strip */}
       <div className="flex items-center gap-6 mb-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">{transactions.length} transactions</span>
+          <BarChart3 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{transactions.length} transactions</span>
         </div>
-        <div className="text-sm text-gray-600">
-          Success rate: <span className="font-semibold text-green-700">{successRate}%</span>
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          Success rate: <span className="font-semibold text-green-700 dark:text-green-300">{successRate}%</span>
         </div>
-        <div className="text-sm text-gray-600">
-          Completed: <span className="font-semibold text-green-600">{completedCount}</span>
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          Completed: <span className="font-semibold text-green-600 dark:text-green-400">{completedCount}</span>
         </div>
-        <div className="text-sm text-gray-600">
-          Failed: <span className="font-semibold text-red-600">{failedCount}</span>
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          Failed: <span className="font-semibold text-red-600 dark:text-red-400">{failedCount}</span>
         </div>
       </div>
 
       {/* Top errors */}
       {topErrorsList.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-4">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
             Top Errors
           </p>
           <div className="flex flex-wrap gap-2">
             {topErrorsList.map(([msg, count]) => (
               <span
                 key={msg}
-                className="inline-flex items-center px-2 py-1 rounded text-xs bg-red-50 text-red-700 border border-red-100"
+                className="inline-flex items-center px-2 py-1 rounded text-xs bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-800"
               >
                 {msg.length > 60 ? `${msg.slice(0, 60)}…` : msg}: {count}
               </span>
@@ -474,7 +474,7 @@ export function Insights() {
 
       {/* Error */}
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+        <div className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm text-red-700 dark:text-red-300">
           {error}
         </div>
       )}
@@ -488,12 +488,12 @@ export function Insights() {
 
       {/* Empty state */}
       {!loading && transactions.length === 0 && !error && (
-        <div className="bg-white rounded-lg border border-dashed border-gray-300 p-12 text-center">
-          <BarChart3 className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm font-medium text-gray-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-12 text-center">
+          <BarChart3 className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
             {hasFilters ? 'No transactions match the current filters' : 'No transactions yet'}
           </p>
-          <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto leading-relaxed">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 max-w-xs mx-auto leading-relaxed">
             {!hasFilters &&
               'Transactions appear here after executing rating requests through the orchestrator.'}
           </p>
@@ -502,10 +502,10 @@ export function Insights() {
 
       {/* Table */}
       {!loading && transactions.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
+              <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                 <th className="w-8 px-3 py-3" />
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Correlation ID
@@ -535,23 +535,23 @@ export function Insights() {
                 <React.Fragment key={tx.id}>
                   <tr
                     onClick={() => toggleExpand(tx.id)}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                   >
-                    <td className="px-3 py-3 text-gray-400">
+                    <td className="px-3 py-3 text-gray-400 dark:text-gray-500">
                       {expanded.has(tx.id) ? (
                         <ChevronDown className="w-3.5 h-3.5" />
                       ) : (
                         <ChevronRight className="w-3.5 h-3.5" />
                       )}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-600 max-w-[130px]">
+                    <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400 max-w-[130px]">
                       <span title={tx.correlationId} className="truncate block">
                         {tx.correlationId.length > 18
                           ? `${tx.correlationId.slice(0, 8)}…${tx.correlationId.slice(-4)}`
                           : tx.correlationId}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-800">
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-800 dark:text-gray-200">
                       {tx.productLineCode}
                     </td>
                     <td className="px-4 py-3">
@@ -564,47 +564,47 @@ export function Insights() {
                         {tx.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500">
+                    <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                       {tx.scope ? (
                         <span className="space-x-1">
                           {tx.scope.state && (
-                            <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-medium">
+                            <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded text-[10px] font-medium">
                               {tx.scope.state}
                             </span>
                           )}
                           {tx.scope.coverage && (
-                            <span className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-[10px] font-medium">
+                            <span className="bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded text-[10px] font-medium">
                               {tx.scope.coverage}
                             </span>
                           )}
                           {tx.scope.transactionType && (
-                            <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px]">
+                            <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded text-[10px]">
                               {tx.scope.transactionType}
                             </span>
                           )}
                         </span>
                       ) : (
-                        <span className="text-gray-300">—</span>
+                        <span className="text-gray-300 dark:text-gray-600">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs">
                       {tx.premiumResult != null ? (
-                        <span className="font-semibold text-green-700">
+                        <span className="font-semibold text-green-700 dark:text-green-300">
                           ${Number(tx.premiumResult).toLocaleString()}
                         </span>
                       ) : (
-                        <span className="text-gray-300">—</span>
+                        <span className="text-gray-300 dark:text-gray-600">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600">
+                    <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
                       {tx.completedSteps}/{tx.stepCount}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-400">
+                    <td className="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">
                       <div>
                         {tx.durationMs != null ? (
-                          <span className="font-mono text-gray-600">{tx.durationMs}ms</span>
+                          <span className="font-mono text-gray-600 dark:text-gray-400">{tx.durationMs}ms</span>
                         ) : (
-                          <span className="text-gray-300">—</span>
+                          <span className="text-gray-300 dark:text-gray-600">—</span>
                         )}
                       </div>
                       <div>{formatDate(tx.createdAt)}</div>

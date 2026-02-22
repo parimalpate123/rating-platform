@@ -69,20 +69,20 @@ function AIGenerateModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-purple-600" />
-            <h3 className="text-base font-semibold text-gray-900">Generate Rule with AI</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Generate Rule with AI</h3>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400">
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="px-6 py-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Describe the rule in plain English</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Describe the rule in plain English</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {[
                 {
@@ -108,14 +108,14 @@ function AIGenerateModal({
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               rows={4}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50 focus:bg-white resize-none"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-800 resize-none"
               placeholder="e.g., Apply a 20% surcharge if the building age is over 40 years and located in California"
               autoFocus
             />
-            <p className="text-xs text-gray-400 mt-1">Describe conditions and what should happen when met. Uses AWS Bedrock (Claude) or falls back to pattern matching.</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Describe conditions and what should happen when met. Uses AWS Bedrock (Claude) or falls back to pattern matching.</p>
           </div>
 
-          {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg px-3 py-2">{error}</p>}
 
           {confidence !== null && (
             <div className="flex items-center gap-2 text-sm">
@@ -125,8 +125,8 @@ function AIGenerateModal({
           )}
         </div>
 
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-b-xl">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
           <button
             onClick={handleGenerate}
             disabled={!prompt.trim() || loading}
@@ -275,8 +275,8 @@ function RuleEditorModal({
     setScopeTags((prev) => prev.filter((t) => t.id !== tagId))
   }
 
-  const inputCls = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white'
-  const selectCls = 'px-2 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white'
+  const inputCls = 'w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-800'
+  const selectCls = 'px-2 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-800'
 
   // Available scope values grouped by type
   const scopeValuesByType = new Map<string, string[]>()
@@ -287,18 +287,18 @@ function RuleEditorModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">{isNew ? 'New Rule' : 'Edit Rule'}</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{productCode}</p>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{isNew ? 'New Rule' : 'Edit Rule'}</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{productCode}</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setShowAI(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors">
               <Sparkles className="w-3.5 h-3.5" /> Generate with AI
             </button>
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400">
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -306,23 +306,23 @@ function RuleEditorModal({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          {error && <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">{error}</div>}
+          {error && <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm text-red-700 dark:text-red-300">{error}</div>}
 
           {/* Basic info */}
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Rule Details</h3>
+            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Rule Details</h3>
             <div className="grid grid-cols-[1fr_100px] gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Name <span className="text-red-500">*</span></label>
                 <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="e.g., High_Revenue_Surcharge" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
                 <input type="number" value={priority} onChange={(e) => setPriority(Number(e.target.value))} className={inputCls} />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
               <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className={inputCls + ' resize-none'} placeholder="Describe what this rule does..." />
             </div>
           </div>
@@ -330,26 +330,26 @@ function RuleEditorModal({
           {/* Conditions */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 Conditions <span className="text-blue-600 font-bold ml-1">(IF)</span>
               </h3>
-              <button onClick={addCond} className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800">
+              <button onClick={addCond} className="flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-400">
                 <Plus className="w-3 h-3" /> Add Condition
               </button>
             </div>
-            <div className="text-[10px] text-gray-400 uppercase grid grid-cols-[1fr_130px_1fr_28px] gap-2 px-1">
+            <div className="text-[10px] text-gray-400 dark:text-gray-500 uppercase grid grid-cols-[1fr_130px_1fr_28px] gap-2 px-1">
               <span>Field path</span><span>Operator</span><span>Value</span><span />
             </div>
             {conditions.map((cond, i) => (
               <React.Fragment key={i}>
                 {i > 0 && <span className="text-[10px] font-bold text-purple-600 pl-1">AND</span>}
                 <div className="grid grid-cols-[1fr_130px_1fr_28px] gap-2 items-center">
-                  <input value={cond.field} onChange={(e) => updateCond(i, { field: e.target.value })} className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50" placeholder="insured.state" />
+                  <input value={cond.field} onChange={(e) => updateCond(i, { field: e.target.value })} className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800" placeholder="insured.state" />
                   <select value={cond.operator} onChange={(e) => updateCond(i, { operator: e.target.value as RuleOperator })} className={selectCls}>
                     {OPERATORS.map((op) => <option key={op.value} value={op.value}>{op.label}</option>)}
                   </select>
-                  <input value={cond.value} onChange={(e) => updateCond(i, { value: e.target.value })} className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50" placeholder="NY" disabled={cond.operator === 'is_null' || cond.operator === 'is_not_null'} />
-                  <button onClick={() => removeCond(i)} disabled={conditions.length === 1} className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-30">
+                  <input value={cond.value} onChange={(e) => updateCond(i, { value: e.target.value })} className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800" placeholder="NY" disabled={cond.operator === 'is_null' || cond.operator === 'is_not_null'} />
+                  <button onClick={() => removeCond(i)} disabled={conditions.length === 1} className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-30">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -360,14 +360,14 @@ function RuleEditorModal({
           {/* Actions */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 Actions <span className="text-green-600 font-bold ml-1">(THEN)</span>
               </h3>
-              <button onClick={addAction} className="flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-800">
+              <button onClick={addAction} className="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-400">
                 <Plus className="w-3 h-3" /> Add Action
               </button>
             </div>
-            <div className="text-[10px] text-gray-400 uppercase grid grid-cols-[140px_1fr_1fr_28px] gap-2 px-1">
+            <div className="text-[10px] text-gray-400 dark:text-gray-500 uppercase grid grid-cols-[140px_1fr_1fr_28px] gap-2 px-1">
               <span>Action type</span><span>Target field</span><span>Value</span><span />
             </div>
             {actions.map((act, i) => (
@@ -375,9 +375,9 @@ function RuleEditorModal({
                 <select value={act.actionType} onChange={(e) => updateAction(i, { actionType: e.target.value as ActionType })} className={selectCls}>
                   {ACTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
-                <input value={act.targetField} onChange={(e) => updateAction(i, { targetField: e.target.value })} className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50" placeholder="premium" disabled={act.actionType === 'reject'} />
-                <input value={act.value} onChange={(e) => updateAction(i, { value: e.target.value })} className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50" placeholder={act.actionType === 'reject' ? 'reason' : '0.20'} />
-                <button onClick={() => removeAction(i)} disabled={actions.length === 1} className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-30">
+                <input value={act.targetField} onChange={(e) => updateAction(i, { targetField: e.target.value })} className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800" placeholder="premium" disabled={act.actionType === 'reject'} />
+                <input value={act.value} onChange={(e) => updateAction(i, { value: e.target.value })} className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800" placeholder={act.actionType === 'reject' ? 'reason' : '0.20'} />
+                <button onClick={() => removeAction(i)} disabled={actions.length === 1} className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-30">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -385,14 +385,14 @@ function RuleEditorModal({
           </div>
 
           {/* Rule Preview */}
-          <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
-            <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Rule Preview</h3>
+          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <h3 className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Rule Preview</h3>
             <div className="font-mono text-sm space-y-0.5">
               <div className="text-blue-600 font-semibold">IF</div>
               {conditions.map((c, i) => (
                 <div key={i} className="pl-4">
                   {i > 0 && <span className="text-purple-600">AND </span>}
-                  <span className="text-gray-700">{c.field || '?'} </span>
+                  <span className="text-gray-700 dark:text-gray-300">{c.field || '?'} </span>
                   <span className="text-orange-500">{c.operator} </span>
                   <span className="text-green-600">{c.value || '?'}</span>
                 </div>
@@ -401,7 +401,7 @@ function RuleEditorModal({
               {actions.map((a, i) => (
                 <div key={i} className="pl-4">
                   <span className="text-purple-600">{a.actionType} </span>
-                  <span className="text-gray-700">{a.targetField || '?'} </span>
+                  <span className="text-gray-700 dark:text-gray-300">{a.targetField || '?'} </span>
                   <span className="text-green-600">{a.value || '?'}</span>
                 </div>
               ))}
@@ -411,7 +411,7 @@ function RuleEditorModal({
           {/* Scope Tags (only for editing existing rules) */}
           {!isNew && (
             <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Scope Tags</h3>
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Scope Tags</h3>
               <div className="flex items-center flex-wrap gap-2">
                 {scopeTags.map((tag) => (
                   <span key={tag.id} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200">
@@ -421,34 +421,34 @@ function RuleEditorModal({
                     </button>
                   </span>
                 ))}
-                {scopeTags.length === 0 && <span className="text-xs text-gray-400">No scope tags — rule applies to all requests</span>}
+                {scopeTags.length === 0 && <span className="text-xs text-gray-400 dark:text-gray-500">No scope tags — rule applies to all requests</span>}
               </div>
               <div className="flex items-center gap-2">
-                <select value={newTagType} onChange={(e) => { setNewTagType(e.target.value); setNewTagValue('') }} className="px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50">
+                <select value={newTagType} onChange={(e) => { setNewTagType(e.target.value); setNewTagValue('') }} className="px-2 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
                   <option value="state">State</option>
                   <option value="coverage">Coverage</option>
                   <option value="transaction_type">Transaction Type</option>
                 </select>
                 {(scopeValuesByType.get(newTagType)?.length ?? 0) > 0 ? (
-                  <select value={newTagValue} onChange={(e) => setNewTagValue(e.target.value)} className="px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50">
+                  <select value={newTagValue} onChange={(e) => setNewTagValue(e.target.value)} className="px-2 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
                     <option value="">Select value...</option>
                     {(scopeValuesByType.get(newTagType) ?? []).map((v) => <option key={v} value={v}>{v}</option>)}
                   </select>
                 ) : (
-                  <input value={newTagValue} onChange={(e) => setNewTagValue(e.target.value)} className="px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50" placeholder="Type value..." />
+                  <input value={newTagValue} onChange={(e) => setNewTagValue(e.target.value)} className="px-2 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800" placeholder="Type value..." />
                 )}
                 <button onClick={handleAddTag} disabled={!newTagValue.trim()} className="px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 disabled:opacity-50">
                   + Add Tag
                 </button>
               </div>
-              <p className="text-[10px] text-gray-400">Tags restrict when this rule fires. Configure available scope values in the Scopes tab first.</p>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500">Tags restrict when this rule fires. Configure available scope values in the Scopes tab first.</p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 flex-shrink-0">
-          <button onClick={onClose} disabled={saving} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50">Cancel</button>
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <button onClick={onClose} disabled={saving} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50">Cancel</button>
           <button
             onClick={handleSave}
             disabled={saving || !name.trim()}
@@ -482,49 +482,49 @@ function RuleCard({
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
       <div className="flex items-center gap-3 px-4 py-3">
-        <button onClick={() => setExpanded(!expanded)} className="text-gray-400">
+        <button onClick={() => setExpanded(!expanded)} className="text-gray-400 dark:text-gray-500">
           {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-gray-800">{rule.name}</span>
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{rule.name}</span>
             <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium', rule.isActive ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700')}>
               {rule.isActive ? 'active' : 'draft'}
             </span>
-            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600">
+            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
               priority: {rule.priority}
             </span>
           </div>
-          {rule.description && <p className="text-xs text-gray-400 mt-0.5 truncate">{rule.description}</p>}
+          {rule.description && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">{rule.description}</p>}
         </div>
-        <span className="text-xs text-gray-400 flex-shrink-0">
+        <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
           {rule.conditions?.length ?? 0} condition{(rule.conditions?.length ?? 0) !== 1 ? 's' : ''}
         </span>
         <div className="flex items-center gap-1 flex-shrink-0">
           {!rule.isActive && (
-            <button onClick={onActivate} title="Activate" className="p-1.5 text-gray-400 hover:text-green-600 rounded hover:bg-green-50">
+            <button onClick={onActivate} title="Activate" className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-green-600 dark:hover:text-green-400 rounded hover:bg-green-50 dark:hover:bg-green-900/30">
               <Zap className="w-3.5 h-3.5" />
             </button>
           )}
-          <button onClick={onEdit} className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50">
+          <button onClick={onEdit} className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30">
             <Pencil className="w-3.5 h-3.5" />
           </button>
-          <button onClick={onDelete} className="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50">
+          <button onClick={onDelete} className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/30">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
       {expanded && (
-        <div className="border-t border-gray-100 px-4 py-3">
+        <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-3">
           <div className="font-mono text-xs space-y-0.5">
             <div className="text-blue-600 font-semibold">IF</div>
             {(rule.conditions ?? []).map((c, i) => (
               <div key={i} className="pl-4">
                 {i > 0 && <span className="text-purple-600">AND </span>}
-                <span className="text-gray-700">{c.field} </span>
+                <span className="text-gray-700 dark:text-gray-300">{c.field} </span>
                 <span className="text-orange-500">{c.operator} </span>
                 <span className="text-green-600">{String(c.value ?? '')}</span>
               </div>
@@ -533,7 +533,7 @@ function RuleCard({
             {(rule.actions ?? []).map((a, i) => (
               <div key={i} className="pl-4">
                 <span className="text-purple-600">{a.actionType} </span>
-                <span className="text-gray-700">{a.targetField} </span>
+                <span className="text-gray-700 dark:text-gray-300">{a.targetField} </span>
                 <span className="text-green-600">{String(a.value ?? '')}</span>
               </div>
             ))}
@@ -581,23 +581,23 @@ export function RulesTab({ productCode }: { productCode: string }) {
   }
 
   if (error) {
-    return <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">{error}</div>
+    return <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm text-red-700 dark:text-red-300">{error}</div>
   }
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">{rules.length} rule{rules.length !== 1 ? 's' : ''} configured</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{rules.length} rule{rules.length !== 1 ? 's' : ''} configured</p>
         <button onClick={handleNew} className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
           <Plus className="w-4 h-4" /> New Rule
         </button>
       </div>
 
       {rules.length === 0 && (
-        <div className="bg-white rounded-lg border border-dashed border-gray-300 p-12 text-center">
-          <BookOpen className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm font-medium text-gray-600">No rules yet</p>
-          <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-12 text-center">
+          <BookOpen className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">No rules yet</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 max-w-xs mx-auto">
             Create rules to apply business logic during rating. You can also use AI to generate rules from plain-English descriptions.
           </p>
           <button onClick={handleNew} className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">

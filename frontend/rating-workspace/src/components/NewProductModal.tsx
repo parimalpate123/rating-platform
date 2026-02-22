@@ -74,16 +74,16 @@ export function NewProductModal({ onClose, onCreated }: NewProductModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">New Product Line</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Create a new rating product line</p>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">New Product Line</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Create a new rating product line</p>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -91,7 +91,7 @@ export function NewProductModal({ onClose, onCreated }: NewProductModalProps) {
 
         {/* Error banner */}
         {error && (
-          <div className="mx-6 mt-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+          <div className="mx-6 mt-4 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
             {error}
           </div>
         )}
@@ -101,7 +101,7 @@ export function NewProductModal({ onClose, onCreated }: NewProductModalProps) {
           {/* Code + Name */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Code <span className="text-red-500">*</span>
               </label>
               <input
@@ -110,11 +110,11 @@ export function NewProductModal({ onClose, onCreated }: NewProductModalProps) {
                 onChange={handleChange}
                 required
                 placeholder="e.g. GL, IMCE"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white font-mono uppercase"
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-800 font-mono uppercase"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -123,7 +123,7 @@ export function NewProductModal({ onClose, onCreated }: NewProductModalProps) {
                 onChange={handleChange}
                 required
                 placeholder="e.g. General Liability"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white"
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-800"
               />
             </div>
           </div>
@@ -137,19 +137,19 @@ export function NewProductModal({ onClose, onCreated }: NewProductModalProps) {
               onChange={handleChange}
               rows={2}
               placeholder="Brief description of this product line..."
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white resize-none"
+              className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-800 resize-none"
             />
           </div>
 
           {/* Source + Target System */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Source System</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Source System</label>
               <select
                 name="sourceSystem"
                 value={form.sourceSystem}
                 onChange={handleChange}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white"
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-800"
               >
                 <option value="">Select source...</option>
                 {SOURCE_SYSTEMS.map((s) => (
@@ -160,12 +160,12 @@ export function NewProductModal({ onClose, onCreated }: NewProductModalProps) {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Target System</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Target System</label>
               <select
                 name="targetSystem"
                 value={form.targetSystem}
                 onChange={handleChange}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white"
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-800"
               >
                 <option value="">Select target...</option>
                 {TARGET_SYSTEMS.map((t) => (
@@ -180,34 +180,34 @@ export function NewProductModal({ onClose, onCreated }: NewProductModalProps) {
           {/* Product Owner + Technical Lead */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Product Owner</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Product Owner</label>
               <input
                 name="productOwner"
                 value={form.productOwner}
                 onChange={handleChange}
                 placeholder="e.g. Jane Smith"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white"
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-800"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Technical Lead</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Technical Lead</label>
               <input
                 name="technicalLead"
                 value={form.technicalLead}
                 onChange={handleChange}
                 placeholder="e.g. John Doe"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white"
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-800"
               />
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>

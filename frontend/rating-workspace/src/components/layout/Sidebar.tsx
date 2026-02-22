@@ -45,7 +45,7 @@ function NavItem({ label, path, icon: Icon, indent = false }: { label: string; p
         'w-full flex items-center gap-2 py-1.5 rounded-md text-sm transition-colors text-left',
         indent ? 'pl-5 pr-3' : 'px-3',
         active
-          ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium'
+          ? 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 font-medium'
           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
       )}
     >
@@ -67,7 +67,7 @@ function ProductNavItem({ product }: { product: ProductLine }) {
         onClick={() => { setOpen(!open); navigate(`/products/${product.code}`); }}
         className={cn(
           'w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-md text-sm transition-colors',
-          active ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
+          active ? 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 font-medium' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -105,7 +105,7 @@ export function Sidebar({ products, onNewProduct }: SidebarProps) {
               onClick={() => navigate(path)}
               className={cn(
                 'w-9 h-9 flex items-center justify-center rounded-lg transition-colors',
-                active ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' : 'text-gray-400 hover:bg-gray-200 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300',
+                active ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' : 'text-gray-400 hover:bg-gray-200 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300',
               )}
             >
               <Icon className="w-4 h-4" />
@@ -122,7 +122,7 @@ export function Sidebar({ products, onNewProduct }: SidebarProps) {
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Navigator</span>
             <button
               onClick={() => navigate('/')}
-              className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-[10px] text-purple-600 dark:text-purple-400 hover:underline"
             >
               Home
             </button>
@@ -140,7 +140,7 @@ export function Sidebar({ products, onNewProduct }: SidebarProps) {
               ))}
               <button
                 onClick={onNewProduct}
-                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/30 transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>New Product</span>

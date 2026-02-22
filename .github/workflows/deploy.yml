@@ -1,0 +1,278 @@
+# ── Rating Platform — Build, Push & Deploy (ECS Fargate) ─────────────────────
+#
+# Triggers:
+#   - Manual dispatch only → choose environment (dev / staging / prod)
+#
+# GitHub Secrets required (Settings > Secrets > Actions):
+#   AWS_ACCESS_KEY_ID       - IAM credentials with ECR + ECS + RDS + Terraform perms
+#   AWS_SECRET_ACCESS_KEY
+#   DB_PASSWORD             - RDS password (Terraform creates RDS with this password)
+#
+# All non-sensitive config (vpc_id, subnets, ecs_cluster_name, etc.) lives in
+# infra/terraform/variables.tf with defaults. Edit that file to change infra config.
+
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "dev"
+        type: choice
+        options: [dev, staging, prod]
+      skip_terraform:
+        description: "Skip Terraform apply (images only)"
+        required: false
+        default: false
+        type: boolean
+      run_migrations:
+        description: "Run DB migrations before deploy"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  TF_DIR: infra/terraform
+  ECS_CLUSTER: sre-poc-mcp-cluster
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  # 1. Build & push all Docker images to ECR
+  # ────────────────────────────────────────────────────────────────────────────
+  build-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: tag
+        run: echo "tag=${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push all images
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          SERVICES=(
+            "orchestrators/core-rating/Dockerfile:core-rating:rating-platform/core-rating"
+            "orchestrators/line-rating/Dockerfile:line-rating:rating-platform/line-rating"
+            "services/product-config/Dockerfile:product-config:rating-platform/product-config"
+            "services/transform-service/Dockerfile:transform-service:rating-platform/transform-service"
+            "services/rules-service/Dockerfile:rules-service:rating-platform/rules-service"
+            "services/status-service/Dockerfile:status-service:rating-platform/status-service"
+            "frontend/rating-workspace/Dockerfile:rating-workspace:rating-platform/rating-workspace"
+            "services/adapters/kafka/Dockerfile:adapter-kafka:rating-platform/adapter-kafka"
+            "services/adapters/dnb/Dockerfile:adapter-dnb:rating-platform/adapter-dnb"
+            "services/adapters/gw/Dockerfile:adapter-gw:rating-platform/adapter-gw"
+          )
+
+          for entry in "${SERVICES[@]}"; do
+            IFS=: read -r dockerfile nx_project ecr_name <<< "$entry"
+            image_uri="${ECR_REGISTRY}/${ecr_name}:${IMAGE_TAG}"
+
+            echo "::group::Build $nx_project"
+            if [ "$nx_project" = "rating-workspace" ]; then
+              npx nx run rating-workspace:build
+            else
+              npx nx run "$nx_project":build
+              npx nx run "$nx_project":prune-lockfile 2>/dev/null || true
+              npx nx run "$nx_project":copy-workspace-modules 2>/dev/null || true
+            fi
+            docker build -f "$dockerfile" -t "$image_uri" .
+            docker push "$image_uri"
+            echo "::endgroup::"
+            echo "✓ $nx_project → $image_uri"
+          done
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # 2. Run DB migrations (optional, gated by manual dispatch input)
+  # ────────────────────────────────────────────────────────────────────────────
+  migrate:
+    name: Run Migrations
+    needs: build-push
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_migrations == true }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7"
+
+      - name: Get RDS endpoint from Terraform
+        id: rds
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          terraform init -input=false
+          DB_HOST=$(terraform output -raw rds_endpoint 2>/dev/null || echo "")
+          DB_PORT=$(terraform output -raw rds_port 2>/dev/null || echo "5432")
+          echo "host=$DB_HOST" >> "$GITHUB_OUTPUT"
+          echo "port=$DB_PORT" >> "$GITHUB_OUTPUT"
+
+      - name: Install psql
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Run migrations
+        env:
+          DB_HOST: ${{ steps.rds.outputs.host }}
+          DB_PORT: ${{ steps.rds.outputs.port }}
+          DB_USER: rating_user
+          DB_PASS: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: rating_platform
+        run: ./scripts/run-migrations.sh
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # 3. Terraform plan + apply (deploys ECS services)
+  # ────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Terraform Deploy
+    needs: [build-push, migrate]
+    if: |
+      always() &&
+      needs.build-push.result == 'success' &&
+      (needs.migrate.result == 'success' || needs.migrate.result == 'skipped') &&
+      inputs.skip_terraform != true
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'dev' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7"
+
+      - name: Terraform init
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform init -input=false
+
+      - name: Terraform plan
+        working-directory: ${{ env.TF_DIR }}
+        env:
+          TF_VAR_image_tag: ${{ needs.build-push.outputs.image_tag }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Terraform apply
+        working-directory: ${{ env.TF_DIR }}
+        env:
+          TF_VAR_image_tag: ${{ needs.build-push.outputs.image_tag }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+        run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Force new deployment for all services
+        run: |
+          SERVICES=(
+            core-rating line-rating product-config
+            transform-service rules-service status-service
+            rating-workspace adapter-kafka adapter-dnb adapter-gw
+          )
+          for svc in "${SERVICES[@]}"; do
+            echo "Forcing deployment: $svc"
+            aws ecs update-service \
+              --cluster "${{ env.ECS_CLUSTER }}" \
+              --service "$svc" \
+              --force-new-deployment \
+              --region "${{ env.AWS_REGION }}" \
+              --no-cli-pager || true
+          done
+
+      - name: Show deploy info
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          echo "───────────────────────────────────────────"
+          echo "Deploy complete!"
+          echo "Image tag:    ${{ needs.build-push.outputs.image_tag }}"
+          echo "ECS Cluster:  $(terraform output -raw ecs_cluster_name 2>/dev/null || echo 'N/A')"
+          echo "ALB DNS:      $(terraform output -raw alb_dns_name 2>/dev/null || echo 'N/A')"
+          echo "───────────────────────────────────────────"
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # 4. Smoke test — verify ECS services are healthy after deploy
+  # ────────────────────────────────────────────────────────────────────────────
+  smoke-test:
+    name: Smoke Test
+    needs: [build-push, deploy]
+    if: needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Wait for ECS services to stabilize
+        run: |
+          SERVICES=(
+            core-rating line-rating product-config
+            transform-service rules-service status-service
+            rating-workspace adapter-kafka adapter-dnb adapter-gw
+          )
+          echo "Waiting for services to reach RUNNING state..."
+          for svc in "${SERVICES[@]}"; do
+            echo -n "  $svc: "
+            aws ecs wait services-stable \
+              --cluster "${{ env.ECS_CLUSTER }}" \
+              --services "$svc" \
+              --region "${{ env.AWS_REGION }}" 2>/dev/null \
+              && echo "STABLE" || echo "TIMEOUT (may still be deploying)"
+          done
+
+      - name: ECS service status
+        run: |
+          echo "── ECS Services ─────────────────────────────"
+          aws ecs describe-services \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --services \
+              core-rating line-rating product-config \
+              transform-service rules-service status-service \
+              rating-workspace adapter-kafka adapter-dnb adapter-gw \
+            --region "${{ env.AWS_REGION }}" \
+            --query 'services[].{Name:serviceName,Status:status,Running:runningCount,Desired:desiredCount,TaskDef:taskDefinition}' \
+            --output table --no-cli-pager

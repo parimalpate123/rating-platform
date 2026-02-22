@@ -11,7 +11,7 @@ import { StepDetailPanel } from '../components/flow/StepDetailPanel'
 function StepStatusIcon({ status }: { status: string }) {
   if (status === 'COMPLETED') return <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
   if (status === 'FAILED') return <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-  return <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+  return <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
 }
 
 // ── Expanded step logs row ────────────────────────────────────────────────────
@@ -35,8 +35,8 @@ function StepLogsRow({ txId }: { txId: string }) {
   if (loading) {
     return (
       <tr>
-        <td colSpan={8} className="px-6 py-3 bg-gray-50">
-          <div className="flex items-center gap-2 text-xs text-gray-400">
+        <td colSpan={8} className="px-6 py-3 bg-gray-50 dark:bg-gray-900">
+          <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
             Loading step logs...
           </div>
@@ -48,8 +48,8 @@ function StepLogsRow({ txId }: { txId: string }) {
   if (error) {
     return (
       <tr>
-        <td colSpan={8} className="px-6 py-3 bg-red-50">
-          <p className="text-xs text-red-600">{error}</p>
+        <td colSpan={8} className="px-6 py-3 bg-red-50 dark:bg-red-900/30">
+          <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
         </td>
       </tr>
     )
@@ -76,14 +76,14 @@ function StepLogsRow({ txId }: { txId: string }) {
     <>
       <tr>
         <td colSpan={8} className="px-0 pb-0">
-          <div className="bg-gray-50 border-t border-gray-100 px-6 py-4 space-y-4">
+          <div className="bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700 px-6 py-4 space-y-4">
             {steps.length === 0 ? (
-              <p className="text-xs text-gray-400">No step logs available.</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">No step logs available.</p>
             ) : (
               <>
                 {/* Flow diagram */}
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                     Execution Flow · click a node to inspect
                   </p>
                   <ExecutionFlowDiagram
@@ -96,7 +96,7 @@ function StepLogsRow({ txId }: { txId: string }) {
 
                 {/* Step list */}
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                     Step Logs
                   </p>
                   <div className="space-y-1.5">
@@ -113,7 +113,7 @@ function StepLogsRow({ txId }: { txId: string }) {
                           <span className="font-medium text-gray-800">{step.stepName}</span>
                           <span className="ml-2 text-gray-400 text-[11px] font-mono">{step.stepType}</span>
                           {step.errorMessage && (
-                            <p className="text-red-500 text-[11px] mt-0.5 truncate">{step.errorMessage}</p>
+                            <p className="text-red-500 dark:text-red-400 text-[11px] mt-0.5 truncate">{step.errorMessage}</p>
                           )}
                         </div>
                         <span
@@ -125,7 +125,7 @@ function StepLogsRow({ txId }: { txId: string }) {
                           {step.status}
                         </span>
                         {step.durationMs != null && (
-                          <span className="text-gray-400 text-[11px] flex-shrink-0 font-mono">
+                          <span className="text-gray-400 dark:text-gray-500 text-[11px] flex-shrink-0 font-mono">
                             {step.durationMs}ms
                           </span>
                         )}
@@ -202,14 +202,14 @@ export function Transactions() {
       {/* Header */}
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Transactions</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Transactions</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             Monitor rating request execution across all product lines
           </p>
         </div>
         <button
           onClick={load}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           Refresh
@@ -222,12 +222,12 @@ export function Transactions() {
           value={productFilter}
           onChange={(e) => setProductFilter(e.target.value)}
           placeholder="Filter by product line..."
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-52"
+          className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 w-52"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
         >
           <option value="">All statuses</option>
           {STATUS_OPTIONS.map((s) => (
@@ -237,19 +237,19 @@ export function Transactions() {
         {hasFilters && (
           <button
             onClick={() => { setProductFilter(''); setStatusFilter('') }}
-            className="text-xs text-gray-400 hover:text-gray-600 underline"
+            className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 underline"
           >
             Clear filters
           </button>
         )}
-        <span className="ml-auto text-xs text-gray-400">
+        <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">
           {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+        <div className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm text-red-700 dark:text-red-300">
           {error}
         </div>
       )}
@@ -263,12 +263,12 @@ export function Transactions() {
 
       {/* Empty state */}
       {!loading && transactions.length === 0 && !error && (
-        <div className="bg-white rounded-lg border border-dashed border-gray-300 p-12 text-center">
-          <Activity className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm font-medium text-gray-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-12 text-center">
+          <Activity className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
             {hasFilters ? 'No transactions match the current filters' : 'No transactions yet'}
           </p>
-          <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto leading-relaxed">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 max-w-xs mx-auto leading-relaxed">
             {!hasFilters && 'Transactions appear here after executing a rating request through the orchestrator.'}
           </p>
         </div>
@@ -276,56 +276,56 @@ export function Transactions() {
 
       {/* Table */}
       {!loading && transactions.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
+              <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                 <th className="w-8 px-3 py-3" />
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Correlation ID
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Product
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Status
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Scope
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Premium
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Steps
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Duration · Created
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {transactions.map((tx) => (
                 <React.Fragment key={tx.id}>
                   <tr
                     onClick={() => toggleExpand(tx.id)}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                   >
-                    <td className="px-3 py-3 text-gray-400">
+                    <td className="px-3 py-3 text-gray-400 dark:text-gray-500">
                       {expanded.has(tx.id) ? (
                         <ChevronDown className="w-3.5 h-3.5" />
                       ) : (
                         <ChevronRight className="w-3.5 h-3.5" />
                       )}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-600 max-w-[130px]">
+                    <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400 max-w-[130px]">
                       <span title={tx.correlationId} className="truncate block">
                         {tx.correlationId.length > 18
                           ? `${tx.correlationId.slice(0, 8)}…${tx.correlationId.slice(-4)}`
                           : tx.correlationId}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-800">
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-800 dark:text-gray-200">
                       {tx.productLineCode}
                     </td>
                     <td className="px-4 py-3">
@@ -338,33 +338,33 @@ export function Transactions() {
                         {tx.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500">
+                    <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                       {tx.scope ? (
                         <span className="space-x-1">
-                          {tx.scope.state && <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-medium">{tx.scope.state}</span>}
-                          {tx.scope.coverage && <span className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-[10px] font-medium">{tx.scope.coverage}</span>}
-                          {tx.scope.transactionType && <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px]">{tx.scope.transactionType}</span>}
+                          {tx.scope.state && <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded text-[10px] font-medium">{tx.scope.state}</span>}
+                          {tx.scope.coverage && <span className="bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded text-[10px] font-medium">{tx.scope.coverage}</span>}
+                          {tx.scope.transactionType && <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded text-[10px]">{tx.scope.transactionType}</span>}
                         </span>
                       ) : (
-                        <span className="text-gray-300">—</span>
+                        <span className="text-gray-300 dark:text-gray-600">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs">
                       {tx.premiumResult != null ? (
-                        <span className="font-semibold text-green-700">${Number(tx.premiumResult).toLocaleString()}</span>
+                        <span className="font-semibold text-green-700 dark:text-green-300">${Number(tx.premiumResult).toLocaleString()}</span>
                       ) : (
-                        <span className="text-gray-300">—</span>
+                        <span className="text-gray-300 dark:text-gray-600">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600">
+                    <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
                       {tx.completedSteps}/{tx.stepCount}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-400">
+                    <td className="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">
                       <div>
                         {tx.durationMs != null ? (
-                          <span className="font-mono text-gray-600">{tx.durationMs}ms</span>
+                          <span className="font-mono text-gray-600 dark:text-gray-400">{tx.durationMs}ms</span>
                         ) : (
-                          <span className="text-gray-300">—</span>
+                          <span className="text-gray-300 dark:text-gray-600">—</span>
                         )}
                       </div>
                       <div>{formatDate(tx.createdAt)}</div>

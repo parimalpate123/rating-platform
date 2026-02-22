@@ -180,7 +180,7 @@ function TestStepDetailModal({
                 )}
               >
                 {responseStr || (
-                  <span className="text-gray-400 italic">
+                  <span className="text-gray-400 dark:text-gray-500 italic">
                     {error ? `Failed: ${error}` : 'No response captured'}
                   </span>
                 )}

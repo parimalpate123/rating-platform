@@ -45,29 +45,29 @@ function ScopeColumn({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-100">
+      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-700">{title}</h3>
-          <span className="text-xs text-gray-400">{scopes.length}</span>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{title}</h3>
+          <span className="text-xs text-gray-400 dark:text-gray-500">{scopes.length}</span>
         </div>
       </div>
 
       {/* Values */}
       <div className="flex-1 px-4 py-3 space-y-1.5 min-h-[120px]">
         {scopes.length === 0 && !adding && (
-          <p className="text-xs text-gray-400 text-center py-4">No values yet</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-4">No values yet</p>
         )}
 
         {scopes.map((scope) => (
           <div key={scope.id} className="flex items-center justify-between">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
               {scope.scopeValue}
             </span>
             <button
               onClick={() => handleDelete(scope.id)}
-              className="p-1 text-gray-300 hover:text-red-500 transition-colors"
+              className="p-1 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors"
               title="Remove"
             >
               <X className="w-3 h-3" />
@@ -81,7 +81,7 @@ function ScopeColumn({
               value={newValue}
               onChange={(e) => setNewValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="flex-1 px-2.5 py-1.5 text-xs border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="flex-1 px-2.5 py-1.5 text-xs border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
               placeholder={scopeType === 'state' ? 'e.g. NY' : scopeType === 'coverage' ? 'e.g. BOP' : 'e.g. new_business'}
               autoFocus
             />
@@ -92,7 +92,7 @@ function ScopeColumn({
             >
               <Plus className="w-3.5 h-3.5" />
             </button>
-            <button onClick={() => { setAdding(false); setNewValue('') }} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded">
+            <button onClick={() => { setAdding(false); setNewValue('') }} className="p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -101,10 +101,10 @@ function ScopeColumn({
 
       {/* Add button */}
       {!adding && (
-        <div className="px-4 py-2 border-t border-gray-100">
+        <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700">
           <button
             onClick={() => setAdding(true)}
-            className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-400 transition-colors"
           >
             <Plus className="w-3 h-3" /> Add {title.slice(0, -1)}
           </button>
@@ -137,7 +137,7 @@ export function ScopesTab({ productCode }: { productCode: string }) {
   }
 
   if (error) {
-    return <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">{error}</div>
+    return <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm text-red-700 dark:text-red-300">{error}</div>
   }
 
   const states = scopes.filter((s) => s.scopeType === 'state')
@@ -149,7 +149,7 @@ export function ScopesTab({ productCode }: { productCode: string }) {
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           {totalCount} scope value{totalCount !== 1 ? 's' : ''} defined.
           {totalCount === 0 && ' Add states, coverages, and transaction types to control when rules fire.'}
         </p>
