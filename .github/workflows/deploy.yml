@@ -27,6 +27,16 @@ on:
         required: false
         default: false
         type: boolean
+      skip_build_push:
+        description: "Skip Build & Push (use existing images; run only Migrations and/or Deploy)"
+        required: false
+        default: false
+        type: boolean
+      image_tag_override:
+        description: "Image tag when skipping build (e.g. b9929023 from a previous run)"
+        required: false
+        default: "latest"
+        type: string
       run_migrations:
         description: "Run DB migrations before deploy"
         required: false
@@ -50,23 +60,33 @@ jobs:
     name: Build & Push Images
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.tag.outputs.tag }}
+      image_tag: ${{ steps.tag.outputs.tag || steps.tag-skip.outputs.tag }}
     steps:
+      - name: Set image tag (when skipping build)
+        id: tag-skip
+        if: ${{ inputs.skip_build_push }}
+        run: echo "tag=${{ inputs.image_tag_override || 'latest' }}" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
+        if: ${{ !inputs.skip_build_push }}
 
       - name: Set image tag
         id: tag
+        if: ${{ !inputs.skip_build_push }}
         run: echo "tag=${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@v4
+        if: ${{ !inputs.skip_build_push }}
         with:
           node-version: 20
           cache: npm
 
       - name: Install dependencies
+        if: ${{ !inputs.skip_build_push }}
         run: npm ci
 
       - name: Configure AWS credentials
+        if: ${{ !inputs.skip_build_push }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -75,9 +95,11 @@ jobs:
 
       - name: Login to ECR
         id: ecr-login
+        if: ${{ !inputs.skip_build_push }}
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Create ECR repositories if missing
+        if: ${{ !inputs.skip_build_push }}
         run: |
           REPOS=(
             rating-platform/core-rating
@@ -97,6 +119,7 @@ jobs:
           done
 
       - name: Build and push all images
+        if: ${{ !inputs.skip_build_push }}
         env:
           ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
           IMAGE_TAG: ${{ steps.tag.outputs.tag }}
@@ -137,7 +160,7 @@ jobs:
   # ────────────────────────────────────────────────────────────────────────────
   migrate:
     name: Run Migrations
-    needs: build-push
+    needs: []
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_migrations == true }}
     steps:
