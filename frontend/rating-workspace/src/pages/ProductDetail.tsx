@@ -717,8 +717,9 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
   const [newFlowEndpoint, setNewFlowEndpoint] = useState('')
   const [newFlowName, setNewFlowName] = useState('')
 
-  // Add step state
+  // Add step state (insertAfterIndex = null → add at end; number → insert after that step index)
   const [showAddStep, setShowAddStep] = useState(false)
+  const [insertAfterIndex, setInsertAfterIndex] = useState<number | null>(null)
   const [newStepType, setNewStepType] = useState(STEP_TYPES[0].value)
   const [newStepName, setNewStepName] = useState('')
   const [newStepConfig, setNewStepConfig] = useState<Record<string, unknown>>({})
@@ -839,13 +840,20 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
       ? Math.max(...orchestrator.steps.map((s: { stepOrder: number }) => s.stepOrder)) + 1
       : 1
     try {
-      await orchestratorApi.addStep(productCode, orchestrator.endpointPath, {
+      const created = await orchestratorApi.addStep(productCode, orchestrator.endpointPath, {
         stepType: newStepType,
         name: newStepName.trim(),
         config: newStepConfig,
         stepOrder: nextOrder,
       } as any)
+      if (insertAfterIndex !== null) {
+        const sorted = [...orchestrator.steps].sort((a: { stepOrder: number }, b: { stepOrder: number }) => a.stepOrder - b.stepOrder)
+        const ids = sorted.map((s: { id: string }) => s.id)
+        const newOrder = [...ids.slice(0, insertAfterIndex + 1), created.id, ...ids.slice(insertAfterIndex + 1)]
+        await orchestratorApi.reorderSteps(productCode, orchestrator.endpointPath, newOrder)
+      }
       setShowAddStep(false)
+      setInsertAfterIndex(null)
       setNewStepName('')
       setNewStepType(STEP_TYPES[0].value)
       setNewStepConfig({})
@@ -1121,13 +1129,15 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
             <div className="space-y-2">
               {[...orchestrator.steps]
                 .sort((a, b) => a.stepOrder - b.stepOrder)
-                .map((step) => {
+                .map((step, index) => {
                   const typeColor =
                     STEP_TYPE_COLORS[step.stepType] ?? 'bg-gray-100 text-gray-600 border-gray-200'
                   const preview = stepConfigPreview(step.config ?? {})
                   const isEditing = editingStepId === step.id
+                  const showInsertFormHere = showAddStep && insertAfterIndex === index
                   return (
-                    <div key={step.id} className={cn('bg-white dark:bg-gray-800 rounded-lg border px-5 py-4', isEditing ? 'border-blue-300 dark:border-blue-600 ring-1 ring-blue-100 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700')}>
+                    <div key={step.id} className="space-y-2">
+                    <div className={cn('bg-white dark:bg-gray-800 rounded-lg border px-5 py-4', isEditing ? 'border-blue-300 dark:border-blue-600 ring-1 ring-blue-100 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700')}>
                       <div className="flex items-center gap-4">
                         <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
                           <span className="text-xs font-bold text-gray-600 dark:text-gray-400">{step.stepOrder}</span>
@@ -1230,11 +1240,73 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
                         </div>
                       )}
                     </div>
+
+                    {/* Insert step here (between this step and the next) */}
+                    {showInsertFormHere ? (
+                      <div className="bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-800 ring-1 ring-blue-100 dark:ring-blue-800 px-5 py-4 space-y-3">
+                        <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Insert New Step after step {index + 1}</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Step Name</label>
+                            <input
+                              autoFocus
+                              value={newStepName}
+                              onChange={(e) => setNewStepName(e.target.value)}
+                              placeholder="e.g. Map Request Fields"
+                              className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Step Type</label>
+                            <select
+                              value={newStepType}
+                              onChange={(e) => { setNewStepType(e.target.value); setNewStepConfig({}) }}
+                              className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              {STEP_TYPES.map((t) => (
+                                <option key={t.value} value={t.value}>{t.label}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        <StepConfigForm
+                          stepType={newStepType}
+                          config={newStepConfig}
+                          onChange={setNewStepConfig}
+                          systems={systems}
+                        />
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            onClick={handleAddStep}
+                            disabled={!newStepName.trim()}
+                            className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                          >
+                            Insert Step
+                          </button>
+                          <button
+                            onClick={() => { setShowAddStep(false); setInsertAfterIndex(null); setNewStepName(''); setNewStepType(STEP_TYPES[0].value); setNewStepConfig({}) }}
+                            className="px-4 py-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : !showAddStep ? (
+                      <button
+                        type="button"
+                        onClick={() => { setInsertAfterIndex(index); setShowAddStep(true) }}
+                        className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Insert step here
+                      </button>
+                    ) : null}
+                    </div>
                   )
                 })}
 
-              {/* Add Step button / form */}
-              {showAddStep ? (
+              {/* Add Step at end: button or form */}
+              {showAddStep && insertAfterIndex === null ? (
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-800 ring-1 ring-blue-100 dark:ring-blue-800 px-5 py-4 space-y-3">
                   <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Add New Step</h4>
                   <div className="grid grid-cols-2 gap-3">
@@ -1278,7 +1350,7 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
                       Add Step
                     </button>
                     <button
-                      onClick={() => { setShowAddStep(false); setNewStepName(''); setNewStepType(STEP_TYPES[0].value); setNewStepConfig({}) }}
+                      onClick={() => { setShowAddStep(false); setInsertAfterIndex(null); setNewStepName(''); setNewStepType(STEP_TYPES[0].value); setNewStepConfig({}) }}
                       className="px-4 py-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                     >
                       Cancel
@@ -1287,7 +1359,7 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
                 </div>
               ) : (
                 <button
-                  onClick={() => setShowAddStep(true)}
+                  onClick={() => { setInsertAfterIndex(null); setShowAddStep(true) }}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-400 dark:text-gray-500 bg-white dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-900/30 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
