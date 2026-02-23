@@ -76,13 +76,13 @@ function StepLogsRow({ txId }: { txId: string }) {
     <>
       <tr>
         <td colSpan={8} className="px-0 pb-0">
-          <div className="bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700 px-6 py-4 space-y-4">
+          <div className="bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700 px-6 py-4 space-y-4 min-w-0">
             {steps.length === 0 ? (
               <p className="text-xs text-gray-400 dark:text-gray-500">No step logs available.</p>
             ) : (
               <>
-                {/* Flow diagram */}
-                <div>
+                {/* Flow diagram — scrollable so all steps (including failed) are visible */}
+                <div className="min-w-0 max-w-full">
                   <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                     Execution Flow · click a node to inspect
                   </p>
@@ -274,10 +274,10 @@ export function Transactions() {
         </div>
       )}
 
-      {/* Table */}
+      {/* Table — table-layout: fixed so expanded flow row doesn't grow table; flow scrolls inside cell */}
       {!loading && transactions.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm table-fixed">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                 <th className="w-8 px-3 py-3" />

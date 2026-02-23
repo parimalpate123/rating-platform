@@ -2,3 +2,36 @@
 
 /* Class-based dark mode: add .dark to html to toggle */
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* Execution flow: always show horizontal scrollbar so users can reach all steps */
+.execution-flow-scroll {
+  overflow-x: scroll !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(156 163 175) rgb(243 244 246);
+}
+.dark .execution-flow-scroll {
+  scrollbar-color: rgb(75 85 99) rgb(31 41 55);
+}
+.execution-flow-scroll::-webkit-scrollbar {
+  height: 10px;
+}
+.execution-flow-scroll::-webkit-scrollbar-track {
+  background: rgb(243 244 246);
+  border-radius: 5px;
+}
+.dark .execution-flow-scroll::-webkit-scrollbar-track {
+  background: rgb(31 41 55);
+}
+.execution-flow-scroll::-webkit-scrollbar-thumb {
+  background: rgb(156 163 175);
+  border-radius: 5px;
+}
+.execution-flow-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128);
+}
+.dark .execution-flow-scroll::-webkit-scrollbar-thumb {
+  background: rgb(75 85 99);
+}
+.dark .execution-flow-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128);
+}

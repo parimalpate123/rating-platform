@@ -136,7 +136,10 @@ export function ExecutionFlowDiagram({
   }
 
   return (
-    <div className="overflow-x-auto pb-2">
+    <div
+      className="execution-flow-scroll min-w-0 w-full max-w-full overflow-x-scroll overflow-y-hidden pb-2"
+      style={{ scrollbarGutter: 'stable' }}
+    >
       <div className="flex items-start gap-0 min-w-max px-1 py-2">
         {sorted.map((step, idx) => {
           const result = getResult(step, idx)
