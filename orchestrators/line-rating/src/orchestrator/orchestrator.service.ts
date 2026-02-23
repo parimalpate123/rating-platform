@@ -6,22 +6,25 @@ import { ProductOrchestratorEntity } from '../entities/product-orchestrator.enti
 import { OrchestratorStepEntity } from '../entities/orchestrator-step.entity';
 
 const XML_TARGET_STEPS = [
-  { order: 1, type: 'field_mapping', name: 'Map Request Fields', config: { direction: 'request' } },
-  { order: 2, type: 'apply_rules', name: 'Pre-Rating Rules', config: { scope: 'pre_rating' } },
-  { order: 3, type: 'format_transform', name: 'JSON to XML', config: { formatDirection: 'json_to_xml' } },
-  { order: 4, type: 'call_rating_engine', name: 'Call CGI Ratabase', config: { systemCode: 'cgi-ratabase' } },
-  { order: 5, type: 'format_transform', name: 'XML to JSON', config: { formatDirection: 'xml_to_json' } },
-  { order: 6, type: 'field_mapping', name: 'Map Response Fields', config: { direction: 'response' } },
-  { order: 7, type: 'apply_rules', name: 'Post-Rating Rules', config: { scope: 'post_rating' } },
-  { order: 8, type: 'publish_event', name: 'Publish Rating Event', config: { topic: 'rating.completed' } },
+  { order: 1, type: 'validate_request', name: 'Validate request', config: {} },
+  { order: 2, type: 'field_mapping', name: 'Map Request Fields', config: { direction: 'request' } },
+  { order: 3, type: 'apply_rules', name: 'Pre-Rating Rules', config: { scope: 'pre_rating' } },
+  { order: 4, type: 'format_transform', name: 'JSON to XML', config: { formatDirection: 'json_to_xml' } },
+  { order: 5, type: 'call_rating_engine', name: 'Call CGI Ratabase', config: { systemCode: 'cgi-ratabase' } },
+  { order: 6, type: 'format_transform', name: 'XML to JSON', config: { formatDirection: 'xml_to_json' } },
+  { order: 7, type: 'field_mapping', name: 'Map Response Fields', config: { direction: 'response' } },
+  { order: 8, type: 'apply_rules', name: 'Post-Rating Rules', config: { scope: 'post_rating' } },
+  { order: 9, type: 'call_external_api', name: 'Send request to Guidewire with necessary detail', config: { systemCode: 'gw-policycenter', endpoint: '/rate', method: 'POST' } },
 ];
 
 const JSON_TARGET_STEPS = [
-  { order: 1, type: 'field_mapping', name: 'Map Request Fields', config: { direction: 'request' } },
-  { order: 2, type: 'apply_rules', name: 'Pre-Rating Rules', config: { scope: 'pre_rating' } },
-  { order: 3, type: 'call_rating_engine', name: 'Call Earnix', config: { systemCode: 'earnix' } },
-  { order: 4, type: 'field_mapping', name: 'Map Response Fields', config: { direction: 'response' } },
-  { order: 5, type: 'apply_rules', name: 'Post-Rating Rules', config: { scope: 'post_rating' } },
+  { order: 1, type: 'validate_request', name: 'Validate request', config: {} },
+  { order: 2, type: 'field_mapping', name: 'Map Request Fields', config: { direction: 'request' } },
+  { order: 3, type: 'apply_rules', name: 'Pre-Rating Rules', config: { scope: 'pre_rating' } },
+  { order: 4, type: 'call_rating_engine', name: 'Call Earnix', config: { systemCode: 'earnix' } },
+  { order: 5, type: 'field_mapping', name: 'Map Response Fields', config: { direction: 'response' } },
+  { order: 6, type: 'apply_rules', name: 'Post-Rating Rules', config: { scope: 'post_rating' } },
+  { order: 7, type: 'call_external_api', name: 'Send request to Guidewire with necessary detail', config: { systemCode: 'gw-policycenter', endpoint: '/rate', method: 'POST' } },
 ];
 
 @Injectable()

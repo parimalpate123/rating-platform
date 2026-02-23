@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Loader2, Server, CheckCircle, AlertCircle, RefreshCw, Plus, Pencil, Trash2 } from 'lucide-react'
 import { systemsApi, type System, type AuthMethod } from '../api/systems'
 import { cn } from '../lib/utils'
@@ -38,11 +38,11 @@ function FormatBadge({ format }: { format: System['format'] }) {
 
 type HealthState = 'idle' | 'checking' | 'healthy' | 'unhealthy' | 'error'
 
-function HealthCheckCell({ systemId, onResult }: { systemId: string; onResult?: (err?: string, durationMs?: number) => void }) {
+function HealthCheckCell({ systemId, checkAllTrigger, onResult }: { systemId: string; checkAllTrigger?: number; onResult?: (err?: string, durationMs?: number) => void }) {
   const [state, setState] = useState<HealthState>('idle')
   const [detail, setDetail] = useState<string | null>(null)
 
-  const check = async () => {
+  const check = useCallback(async () => {
     setState('checking')
     setDetail(null)
     try {
@@ -62,7 +62,12 @@ function HealthCheckCell({ systemId, onResult }: { systemId: string; onResult?: 
       setDetail(msg)
       onResult?.(msg)
     }
-  }
+  }, [systemId, onResult])
+
+  // When parent triggers "Check all", run check
+  useEffect(() => {
+    if (checkAllTrigger != null && checkAllTrigger > 0) check()
+  }, [checkAllTrigger, check])
 
   if (state === 'idle') {
     return (
@@ -204,6 +209,7 @@ export function Systems() {
   const [form, setForm] = useState<SystemFormData>(defaultForm)
   const [saving, setSaving] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [checkAllTrigger, setCheckAllTrigger] = useState(0)
 
   const load = () => {
     systemsApi.list().then(setSystems).catch((err: unknown) => {
@@ -276,13 +282,24 @@ export function Systems() {
             Manage source and target systems used across product lines. {isProd ? 'Production endpoints shown.' : 'Local/dev endpoints shown.'}
           </p>
         </div>
-        <button
-          onClick={openAdd}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add system
-        </button>
+        <div className="flex items-center gap-2">
+          {systems.length > 0 && (
+            <button
+              onClick={() => setCheckAllTrigger((t) => t + 1)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Check all
+            </button>
+          )}
+          <button
+            onClick={openAdd}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add system
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -348,7 +365,7 @@ export function Systems() {
                       {sys.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="px-4 py-3"><HealthCheckCell systemId={sys.id} /></td>
+                  <td className="px-4 py-3"><HealthCheckCell systemId={sys.id} checkAllTrigger={checkAllTrigger} /></td>
                   <td className="px-4 py-3 flex items-center gap-1">
                     <button onClick={() => openEdit(sys)} className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded" title="Edit"><Pencil className="w-4 h-4" /></button>
                     {deleteConfirm === sys.id ? (
