@@ -174,7 +174,7 @@ resource "aws_ecs_task_definition" "services" {
       interval    = 30
       timeout     = 5
       retries     = 3
-      startPeriod = 15
+      startPeriod = 45
     }
   }])
 

@@ -30,7 +30,7 @@ resource "aws_lb_target_group" "frontend" {
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
-    unhealthy_threshold = 3
+    unhealthy_threshold = 5
     matcher             = "200"
   }
 
@@ -50,7 +50,7 @@ resource "aws_lb_target_group" "core_rating" {
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
-    unhealthy_threshold = 3
+    unhealthy_threshold = 5
     matcher             = "200"
   }
 
@@ -70,7 +70,7 @@ resource "aws_lb_target_group" "line_rating" {
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
-    unhealthy_threshold = 3
+    unhealthy_threshold = 5
     matcher             = "200"
   }
 
@@ -90,7 +90,7 @@ resource "aws_lb_target_group" "product_config" {
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
-    unhealthy_threshold = 3
+    unhealthy_threshold = 5
     matcher             = "200"
   }
 
@@ -110,7 +110,7 @@ resource "aws_lb_target_group" "transform_service" {
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
-    unhealthy_threshold = 3
+    unhealthy_threshold = 5
     matcher             = "200"
   }
 
@@ -130,7 +130,7 @@ resource "aws_lb_target_group" "rules_service" {
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
-    unhealthy_threshold = 3
+    unhealthy_threshold = 5
     matcher             = "200"
   }
 
@@ -150,7 +150,7 @@ resource "aws_lb_target_group" "status_service" {
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
-    unhealthy_threshold = 3
+    unhealthy_threshold = 5
     matcher             = "200"
   }
 

@@ -20,7 +20,7 @@ service_discovery_namespace = "rating-platform.local"
 
 # ── Application ──────────────────────────────────────────────────────────────
 image_tag     = "latest"   # Set to a specific tag in CI (e.g. git SHA)
-desired_count = 1          # Default task count per service
+desired_count = 2         # 2+ avoids 503 when one task restarts; set 1 in dev to save cost
 
 # ── Database (RDS PostgreSQL) ──────────────────────────────────────────────────
 # Option A — let Terraform create RDS (set create_rds = true):

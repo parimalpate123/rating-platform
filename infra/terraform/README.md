@@ -129,6 +129,8 @@ terraform apply
 
 ## Variables
 
+**Avoiding intermittent 503 (ECS):** With a single task per service, any restart or failed health check leaves the ALB target group with no healthy targets, so the ALB returns 503. To fix this, `desired_count` defaults to **2** so there is always at least one healthy task when the other is restarting. ALB `unhealthy_threshold` is set to 5 (was 3) and ECS container `startPeriod` to 45s (was 15s) so tasks are not marked unhealthy too quickly. To reduce cost in dev you can set `desired_count = 1` in `terraform.tfvars` and accept occasional 503s during restarts.
+
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `cluster_name` | Yes | — | EKS cluster name (created or existing) |

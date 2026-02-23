@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { randomUUID } from '../lib/uuid';
+import { addRetryInterceptor } from './client';
 
 const lineRatingBase = typeof import.meta !== 'undefined' && import.meta.env?.DEV ? '/api/line-rating' : '/api/v1';
 const lineRating = axios.create({ baseURL: lineRatingBase });
@@ -8,6 +9,7 @@ lineRating.interceptors.request.use((config) => {
   config.headers['x-correlation-id'] = randomUUID();
   return config;
 });
+addRetryInterceptor(lineRating);
 
 export interface OrchestratorStep {
   id: string;
@@ -55,6 +57,7 @@ coreRating.interceptors.request.use((config) => {
   config.headers['x-correlation-id'] = randomUUID();
   return config;
 });
+addRetryInterceptor(coreRating);
 
 export const ratingApi = {
   rate: (

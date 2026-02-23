@@ -73,9 +73,9 @@ variable "ecr_registry_id" {
 }
 
 variable "desired_count" {
-  description = "Default desired task count for each ECS service"
+  description = "Desired task count per ECS service. Use 2+ for ALB-backed services to avoid 503 when one task restarts."
   type        = number
-  default     = 1
+  default     = 2
 }
 
 # ── Database (RDS PostgreSQL) ──────────────────────────────────────────────────
