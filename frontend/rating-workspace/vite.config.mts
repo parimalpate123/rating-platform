@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
+  base: '/',
   cacheDir: '../../node_modules/.vite/frontend/rating-workspace',
   server: {
     port: 4200,
