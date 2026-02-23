@@ -56,6 +56,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.tag.outputs.tag || steps.tag-skip.outputs.tag }}
+      affected_services: ${{ steps.compute-affected.outputs.affected_services || '[]' }}
+      image_tag_previous: ${{ steps.restore-tag.outputs.tag || '' }}
     steps:
       - name: Set image tag (when skipping build)
         id: tag-skip
@@ -64,6 +66,8 @@ jobs:
 
       - uses: actions/checkout@v4
         if: ${{ !inputs.skip_build_push }}
+        with:
+          fetch-depth: 0
 
       - name: Set image tag
         id: tag
@@ -87,6 +91,13 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Restore previous image tag from S3
+        id: restore-tag
+        if: ${{ !inputs.skip_build_push && vars.TF_STATE_BUCKET != '' }}
+        run: |
+          PREV=$(aws s3 cp "s3://${{ vars.TF_STATE_BUCKET }}/rating-platform/${{ inputs.environment }}/last-image-tag" - 2>/dev/null || true)
+          echo "tag=${PREV:-}" >> "$GITHUB_OUTPUT"
 
       - name: Login to ECR
         id: ecr-login
@@ -113,7 +124,45 @@ jobs:
             aws ecr create-repository --repository-name "$repo" --region "${{ env.AWS_REGION }}" --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE
           done
 
-      - name: Build and push all images
+      - name: Compute affected services
+        id: compute-affected
+        if: ${{ !inputs.skip_build_push }}
+        env:
+          PREVIOUS_TAG: ${{ steps.restore-tag.outputs.tag }}
+        run: |
+          DEPLOYABLE="core-rating line-rating product-config transform-service rules-service status-service rating-workspace adapter-kafka adapter-dnb adapter-gw"
+          AFFECTED=""
+          if git rev-parse --verify origin/main >/dev/null 2>&1; then
+            RAW=$(npx nx print-affected -t build --base=origin/main --head=HEAD --select=projects 2>/dev/null || true)
+            if [ -n "$RAW" ]; then
+              for p in $DEPLOYABLE; do
+                if echo "$RAW" | grep -qE "\b$p\b"; then
+                  AFFECTED="$AFFECTED $p"
+                fi
+              done
+            fi
+          fi
+          # If base missing or no affected parsed, build all
+          if [ -z "$AFFECTED" ]; then
+            AFFECTED=$DEPLOYABLE
+          fi
+          # For Terraform: when no previous tag (first run / no S3), pass [] so TF uses single tag for all
+          if [ -z "${PREVIOUS_TAG}" ]; then
+            TF_AFFECTED="[]"
+          else
+            TF_AFFECTED="["
+            first=true
+            for p in $AFFECTED; do
+              $first && first=false || TF_AFFECTED="$TF_AFFECTED,"
+              TF_AFFECTED="$TF_AFFECTED\"$p\""
+            done
+            TF_AFFECTED="$TF_AFFECTED]"
+          fi
+          echo "affected_services=$TF_AFFECTED" >> "$GITHUB_OUTPUT"
+          echo "$AFFECTED" | tr ' ' '\n' > affected.list
+          echo "Affected: $AFFECTED"
+
+      - name: Build and push affected images (parallel, 4 at a time)
         if: ${{ !inputs.skip_build_push }}
         env:
           ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
@@ -131,11 +180,12 @@ jobs:
             "services/adapters/dnb/Dockerfile:adapter-dnb:rating-platform/adapter-dnb"
             "services/adapters/gw/Dockerfile:adapter-gw:rating-platform/adapter-gw"
           )
-
-          for entry in "${SERVICES[@]}"; do
+          mapfile -t AFFECTED_LIST < <(tr -d '\r' < affected.list | grep -v '^$')
+          build_one() {
+            local entry="$1"
+            local dockerfile nx_project ecr_name
             IFS=: read -r dockerfile nx_project ecr_name <<< "$entry"
             image_uri="${ECR_REGISTRY}/${ecr_name}:${IMAGE_TAG}"
-
             echo "::group::Build $nx_project"
             if [ "$nx_project" = "rating-workspace" ]; then
               npx nx run rating-workspace:build
@@ -148,7 +198,20 @@ jobs:
             docker push "$image_uri"
             echo "::endgroup::"
             echo "✓ $nx_project → $image_uri"
+          }
+          running=0
+          for entry in "${SERVICES[@]}"; do
+            IFS=: read -r _ nx_project _ <<< "$entry"
+            if printf '%s\n' "${AFFECTED_LIST[@]}" | grep -qxF "$nx_project"; then
+              build_one "$entry" &
+              running=$((running + 1))
+              if [ "$running" -ge 4 ]; then
+                wait -n
+                running=$((running - 1))
+              fi
+            fi
           done
+          wait
 
   # ────────────────────────────────────────────────────────────────────────────
   # 2. Terraform plan + apply (deploys ECS); migrations run after apply when requested
@@ -219,6 +282,8 @@ jobs:
         working-directory: ${{ env.TF_DIR }}
         env:
           TF_VAR_image_tag: ${{ needs.build-push.outputs.image_tag }}
+          TF_VAR_image_tag_previous: ${{ needs.build-push.outputs.image_tag_previous }}
+          TF_VAR_affected_services: ${{ needs.build-push.outputs.affected_services }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
           ENV: ${{ inputs.environment || 'dev' }}
         run: |
@@ -303,6 +368,8 @@ jobs:
         working-directory: ${{ env.TF_DIR }}
         env:
           TF_VAR_image_tag: ${{ needs.build-push.outputs.image_tag }}
+          TF_VAR_image_tag_previous: ${{ needs.build-push.outputs.image_tag_previous }}
+          TF_VAR_affected_services: ${{ needs.build-push.outputs.affected_services }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: terraform plan -input=false -out=tfplan
 
@@ -310,8 +377,27 @@ jobs:
         working-directory: ${{ env.TF_DIR }}
         env:
           TF_VAR_image_tag: ${{ needs.build-push.outputs.image_tag }}
+          TF_VAR_image_tag_previous: ${{ needs.build-push.outputs.image_tag_previous }}
+          TF_VAR_affected_services: ${{ needs.build-push.outputs.affected_services }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Save image tag to S3
+        if: ${{ vars.TF_STATE_BUCKET != '' }}
+        env:
+          AFFECTED: ${{ needs.build-push.outputs.affected_services }}
+          IMAGE_TAG: ${{ needs.build-push.outputs.image_tag }}
+          IMAGE_TAG_PREV: ${{ needs.build-push.outputs.image_tag_previous }}
+        run: |
+          # After an affected-only build, only affected services have the new tag in ECR.
+          # Next run's non-affected must use the tag that already exists for them → save that.
+          if [ "$AFFECTED" = "[]" ] || [ -z "$AFFECTED" ]; then
+            TAG_TO_SAVE="$IMAGE_TAG"
+          else
+            TAG_TO_SAVE="${IMAGE_TAG_PREV:-$IMAGE_TAG}"
+          fi
+          [ -n "$TAG_TO_SAVE" ] && echo -n "$TAG_TO_SAVE" | \
+            aws s3 cp - "s3://${{ vars.TF_STATE_BUCKET }}/rating-platform/${{ inputs.environment || 'dev' }}/last-image-tag"
 
       - name: Force new deployment for all services
         run: |

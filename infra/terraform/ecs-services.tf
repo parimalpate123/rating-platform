@@ -124,6 +124,17 @@ resource "aws_service_discovery_service" "services" {
   }
 }
 
+# Per-service image tag: when affected_services is set, use image_tag for affected and image_tag_previous for others
+locals {
+  image_tag_per_service = {
+    for k, _ in local.services : k => (
+      length(var.affected_services) == 0
+      ? var.image_tag
+      : (contains(var.affected_services, k) ? var.image_tag : (var.image_tag_previous != "" ? var.image_tag_previous : var.image_tag))
+    )
+  }
+}
+
 # ── Task Definitions ─────────────────────────────────────────────────────────
 
 resource "aws_ecs_task_definition" "services" {
@@ -139,7 +150,7 @@ resource "aws_ecs_task_definition" "services" {
 
   container_definitions = jsonencode([{
     name      = each.key
-    image     = "${local.ecr_registry}/${each.value.image}:${var.image_tag}"
+    image     = "${local.ecr_registry}/${each.value.image}:${local.image_tag_per_service[each.key]}"
     essential = true
 
     portMappings = [{

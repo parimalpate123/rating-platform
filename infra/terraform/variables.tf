@@ -49,9 +49,21 @@ variable "service_discovery_namespace" {
 # ── Application ──────────────────────────────────────────────────────────────
 
 variable "image_tag" {
-  description = "Docker image tag applied to all services"
+  description = "Docker image tag for services built this run (or all services when affected_services is empty)"
   type        = string
   default     = "latest"
+}
+
+variable "image_tag_previous" {
+  description = "Tag for services not built this run (used when affected_services is non-empty). Defaults to image_tag when empty so first run works."
+  type        = string
+  default     = ""
+}
+
+variable "affected_services" {
+  description = "List of service names that were built this run. When empty, all services use image_tag."
+  type        = list(string)
+  default     = []
 }
 
 variable "ecr_registry_id" {
