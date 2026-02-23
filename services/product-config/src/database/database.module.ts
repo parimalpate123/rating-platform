@@ -22,6 +22,8 @@ import { UploadedFileEntity } from '../entities/uploaded-file.entity';
       entities: [ProductLineEntity, SystemEntity, MappingEntity, FieldMappingEntity, ProductScopeEntity, ActivityLogEntity, LookupTableEntity, LookupEntryEntity, UploadedFileEntity],
       synchronize: false,
       logging: process.env['NODE_ENV'] !== 'production',
+      // RDS requires SSL; pg_hba rejects "no encryption" connections
+      ssl: process.env['DB_HOST'] ? { rejectUnauthorized: false } : false,
     }),
   ],
   exports: [TypeOrmModule],

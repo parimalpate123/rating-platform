@@ -19,6 +19,7 @@ import { AiPromptEntity } from '../ai-prompts/ai-prompt.entity';
       database: process.env.DB_NAME || 'rating_platform',
       entities: [RuleEntity, RuleConditionEntity, RuleActionEntity, ScopeTagEntity, AiPromptEntity],
       synchronize: false,
+      ssl: process.env.DB_HOST ? { rejectUnauthorized: false } : false,
     }),
   ],
 })

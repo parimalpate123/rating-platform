@@ -13,6 +13,7 @@ import { TransactionEntity, TransactionStepLogEntity } from '../entities';
       database: process.env.DB_NAME || 'rating_platform',
       entities: [TransactionEntity, TransactionStepLogEntity],
       synchronize: false,
+      ssl: process.env.DB_HOST ? { rejectUnauthorized: false } : false,
     }),
   ],
 })

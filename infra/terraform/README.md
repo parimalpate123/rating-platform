@@ -29,6 +29,40 @@ terraform plan -out=tfplan
 terraform apply tfplan
 ```
 
+## Local deploy (one script)
+
+From the **repo root**, a single script builds all images, pushes to ECR, and runs Terraform apply (same flow as the GitHub Actions deploy):
+
+```bash
+# One-time: copy tfvars and set db_password (and VPC/subnets if needed)
+cp infra/terraform/terraform.tfvars.example infra/terraform/terraform.tfvars
+# Edit infra/terraform/terraform.tfvars
+
+# Full deploy (build + push + apply). Uses local Terraform state unless TF_STATE_BUCKET is set.
+./scripts/local-deploy.sh
+```
+
+Optional env vars:
+
+| Env | Purpose |
+|-----|--------|
+| `TF_STATE_BUCKET` | Use same S3 state as CI (bucket from `bootstrap-remote-state.sh`) |
+| `ENVIRONMENT` | `dev` (default), `staging`, or `prod` — used for state key when using S3 |
+| `TF_VAR_db_password` | RDS password (if not in `terraform.tfvars`) |
+| `SKIP_BUILD=1` | Only Terraform apply; set `IMAGE_TAG` to an existing tag |
+| `SKIP_TERRAFORM=1` | Only build and push images |
+| `RUN_MIGRATIONS=1` | Run DB migrations before deploy |
+
+Examples:
+
+```bash
+# Use same state as CI (after setting TF_STATE_BUCKET in GitHub and locally)
+TF_STATE_BUCKET=rating-platform-tfstate-123456789 ./scripts/local-deploy.sh
+
+# Deploy without rebuilding images
+SKIP_BUILD=1 IMAGE_TAG=abc123 ./scripts/local-deploy.sh
+```
+
 ## Remote state (required for CI)
 
 The deploy workflow **requires** remote state so Terraform state is shared across runs. Without it, each run starts with empty state and fails with "already exists" errors.

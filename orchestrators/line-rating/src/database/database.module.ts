@@ -13,6 +13,7 @@ import { OrchestratorStepEntity, ProductOrchestratorEntity } from '../entities';
       database: process.env.DB_NAME || 'rating_platform',
       entities: [ProductOrchestratorEntity, OrchestratorStepEntity],
       synchronize: false,
+      ssl: process.env.DB_HOST ? { rejectUnauthorized: false } : false,
     }),
   ],
 })
