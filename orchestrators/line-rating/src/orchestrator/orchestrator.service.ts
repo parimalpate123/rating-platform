@@ -1,7 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import axios from 'axios';
 import { ProductOrchestratorEntity } from '../entities/product-orchestrator.entity';
 import { OrchestratorStepEntity } from '../entities/orchestrator-step.entity';
 
@@ -14,7 +13,7 @@ const XML_TARGET_STEPS = [
   { order: 6, type: 'format_transform', name: 'XML to JSON', config: { formatDirection: 'xml_to_json' } },
   { order: 7, type: 'field_mapping', name: 'Map Response Fields', config: { direction: 'response' } },
   { order: 8, type: 'apply_rules', name: 'Post-Rating Rules', config: { scope: 'post_rating' } },
-  { order: 9, type: 'call_external_api', name: 'Send request to Guidewire with necessary detail', config: { systemCode: 'gw-policycenter', endpoint: '/rate', method: 'POST' } },
+  { order: 9, type: 'publish_event', name: 'Publish rating event to Kafka', config: { topic: 'rating.completed' } },
 ];
 
 const JSON_TARGET_STEPS = [
@@ -24,7 +23,7 @@ const JSON_TARGET_STEPS = [
   { order: 4, type: 'call_rating_engine', name: 'Call Earnix', config: { systemCode: 'earnix' } },
   { order: 5, type: 'field_mapping', name: 'Map Response Fields', config: { direction: 'response' } },
   { order: 6, type: 'apply_rules', name: 'Post-Rating Rules', config: { scope: 'post_rating' } },
-  { order: 7, type: 'call_external_api', name: 'Send request to Guidewire with necessary detail', config: { systemCode: 'gw-policycenter', endpoint: '/rate', method: 'POST' } },
+  { order: 7, type: 'publish_event', name: 'Publish rating event to Kafka', config: { topic: 'rating.completed' } },
 ];
 
 @Injectable()
@@ -176,9 +175,6 @@ export class OrchestratorService {
     targetFormat: 'xml' | 'json',
     endpointPath = 'rate',
   ): Promise<any> {
-    const productConfigUrl =
-      process.env['PRODUCT_CONFIG_URL'] || 'http://localhost:4010';
-
     // Delete existing orchestrator for this product + endpoint if present
     const existing = await this.orchRepo.findOne({
       where: { productLineCode, endpointPath },
@@ -199,29 +195,8 @@ export class OrchestratorService {
     const steps: OrchestratorStepEntity[] = [];
     for (const t of template) {
       const config: Record<string, unknown> = { ...(t.config as Record<string, unknown>) };
-
-      if (t.type === 'field_mapping') {
-        const direction = (config.direction as string) ?? 'request';
-        try {
-          const { data: mapping } = await axios.post(
-            `${productConfigUrl}/api/v1/mappings`,
-            {
-              name: `${productLineCode} — ${t.name}`,
-              productLineCode,
-              direction,
-              status: 'draft',
-            },
-          );
-          config.mappingId = mapping.id;
-          this.logger.log(
-            `Created mapping stub ${mapping.id} for step "${t.name}" (${direction})`,
-          );
-        } catch (err) {
-          this.logger.warn(
-            `Could not create mapping stub for step "${t.name}": ${err}`,
-          );
-        }
-      }
+      // Do not create mapping entries; user adds mappings manually and links them via step config (mappingId) if needed.
+      // Field-mapping step will passthrough at runtime when no mapping is configured.
 
       const step = await this.addStep(orch.id, {
         stepType: t.type,

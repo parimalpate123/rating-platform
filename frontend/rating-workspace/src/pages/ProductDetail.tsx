@@ -922,8 +922,11 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
         <GitBranch className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
         <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">No Orchestrator Flows</p>
-        <p className="text-xs text-gray-400 dark:text-gray-500 max-w-xs mx-auto leading-relaxed mb-6">
+        <p className="text-xs text-gray-400 dark:text-gray-500 max-w-xs mx-auto leading-relaxed mb-2">
           Create your first flow for this product line. Each flow maps to an endpoint (e.g. /rate, /init-rate).
+        </p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 max-w-sm mx-auto mb-6">
+          Auto-Generate creates the flow steps only. Add mappings under the Mappings tab when needed and link them in the step config.
         </p>
         <div className="flex items-center justify-center gap-3">
           <button
