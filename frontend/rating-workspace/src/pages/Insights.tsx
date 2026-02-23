@@ -48,7 +48,7 @@ function JsonViewer({ data, label, defaultOpen = false }: { data: unknown; label
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="w-full flex items-center justify-between px-2.5 py-1.5 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
       >
         <span>{label}</span>
         {open ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -62,7 +62,7 @@ function JsonViewer({ data, label, defaultOpen = false }: { data: unknown; label
             <Copy className="w-3 h-3" />
             {copied ? 'Copied' : 'Copy'}
           </button>
-          <pre className="p-4 pt-10 text-xs font-mono text-gray-700 dark:text-gray-300 overflow-auto max-h-64">
+          <pre className="p-3 pt-9 text-xs font-mono text-gray-700 dark:text-gray-300 overflow-auto max-h-64">
             {str || <span className="text-gray-400 dark:text-gray-500 italic">Empty</span>}
           </pre>
         </div>
@@ -104,7 +104,7 @@ function InsightDetailRow({
   if (loading) {
     return (
       <tr>
-        <td colSpan={9} className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700">
+        <td colSpan={9} className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
             Loading step logs...
@@ -118,9 +118,9 @@ function InsightDetailRow({
     <>
       <tr>
         <td colSpan={9} className="px-0 pb-0">
-          <div className="bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700 px-6 py-4 space-y-4">
+          <div className="bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700 px-4 py-3 space-y-3 min-w-0">
             {/* Request & Response JSON */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <JsonViewer
                 data={tx.requestPayload}
                 label="Request Payload (JSON)"
@@ -133,10 +133,10 @@ function InsightDetailRow({
               />
             </div>
 
-            {/* Step trace flowchart */}
+            {/* Step trace flowchart — scrollable so all steps are visible */}
             {steps.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+              <div className="min-w-0 max-w-full">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
                   Step Trace · click a node to inspect
                 </p>
                 <ExecutionFlowDiagram
@@ -150,14 +150,14 @@ function InsightDetailRow({
 
             {/* Step logs list */}
             <div>
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
                 Step Logs
               </p>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 {steps.map((step) => (
                   <div
                     key={step.id}
-                    className="flex items-center gap-3 text-xs text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 px-3 py-2"
+                    className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 px-2.5 py-1.5"
                   >
                     <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-mono text-[10px] flex-shrink-0">
                       {step.stepOrder}
@@ -336,9 +336,9 @@ export function Insights() {
   }
 
   return (
-    <div className="px-6 py-6 max-w-7xl mx-auto">
+    <div className="px-4 py-4 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-5 flex items-start justify-between gap-4">
+      <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Insights</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
@@ -355,12 +355,12 @@ export function Insights() {
       </div>
 
       {/* Search bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-4">
-        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-3">
+        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-2">
           <Search className="w-3.5 h-3.5" />
           Search
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <input
             value={policyNumber}
             onChange={(e) => setPolicyNumber(e.target.value)}
@@ -418,7 +418,7 @@ export function Insights() {
             className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
           />
         </div>
-        <div className="flex items-center gap-3 mt-3">
+        <div className="flex items-center gap-2 mt-2">
           <button
             onClick={load}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
@@ -437,7 +437,7 @@ export function Insights() {
       </div>
 
       {/* Summary strip */}
-      <div className="flex items-center gap-6 mb-4 flex-wrap">
+      <div className="flex items-center gap-4 mb-3 flex-wrap">
         <div className="flex items-center gap-2">
           <BarChart3 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{transactions.length} transactions</span>
@@ -455,11 +455,11 @@ export function Insights() {
 
       {/* Top errors */}
       {topErrorsList.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-4">
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-3">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
             Top Errors
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {topErrorsList.map(([msg, count]) => (
               <span
                 key={msg}
@@ -474,22 +474,22 @@ export function Insights() {
 
       {/* Error */}
       {error && (
-        <div className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm text-red-700 dark:text-red-300">
+        <div className="mb-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2 text-sm text-red-700 dark:text-red-300">
           {error}
         </div>
       )}
 
       {/* Loading */}
       {loading && (
-        <div className="flex items-center justify-center py-16">
+        <div className="flex items-center justify-center py-12">
           <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
         </div>
       )}
 
       {/* Empty state */}
       {!loading && transactions.length === 0 && !error && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-12 text-center">
-          <BarChart3 className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-8 text-center">
+          <BarChart3 className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
           <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
             {hasFilters ? 'No transactions match the current filters' : 'No transactions yet'}
           </p>
@@ -500,32 +500,32 @@ export function Insights() {
         </div>
       )}
 
-      {/* Table */}
+      {/* Table — table-fixed so expanded Step Trace row doesn't grow table; flow scrolls inside cell */}
       {!loading && transactions.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm table-fixed">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                <th className="w-8 px-3 py-3" />
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="w-7 px-2 py-2" />
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Correlation ID
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Product
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Status
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Scope
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Premium
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Steps
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Duration · Created
                 </th>
               </tr>
@@ -537,24 +537,24 @@ export function Insights() {
                     onClick={() => toggleExpand(tx.id)}
                     className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                   >
-                    <td className="px-3 py-3 text-gray-400 dark:text-gray-500">
+                    <td className="px-2 py-2 text-gray-400 dark:text-gray-500">
                       {expanded.has(tx.id) ? (
                         <ChevronDown className="w-3.5 h-3.5" />
                       ) : (
                         <ChevronRight className="w-3.5 h-3.5" />
                       )}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400 max-w-[130px]">
+                    <td className="px-3 py-2 font-mono text-xs text-gray-600 dark:text-gray-400 max-w-[130px]">
                       <span title={tx.correlationId} className="truncate block">
                         {tx.correlationId.length > 18
                           ? `${tx.correlationId.slice(0, 8)}…${tx.correlationId.slice(-4)}`
                           : tx.correlationId}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-800 dark:text-gray-200">
+                    <td className="px-3 py-2 font-mono text-xs font-semibold text-gray-800 dark:text-gray-200">
                       {tx.productLineCode}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2">
                       <span
                         className={cn(
                           'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
@@ -564,7 +564,7 @@ export function Insights() {
                         {tx.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
+                    <td className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
                       {tx.scope ? (
                         <span className="space-x-1">
                           {tx.scope.state && (
@@ -587,7 +587,7 @@ export function Insights() {
                         <span className="text-gray-300 dark:text-gray-600">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs">
+                    <td className="px-3 py-2 text-xs">
                       {tx.premiumResult != null ? (
                         <span className="font-semibold text-green-700 dark:text-green-300">
                           ${Number(tx.premiumResult).toLocaleString()}
@@ -596,10 +596,10 @@ export function Insights() {
                         <span className="text-gray-300 dark:text-gray-600">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
+                    <td className="px-3 py-2 text-xs text-gray-600 dark:text-gray-400">
                       {tx.completedSteps}/{tx.stepCount}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">
+                    <td className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500">
                       <div>
                         {tx.durationMs != null ? (
                           <span className="font-mono text-gray-600 dark:text-gray-400">{tx.durationMs}ms</span>

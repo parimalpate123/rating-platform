@@ -90,8 +90,17 @@ export function TestRating() {
     });
   };
 
+  const formatPayload = () => {
+    try {
+      const parsed = JSON.parse(payload);
+      setPayload(JSON.stringify(parsed, null, 2));
+    } catch {
+      // leave as-is if invalid
+    }
+  };
+
   return (
-    <div className="px-6 py-6 max-w-5xl mx-auto space-y-6">
+    <div className="px-4 py-4 max-w-7xl mx-auto space-y-5">
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
@@ -179,14 +188,25 @@ export function TestRating() {
               </div>
             </div>
 
-            {/* Payload */}
+            {/* Payload — JSON editor style (dark background, light text) */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Payload (JSON)</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">Payload (JSON)</label>
+                <button
+                  type="button"
+                  onClick={formatPayload}
+                  className="text-[10px] font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  Format
+                </button>
+              </div>
               <textarea
                 value={payload}
                 onChange={e => setPayload(e.target.value)}
                 rows={12}
-                className="w-full px-3 py-2 text-xs font-mono border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                spellCheck={false}
+                className="w-full px-3 py-2.5 text-xs font-mono text-gray-100 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 resize-none caret-gray-100 selection:bg-blue-900/50"
+                placeholder='{"policy": {}, "coverage": {}}'
               />
             </div>
 

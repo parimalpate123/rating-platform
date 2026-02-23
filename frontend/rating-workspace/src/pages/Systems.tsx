@@ -274,7 +274,7 @@ export function Systems() {
   }
 
   return (
-    <div className="px-6 py-6 max-w-6xl mx-auto">
+    <div className="px-4 py-4 max-w-7xl mx-auto">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Systems Registry</h1>

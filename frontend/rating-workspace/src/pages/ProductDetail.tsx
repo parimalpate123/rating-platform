@@ -315,7 +315,7 @@ export function ProductDetail() {
   }
 
   return (
-    <div className="px-6 py-6 max-w-5xl mx-auto space-y-6">
+    <div className="px-4 py-4 max-w-7xl mx-auto space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
@@ -762,7 +762,7 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productCode])
 
-  const handleAutoGenerate = async (endpointPath = 'rate') => {
+  const handleAutoGenerate = async (endpointPath = 'rate', onSuccess?: () => void) => {
     const ts = targetSystem.toLowerCase()
     const targetFormat: 'xml' | 'json' =
       ts.includes('ratabase') || ts.includes('cgi') ? 'xml' : 'json'
@@ -772,6 +772,7 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
       await orchestratorApi.autoGenerate(productCode, targetFormat, endpointPath)
       load()
       setActiveEndpoint(endpointPath)
+      onSuccess?.()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to auto-generate orchestrator.')
     } finally {
@@ -1003,7 +1004,19 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
               />
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => handleAutoGenerate(newFlowEndpoint.trim() || 'rate', () => {
+                setShowNewFlowForm(false)
+                setNewFlowEndpoint('')
+                setNewFlowName('')
+              })}
+              disabled={generating}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-colors disabled:opacity-60"
+            >
+              {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+              {generating ? 'Generating...' : `Auto-Generate /${newFlowEndpoint.trim() || 'rate'} Flow`}
+            </button>
             <button
               onClick={handleCreateFlow}
               disabled={!newFlowEndpoint.trim()}

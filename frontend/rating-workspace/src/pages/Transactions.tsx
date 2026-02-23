@@ -35,7 +35,7 @@ function StepLogsRow({ txId }: { txId: string }) {
   if (loading) {
     return (
       <tr>
-        <td colSpan={8} className="px-6 py-3 bg-gray-50 dark:bg-gray-900">
+        <td colSpan={8} className="px-4 py-2 bg-gray-50 dark:bg-gray-900">
           <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
             Loading step logs...
@@ -48,7 +48,7 @@ function StepLogsRow({ txId }: { txId: string }) {
   if (error) {
     return (
       <tr>
-        <td colSpan={8} className="px-6 py-3 bg-red-50 dark:bg-red-900/30">
+        <td colSpan={8} className="px-4 py-2 bg-red-50 dark:bg-red-900/30">
           <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
         </td>
       </tr>
@@ -76,14 +76,14 @@ function StepLogsRow({ txId }: { txId: string }) {
     <>
       <tr>
         <td colSpan={8} className="px-0 pb-0">
-          <div className="bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700 px-6 py-4 space-y-4 min-w-0">
+          <div className="bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700 px-4 py-3 space-y-3 min-w-0">
             {steps.length === 0 ? (
               <p className="text-xs text-gray-400 dark:text-gray-500">No step logs available.</p>
             ) : (
               <>
                 {/* Flow diagram — scrollable so all steps (including failed) are visible */}
                 <div className="min-w-0 max-w-full">
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
                     Execution Flow · click a node to inspect
                   </p>
                   <ExecutionFlowDiagram
@@ -96,14 +96,14 @@ function StepLogsRow({ txId }: { txId: string }) {
 
                 {/* Step list */}
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
                     Step Logs
                   </p>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {steps.map((step) => (
                       <div
                         key={step.id}
-                        className="flex items-center gap-3 text-xs text-gray-700 bg-white rounded border border-gray-200 px-3 py-2"
+                        className="flex items-center gap-2 text-xs text-gray-700 bg-white rounded border border-gray-200 px-2.5 py-1.5"
                       >
                         <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 font-mono text-[10px] flex-shrink-0">
                           {step.stepOrder}
@@ -198,9 +198,9 @@ export function Transactions() {
   const hasFilters = productFilter || statusFilter
 
   return (
-    <div className="px-6 py-6 max-w-6xl mx-auto">
+    <div className="px-4 py-4 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-5 flex items-start justify-between gap-4">
+      <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Transactions</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
@@ -217,7 +217,7 @@ export function Transactions() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex items-center gap-3 mb-5 flex-wrap">
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
         <input
           value={productFilter}
           onChange={(e) => setProductFilter(e.target.value)}
@@ -249,22 +249,22 @@ export function Transactions() {
 
       {/* Error */}
       {error && (
-        <div className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm text-red-700 dark:text-red-300">
+        <div className="mb-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2 text-sm text-red-700 dark:text-red-300">
           {error}
         </div>
       )}
 
       {/* Loading */}
       {loading && (
-        <div className="flex items-center justify-center py-16">
+        <div className="flex items-center justify-center py-12">
           <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
         </div>
       )}
 
       {/* Empty state */}
       {!loading && transactions.length === 0 && !error && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-12 text-center">
-          <Activity className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-8 text-center">
+          <Activity className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
           <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
             {hasFilters ? 'No transactions match the current filters' : 'No transactions yet'}
           </p>
@@ -280,26 +280,26 @@ export function Transactions() {
           <table className="w-full text-sm table-fixed">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                <th className="w-8 px-3 py-3" />
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                <th className="w-7 px-2 py-2" />
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Correlation ID
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Product
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Status
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Scope
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Premium
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Steps
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Duration · Created
                 </th>
               </tr>
@@ -311,24 +311,24 @@ export function Transactions() {
                     onClick={() => toggleExpand(tx.id)}
                     className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                   >
-                    <td className="px-3 py-3 text-gray-400 dark:text-gray-500">
+                    <td className="px-2 py-2 text-gray-400 dark:text-gray-500">
                       {expanded.has(tx.id) ? (
                         <ChevronDown className="w-3.5 h-3.5" />
                       ) : (
                         <ChevronRight className="w-3.5 h-3.5" />
                       )}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400 max-w-[130px]">
+                    <td className="px-3 py-2 font-mono text-xs text-gray-600 dark:text-gray-400 max-w-[130px]">
                       <span title={tx.correlationId} className="truncate block">
                         {tx.correlationId.length > 18
                           ? `${tx.correlationId.slice(0, 8)}…${tx.correlationId.slice(-4)}`
                           : tx.correlationId}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-800 dark:text-gray-200">
+                    <td className="px-3 py-2 font-mono text-xs font-semibold text-gray-800 dark:text-gray-200">
                       {tx.productLineCode}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2">
                       <span
                         className={cn(
                           'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
@@ -338,7 +338,7 @@ export function Transactions() {
                         {tx.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
+                    <td className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
                       {tx.scope ? (
                         <span className="space-x-1">
                           {tx.scope.state && <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded text-[10px] font-medium">{tx.scope.state}</span>}
@@ -349,17 +349,17 @@ export function Transactions() {
                         <span className="text-gray-300 dark:text-gray-600">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs">
+                    <td className="px-3 py-2 text-xs">
                       {tx.premiumResult != null ? (
                         <span className="font-semibold text-green-700 dark:text-green-300">${Number(tx.premiumResult).toLocaleString()}</span>
                       ) : (
                         <span className="text-gray-300 dark:text-gray-600">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
+                    <td className="px-3 py-2 text-xs text-gray-600 dark:text-gray-400">
                       {tx.completedSteps}/{tx.stepCount}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">
+                    <td className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500">
                       <div>
                         {tx.durationMs != null ? (
                           <span className="font-mono text-gray-600 dark:text-gray-400">{tx.durationMs}ms</span>

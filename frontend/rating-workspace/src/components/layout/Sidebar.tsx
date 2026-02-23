@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Package, GitBranch, Map, BookOpen,
+  LayoutDashboard, Package, GitBranch, Map,
   Database, Server, Activity, ChevronRight, ChevronDown,
   Plus, Layers, Zap, BarChart3, Bot,
 } from 'lucide-react';
@@ -149,8 +149,6 @@ export function Sidebar({ products, onNewProduct }: SidebarProps) {
 
             <NavSection title="Configuration">
               <NavItem label="Systems" path="/systems" icon={Server} />
-              <NavItem label="Mappings" path="/mappings" icon={Map} />
-              <NavItem label="Rules" path="/rules" icon={BookOpen} />
               <NavItem label="Decision Tables" path="/decision-tables" icon={Database} />
               <NavItem label="Knowledge Base" path="/knowledge-base" icon={GitBranch} />
               <NavItem label="AI Prompts" path="/ai-prompts" icon={Bot} />

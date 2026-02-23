@@ -137,10 +137,10 @@ export function ExecutionFlowDiagram({
 
   return (
     <div
-      className="execution-flow-scroll min-w-0 w-full max-w-full overflow-x-scroll overflow-y-hidden pb-2"
+      className="execution-flow-scroll min-w-0 w-full max-w-full overflow-x-scroll overflow-y-hidden pb-1.5"
       style={{ scrollbarGutter: 'stable' }}
     >
-      <div className="flex items-start gap-0 min-w-max px-1 py-2">
+      <div className="flex items-start gap-0 min-w-max px-1 py-1">
         {sorted.map((step, idx) => {
           const result = getResult(step, idx)
           const leftBorder = STEP_NODE_STYLES[step.stepType] ?? 'border-l-gray-400'
@@ -155,7 +155,7 @@ export function ExecutionFlowDiagram({
               <div
                 onClick={() => onStepClick?.(step, result)}
                 className={cn(
-                  'w-36 rounded-lg border border-gray-200 dark:border-gray-700 border-l-4 bg-white dark:bg-gray-800 p-3 flex-shrink-0',
+                  'w-32 rounded-md border border-gray-200 dark:border-gray-700 border-l-4 bg-white dark:bg-gray-800 p-2 flex-shrink-0',
                   leftBorder,
                   ring,
                   isSelected && 'ring-2 ring-blue-500',
@@ -163,13 +163,13 @@ export function ExecutionFlowDiagram({
                 )}
               >
                 {/* Name */}
-                <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 leading-tight mb-1.5 line-clamp-2 min-h-[2rem]">
+                <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 leading-tight mb-1 line-clamp-2 min-h-[1.75rem]">
                   {step.name}
                 </p>
                 {/* Type badge */}
                 <span
                   className={cn(
-                    'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium mb-1',
+                    'inline-flex items-center px-1 py-0.5 rounded text-[10px] font-medium mb-0.5',
                     badgeStyle,
                   )}
                 >
@@ -179,7 +179,7 @@ export function ExecutionFlowDiagram({
                 <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">{serviceLabel}</p>
                 {/* Execution overlay */}
                 {result && (
-                  <div className="mt-2 pt-1.5 border-t border-gray-100 dark:border-gray-700 flex items-center gap-1">
+                  <div className="mt-1.5 pt-1 border-t border-gray-100 dark:border-gray-700 flex items-center gap-1">
                     <StatusIcon status={result.status} />
                     <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-auto font-mono">
                       {result.durationMs}ms
@@ -191,7 +191,7 @@ export function ExecutionFlowDiagram({
               {/* Arrow connector */}
               {idx < sorted.length - 1 && (
                 <div className="flex items-center self-center flex-shrink-0">
-                  <div className="w-5 h-px bg-gray-300 dark:bg-gray-600" />
+                  <div className="w-3 h-px bg-gray-300 dark:bg-gray-600" />
                   <span className="text-gray-400 dark:text-gray-500 text-[11px] -ml-0.5">▶</span>
                 </div>
               )}
