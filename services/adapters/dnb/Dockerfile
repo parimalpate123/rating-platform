@@ -17,7 +17,8 @@ FROM node:${NODE_VERSION}-alpine AS runner
 WORKDIR /app
 
 COPY --from=builder /app/services/adapters/dnb/dist ./
-RUN npm ci --omit=dev
+# Pruned lockfile from Nx can omit transitive deps; install from package.json
+RUN npm install --omit=dev
 
 EXPOSE 3011
 

@@ -17,7 +17,8 @@ FROM node:${NODE_VERSION}-alpine AS runner
 WORKDIR /app
 
 COPY --from=builder /app/orchestrators/core-rating/dist ./
-RUN npm ci --omit=dev
+# Pruned lockfile from Nx can omit some transitive deps; install from package.json
+RUN npm install --omit=dev
 
 EXPOSE 4000
 
