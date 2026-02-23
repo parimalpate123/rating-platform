@@ -12,8 +12,8 @@ const coreRating    = axios.create({ baseURL: apiBase.core });
 
 /** Retry on 502/503/504 (e.g. ALB has no healthy target). Only for idempotent methods to avoid double-submit. */
 const RETRYABLE_STATUS = [502, 503, 504];
-const MAX_RETRIES = 2;
-const RETRY_DELAY_MS = 1000;
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1500;
 
 function addRetryInterceptor(instance: ReturnType<typeof axios.create>) {
   instance.interceptors.response.use(

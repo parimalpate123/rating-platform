@@ -216,10 +216,6 @@ resource "aws_ecs_service" "services" {
 
   depends_on = [aws_lb_listener.http]
 
-  lifecycle {
-    ignore_changes = [desired_count]
-  }
-
   tags = {
     Environment = var.environment
     Service     = each.key
