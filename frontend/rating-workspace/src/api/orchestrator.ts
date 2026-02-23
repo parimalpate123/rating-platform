@@ -1,9 +1,11 @@
 import axios from 'axios';
+import { randomUUID } from '../lib/uuid';
 
-const lineRating = axios.create({ baseURL: '/api/line-rating' });
+const lineRatingBase = typeof import.meta !== 'undefined' && import.meta.env?.DEV ? '/api/line-rating' : '/api/v1';
+const lineRating = axios.create({ baseURL: lineRatingBase });
 
 lineRating.interceptors.request.use((config) => {
-  config.headers['x-correlation-id'] = crypto.randomUUID();
+  config.headers['x-correlation-id'] = randomUUID();
   return config;
 });
 
@@ -47,9 +49,10 @@ export interface RateResponse {
   totalDurationMs: number;
 }
 
-const coreRating = axios.create({ baseURL: '/api/core-rating' });
+const coreRatingBase = typeof import.meta !== 'undefined' && import.meta.env?.DEV ? '/api/core-rating' : '/api/v1';
+const coreRating = axios.create({ baseURL: coreRatingBase });
 coreRating.interceptors.request.use((config) => {
-  config.headers['x-correlation-id'] = crypto.randomUUID();
+  config.headers['x-correlation-id'] = randomUUID();
   return config;
 });
 

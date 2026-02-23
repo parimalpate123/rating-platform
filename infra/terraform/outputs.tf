@@ -50,6 +50,11 @@ output "alb_arn" {
   value       = var.ingress_enabled ? aws_lb.main[0].arn : ""
 }
 
+output "frontend_url" {
+  description = "Frontend (rating-workspace) URL — open in browser to use the app"
+  value       = var.ingress_enabled ? "http://${aws_lb.main[0].dns_name}" : ""
+}
+
 # ── RDS Outputs ──────────────────────────────────────────────────────────────
 
 output "rds_endpoint" {

@@ -272,7 +272,7 @@ resource "aws_lb_listener_rule" "rules" {
   }
 
   condition {
-    path_pattern { values = ["/api/v1/rules", "/api/v1/rules/*"] }
+    path_pattern { values = ["/api/v1/rules", "/api/v1/rules/*", "/api/v1/ai-prompts", "/api/v1/ai-prompts/*"] }
   }
 }
 
