@@ -11,12 +11,14 @@ import { LookupTables } from '../pages/LookupTables';
 import { KnowledgeBase } from '../pages/KnowledgeBase';
 import { AiPrompts } from '../pages/AiPrompts';
 import { GettingStarted } from '../pages/GettingStarted';
+import { Architecture } from '../pages/Architecture';
 
 export function App() {
   return (
     <Routes>
       <Route element={<AppShell />}>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/architecture" element={<Architecture />} />
         <Route path="/guide" element={<GettingStarted />} />
         <Route path="/products" element={<Products />} />
         <Route path="/products/:code" element={<ProductDetail />} />

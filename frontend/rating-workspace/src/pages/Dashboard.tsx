@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useOutletContext, useNavigate } from 'react-router-dom'
 import {
   Package,
@@ -68,7 +68,6 @@ function NavCard({ icon: Icon, title, description, borderColor, onClick }: NavCa
 export function Dashboard() {
   const { products } = useOutletContext<OutletCtx>()
   const navigate = useNavigate()
-  const [showNewProductNote, setShowNewProductNote] = useState(false)
 
   const activeCount = products.filter((p) => p.status === 'active').length
 
@@ -149,23 +148,13 @@ export function Dashboard() {
             <Plus className="w-4 h-4" />
             New Product Line
           </button>
-          <div className="relative">
-            <button
-              disabled
-              onMouseEnter={() => setShowNewProductNote(true)}
-              onMouseLeave={() => setShowNewProductNote(false)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg cursor-not-allowed"
-            >
-              <BarChart3 className="w-4 h-4" />
-              View Architecture
-            </button>
-            {showNewProductNote && (
-              <div className="absolute left-0 top-full mt-1.5 z-10 px-3 py-2 bg-gray-900 dark:bg-gray-950 text-white text-xs rounded-lg whitespace-nowrap shadow-lg">
-                Architecture view coming in Phase 2
-                <div className="absolute -top-1.5 left-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900 dark:border-b-gray-950" />
-              </div>
-            )}
-          </div>
+          <button
+            onClick={() => navigate('/architecture')}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          >
+            <BarChart3 className="w-4 h-4" />
+            View Architecture
+          </button>
         </div>
       </div>
 

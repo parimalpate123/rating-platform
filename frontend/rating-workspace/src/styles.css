@@ -35,3 +35,17 @@
 .dark .execution-flow-scroll::-webkit-scrollbar-thumb:hover {
   background: rgb(107 114 128);
 }
+
+/* Architecture page: same font size for "Per product line" diagram as platform diagram */
+.mermaid-plconfig svg {
+  font-size: 12px;
+}
+.mermaid-plconfig svg text,
+.mermaid-plconfig svg tspan {
+  font-size: 12px !important;
+}
+.mermaid-plconfig svg .nodeLabel,
+.mermaid-plconfig svg .edgeLabel,
+.mermaid-plconfig svg .cluster-label {
+  font-size: 12px !important;
+}
