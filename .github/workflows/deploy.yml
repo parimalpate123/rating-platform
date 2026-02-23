@@ -450,15 +450,24 @@ jobs:
             transform-service rules-service status-service
             rating-workspace adapter-kafka adapter-dnb adapter-gw
           )
-          echo "Waiting for services to reach RUNNING state..."
-          for svc in "${SERVICES[@]}"; do
-            echo -n "  $svc: "
-            aws ecs wait services-stable \
+          # Short poll: 12 × 10s = 2 min max. Broken image tag = tasks never start → wait would run full time.
+          echo "Waiting for services (parallel, max 2 min)..."
+          wait_one() {
+            svc="$1"
+            if aws ecs wait services-stable \
               --cluster "${{ env.ECS_CLUSTER }}" \
               --services "$svc" \
-              --region "${{ env.AWS_REGION }}" 2>/dev/null \
-              && echo "STABLE" || echo "TIMEOUT (may still be deploying)"
-          done
+              --region "${{ env.AWS_REGION }}" \
+              --waiter-config '{"MaxAttempts": 12, "Delay": 10}' 2>/dev/null; then
+              echo "  $svc: STABLE"
+            else
+              echo "  $svc: TIMEOUT (check image tag / task failures)"
+            fi
+          }
+          export -f wait_one
+          for svc in "${SERVICES[@]}"; do wait_one "$svc" & done
+          wait
+          echo "Done."
 
       - name: ECS service status
         run: |
