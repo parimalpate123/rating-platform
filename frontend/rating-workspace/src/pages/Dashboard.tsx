@@ -3,7 +3,6 @@ import { useOutletContext, useNavigate } from 'react-router-dom'
 import {
   Package,
   Server,
-  BookOpen,
   Activity,
   ArrowRight,
   Plus,
@@ -81,8 +80,8 @@ export function Dashboard() {
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Rating Orchestration Platform</p>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-4 gap-4">
+      {/* Stats row — Rules removed (per-product); Systems highlighted */}
+      <div className="grid grid-cols-3 gap-4">
         <StatCard
           label="Product Lines"
           value={products.length}
@@ -97,11 +96,6 @@ export function Dashboard() {
           label="Systems"
           value="5 registered"
           borderColor="border-l-purple-500"
-        />
-        <StatCard
-          label="Rules"
-          value="—"
-          borderColor="border-l-orange-400"
         />
       </div>
 
@@ -126,11 +120,11 @@ export function Dashboard() {
             onClick={() => navigate('/systems')}
           />
           <NavCard
-            icon={BookOpen}
-            title="Rules Engine"
-            description="Business rules and rating logic"
+            icon={BarChart3}
+            title="Insights"
+            description="Search transactions and analyze execution flow"
             borderColor="border-l-green-500"
-            onClick={() => navigate('/rules')}
+            onClick={() => navigate('/insights')}
           />
           <NavCard
             icon={Activity}
