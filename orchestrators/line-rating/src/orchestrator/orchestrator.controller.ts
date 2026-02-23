@@ -16,6 +16,11 @@ import { OrchestratorService } from './orchestrator.service';
 export class OrchestratorController {
   constructor(private readonly orchestratorService: OrchestratorService) {}
 
+  @Get('health')
+  health() {
+    return { status: 'ok', service: 'line-rating', timestamp: new Date().toISOString() };
+  }
+
   // ── Multi-flow: list all flows for a product ────────────────────────────────
   @Get(':productLineCode')
   async getAllFlows(@Param('productLineCode') code: string) {

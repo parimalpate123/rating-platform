@@ -1,10 +1,39 @@
 #!/bin/bash
 # Start all services directly via node (bypasses nx serve lock issues on macOS)
 # Each service runs in background and logs to logs/<service>.log
+#
+# Locally: starts PostgreSQL (and optional Redis/MinIO) via docker-compose.dev.yml
+# so DB-dependent services (line-rating, product-config, rules-service, status-service) can boot.
 
 cd "$(dirname "$0")/.."
 
 mkdir -p logs
+
+# ── Start local PostgreSQL (port 5433) if not already running ─────────────
+if command -v docker >/dev/null 2>&1 && [ -f docker-compose.dev.yml ]; then
+  if nc -z 127.0.0.1 5433 2>/dev/null; then
+    echo "PostgreSQL already running on 5433."
+  else
+    echo "Starting PostgreSQL (docker compose -f docker-compose.dev.yml up -d postgres)..."
+    docker compose -f docker-compose.dev.yml up -d postgres 2>/dev/null || true
+    echo "Waiting for PostgreSQL on 5433..."
+    for i in $(seq 1 25); do
+      if nc -z 127.0.0.1 5433 2>/dev/null; then
+        echo "  PostgreSQL ready."
+        break
+      fi
+      sleep 1
+    done
+    if ! nc -z 127.0.0.1 5433 2>/dev/null; then
+      echo "  Warning: PostgreSQL not ready. Run: docker compose -f docker-compose.dev.yml up -d postgres"
+    fi
+  fi
+else
+  if ! nc -z 127.0.0.1 5433 2>/dev/null; then
+    echo "PostgreSQL not running on 5433. Start it (e.g. docker compose -f docker-compose.dev.yml up -d postgres)."
+  fi
+fi
+echo ""
 
 # Kill any existing service processes
 pkill -f "services/product-config/dist/main.js" 2>/dev/null || true

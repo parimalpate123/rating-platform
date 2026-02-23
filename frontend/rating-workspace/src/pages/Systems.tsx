@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Loader2, Server, CheckCircle, AlertCircle, RefreshCw, Plus, Pencil, Trash2 } from 'lucide-react'
+import { Loader2, Server, CheckCircle, AlertCircle, RefreshCw, Plus, Pencil, Trash2, Sparkles } from 'lucide-react'
 import { systemsApi, type System, type AuthMethod } from '../api/systems'
+import { checkAllPlatformHealth, PLATFORM_SERVICES, type PlatformHealthResult } from '../api/platform-services'
 import { cn } from '../lib/utils'
 
 const isProd = import.meta.env.MODE === 'production'
@@ -210,6 +211,23 @@ export function Systems() {
   const [saving, setSaving] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [checkAllTrigger, setCheckAllTrigger] = useState(0)
+  const [platformHealth, setPlatformHealth] = useState<PlatformHealthResult[] | null>(null)
+  const [platformChecking, setPlatformChecking] = useState(false)
+  const [platformCheckTrigger, setPlatformCheckTrigger] = useState(0)
+
+  const runPlatformHealthCheck = useCallback(async () => {
+    setPlatformChecking(true)
+    try {
+      const results = await checkAllPlatformHealth()
+      setPlatformHealth(results)
+    } finally {
+      setPlatformChecking(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    runPlatformHealthCheck()
+  }, [platformCheckTrigger, runPlatformHealthCheck])
 
   const load = () => {
     systemsApi.list().then(setSystems).catch((err: unknown) => {
@@ -275,6 +293,86 @@ export function Systems() {
 
   return (
     <div className="px-4 py-4 max-w-7xl mx-auto">
+      {/* InsurRateX Platform Services health */}
+      <section className="mb-8">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">InsurRateX Platform Services</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              Health status of backend and orchestrator services. No add/remove — read-only.
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400 shrink-0" />
+              <span>AI icon = AI-enabled service (e.g. Rules, Mapper suggestions).</span>
+            </p>
+          </div>
+          <button
+            onClick={() => setPlatformCheckTrigger((t) => t + 1)}
+            disabled={platformChecking}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+          >
+            {platformChecking ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            Check all
+          </button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {(platformHealth ?? PLATFORM_SERVICES.map((s) => ({ id: s.id, name: s.name, usesAI: s.usesAI, status: 'checking' as const }))).map((r) => (
+            <div
+              key={r.id}
+              className={cn(
+                'rounded-lg border p-4 flex items-start justify-between gap-3',
+                r.status === 'healthy' && 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800',
+                r.status === 'unhealthy' && 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800',
+                (r.status === 'error' || r.status === 'checking') && 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700',
+              )}
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{r.name}</span>
+                  {r.usesAI && (
+                    <span className="shrink-0 text-violet-600 dark:text-violet-400" title="Uses AI">
+                      <Sparkles className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
+                <div className="mt-1 flex items-center gap-1.5 text-xs">
+                  {r.status === 'checking' && (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />
+                      <span className="text-gray-500">Checking...</span>
+                    </>
+                  )}
+                  {r.status === 'healthy' && (
+                    <>
+                      <CheckCircle className="w-3.5 h-3.5 text-green-600 dark:text-green-400 shrink-0" />
+                      <span className="text-green-700 dark:text-green-300">
+                        Healthy{r.durationMs != null ? ` (${r.durationMs}ms)` : ''}{r.detail ? ` — ${r.detail}` : ''}
+                      </span>
+                    </>
+                  )}
+                  {r.status === 'unhealthy' && (
+                    <>
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                      <span className="text-amber-700 dark:text-amber-300 truncate" title={r.error}>
+                        Unhealthy{r.error ? ` — ${r.error}` : ''}
+                      </span>
+                    </>
+                  )}
+                  {r.status === 'error' && (
+                    <>
+                      <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                      <span className="text-red-700 dark:text-red-300 truncate" title={r.error}>
+                        Error{r.error ? ` — ${r.error}` : ''}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Systems Registry</h1>

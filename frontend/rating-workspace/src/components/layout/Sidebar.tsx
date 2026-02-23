@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Package, GitBranch, Map,
   Database, Server, Activity, ChevronRight, ChevronDown,
-  Plus, Layers, Zap, BarChart3, Bot,
+  Plus, Layers, Zap, BarChart3, Bot, HelpCircle,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { ProductLine } from '../../api/products';
@@ -22,6 +22,7 @@ const iconNav = [
   { icon: BarChart3, label: 'Insights', path: '/insights' },
   { icon: Activity, label: 'Transactions', path: '/transactions' },
   { icon: Zap, label: 'Test Rating', path: '/test' },
+  { icon: HelpCircle, label: 'Getting Started', path: '/guide' },
 ];
 
 function NavSection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -158,6 +159,10 @@ export function Sidebar({ products, onNewProduct }: SidebarProps) {
               <NavItem label="Insights" path="/insights" icon={BarChart3} />
               <NavItem label="Transactions" path="/transactions" icon={Activity} />
               <NavItem label="Test Rating" path="/test" icon={Zap} />
+            </NavSection>
+
+            <NavSection title="Help">
+              <NavItem label="Getting Started" path="/guide" icon={HelpCircle} />
             </NavSection>
           </div>
         </div>

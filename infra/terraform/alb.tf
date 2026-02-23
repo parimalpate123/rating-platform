@@ -319,6 +319,21 @@ resource "aws_lb_listener_rule" "product_config_2" {
   }
 }
 
+resource "aws_lb_listener_rule" "product_config_db_health" {
+  count        = var.ingress_enabled ? 1 : 0
+  listener_arn = local.active_listener_arn
+  priority     = 52
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.product_config[0].arn
+  }
+
+  condition {
+    path_pattern { values = ["/api/v1/db-health"] }
+  }
+}
+
 resource "aws_lb_listener_rule" "core_api" {
   count        = var.ingress_enabled ? 1 : 0
   listener_arn = local.active_listener_arn

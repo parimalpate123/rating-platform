@@ -10,12 +10,14 @@ import { TestRating } from '../pages/TestRating';
 import { LookupTables } from '../pages/LookupTables';
 import { KnowledgeBase } from '../pages/KnowledgeBase';
 import { AiPrompts } from '../pages/AiPrompts';
+import { GettingStarted } from '../pages/GettingStarted';
 
 export function App() {
   return (
     <Routes>
       <Route element={<AppShell />}>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/guide" element={<GettingStarted />} />
         <Route path="/products" element={<Products />} />
         <Route path="/products/:code" element={<ProductDetail />} />
         <Route path="/products/:code/:tab" element={<ProductDetail />} />
