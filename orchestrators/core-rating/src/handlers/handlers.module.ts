@@ -1,5 +1,6 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { StepHandlerRegistry } from '../registry/step-handler.registry';
+import { RegistryModule } from '../registry/registry.module';
 import { FieldMappingHandler } from './field-mapping.handler';
 import { ApplyRulesHandler } from './apply-rules.handler';
 import { FormatTransformHandler } from './format-transform.handler';
@@ -8,8 +9,11 @@ import { PublishEventHandler } from './publish-event.handler';
 import { ValidateRequestHandler } from './validate-request.handler';
 import { CallExternalApiHandler } from './call-external-api.handler';
 import { EnrichHandler } from './enrich.handler';
+import { GenerateValueHandler } from './generate-value.handler';
+import { RunCustomFlowHandler } from './run-custom-flow.handler';
 
 @Module({
+  imports: [RegistryModule],
   providers: [
     FieldMappingHandler,
     ApplyRulesHandler,
@@ -19,6 +23,8 @@ import { EnrichHandler } from './enrich.handler';
     ValidateRequestHandler,
     CallExternalApiHandler,
     EnrichHandler,
+    GenerateValueHandler,
+    RunCustomFlowHandler,
   ],
   exports: [
     FieldMappingHandler,
@@ -29,6 +35,8 @@ import { EnrichHandler } from './enrich.handler';
     ValidateRequestHandler,
     CallExternalApiHandler,
     EnrichHandler,
+    GenerateValueHandler,
+    RunCustomFlowHandler,
   ],
 })
 export class HandlersModule implements OnModuleInit {
@@ -42,6 +50,8 @@ export class HandlersModule implements OnModuleInit {
     private readonly validateRequest: ValidateRequestHandler,
     private readonly callExternalApi: CallExternalApiHandler,
     private readonly enrich: EnrichHandler,
+    private readonly generateValue: GenerateValueHandler,
+    private readonly runCustomFlow: RunCustomFlowHandler,
   ) {}
 
   onModuleInit() {
@@ -53,5 +63,7 @@ export class HandlersModule implements OnModuleInit {
     this.registry.register(this.validateRequest);
     this.registry.register(this.callExternalApi);
     this.registry.register(this.enrich);
+    this.registry.register(this.generateValue);
+    this.registry.register(this.runCustomFlow);
   }
 }

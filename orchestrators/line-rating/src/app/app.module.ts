@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { OrchestratorModule } from '../orchestrator/orchestrator.module';
 import { DatabaseModule } from '../database/database.module';
+import { OrchestratorModule } from '../orchestrator/orchestrator.module';
+import { CustomFlowsModule } from '../custom-flows/custom-flows.module';
 
 @Module({
-  imports: [DatabaseModule, OrchestratorModule],
+  imports: [DatabaseModule, OrchestratorModule, CustomFlowsModule],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -10,6 +10,8 @@ import { TestRating } from '../pages/TestRating';
 import { LookupTables } from '../pages/LookupTables';
 import { KnowledgeBase } from '../pages/KnowledgeBase';
 import { AiPrompts } from '../pages/AiPrompts';
+import { CustomFlows } from '../pages/CustomFlows';
+import { CustomFlowEdit } from '../pages/CustomFlowEdit';
 import { GettingStarted } from '../pages/GettingStarted';
 import { Architecture } from '../pages/Architecture';
 
@@ -29,6 +31,8 @@ export function App() {
         <Route path="/decision-tables" element={<LookupTables />} />
         <Route path="/knowledge-base" element={<KnowledgeBase />} />
         <Route path="/ai-prompts" element={<AiPrompts />} />
+        <Route path="/custom-flows" element={<CustomFlows />} />
+        <Route path="/custom-flows/:flowId" element={<CustomFlowEdit />} />
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/insights" element={<Insights />} />
         <Route path="/test" element={<TestRating />} />

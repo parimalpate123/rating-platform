@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { OrchestratorStepEntity, ProductOrchestratorEntity } from '../entities';
+import {
+  CustomFlowEntity,
+  CustomFlowStepEntity,
+  OrchestratorStepEntity,
+  ProductOrchestratorEntity,
+} from '../entities';
 
 @Module({
   imports: [
@@ -11,7 +16,12 @@ import { OrchestratorStepEntity, ProductOrchestratorEntity } from '../entities';
       username: process.env.DB_USER || 'rating_user',
       password: process.env.DB_PASS || 'rating_pass',
       database: process.env.DB_NAME || 'rating_platform',
-      entities: [ProductOrchestratorEntity, OrchestratorStepEntity],
+      entities: [
+        ProductOrchestratorEntity,
+        OrchestratorStepEntity,
+        CustomFlowEntity,
+        CustomFlowStepEntity,
+      ],
       synchronize: false,
       ssl: process.env.DB_HOST ? { rejectUnauthorized: false } : false,
     }),

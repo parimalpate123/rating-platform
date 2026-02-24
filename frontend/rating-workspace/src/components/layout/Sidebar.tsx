@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Package, GitBranch, Map,
   Database, Server, Activity, ChevronRight, ChevronDown,
-  Plus, Layers, Zap, BarChart3, Bot, HelpCircle,
+  Plus, Layers, Zap, BarChart3, Bot, HelpCircle, Workflow,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { ProductLine } from '../../api/products';
@@ -153,6 +153,7 @@ export function Sidebar({ products, onNewProduct }: SidebarProps) {
               <NavItem label="Decision Tables" path="/decision-tables" icon={Database} />
               <NavItem label="Knowledge Base" path="/knowledge-base" icon={GitBranch} />
               <NavItem label="AI Prompts" path="/ai-prompts" icon={Bot} />
+              <NavItem label="Custom Flows" path="/custom-flows" icon={Workflow} />
             </NavSection>
 
             <NavSection title="Monitoring">

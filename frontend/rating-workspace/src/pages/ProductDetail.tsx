@@ -25,6 +25,7 @@ import {
 import { productsApi, type ProductLine } from '../api/products'
 import { cn, statusColor, formatDate } from '../lib/utils'
 import { orchestratorApi, ratingApi, type ProductOrchestrator, type RateResponse } from '../api/orchestrator'
+import { customFlowsApi, type CustomFlow } from '../api/custom-flows'
 import { systemsApi, type System } from '../api/systems'
 import { MappingsTab } from '../components/tabs/MappingsTab'
 import { RulesTab } from '../components/tabs/RulesTab'
@@ -506,6 +507,7 @@ function OverviewTab({ product }: { product: ProductLine }) {
 
 const STEP_TYPE_COLORS: Record<string, string> = {
   validate_request: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+  run_custom_flow: 'bg-violet-100 text-violet-700 border-violet-200',
   field_mapping: 'bg-blue-100 text-blue-700 border-blue-200',
   apply_rules: 'bg-green-100 text-green-700 border-green-200',
   format_transform: 'bg-orange-100 text-orange-700 border-orange-200',
@@ -570,6 +572,7 @@ function stepConfigPreview(config: Record<string, unknown>): string {
 
 const STEP_TYPES = [
   { value: 'validate_request', label: 'Validate Request' },
+  { value: 'run_custom_flow', label: 'Run custom flow' },
   { value: 'field_mapping', label: 'Field Mapping' },
   { value: 'apply_rules', label: 'Apply Rules' },
   { value: 'call_rating_engine', label: 'Call Rating Engine' },
@@ -588,7 +591,7 @@ interface ConfigField {
 
 const STEP_CONFIG_FIELDS: Record<string, ConfigField[]> = {
   validate_request: [
-    { key: 'schema', label: 'Schema Name', type: 'text', placeholder: 'e.g. rate-request, init-rate-request' },
+    { key: 'schema', label: 'Schema Name (coming soon)', type: 'text', placeholder: 'e.g. rate-request, init-rate-request' },
     { key: 'strictMode', label: 'Strict Mode', type: 'select', options: ['true', 'false'] },
   ],
   field_mapping: [
@@ -612,6 +615,7 @@ const STEP_CONFIG_FIELDS: Record<string, ConfigField[]> = {
   publish_event: [
     { key: 'topic', label: 'Topic', type: 'text', placeholder: 'e.g. rating.completed' },
   ],
+  run_custom_flow: [], // custom-flow dropdown rendered below when productCode is set
 }
 
 function StepConfigForm({
@@ -634,6 +638,15 @@ function StepConfigForm({
   const [aiLoading, setAILoading] = useState(false)
   const [aiError, setAIError] = useState<string | null>(null)
   const [lastConditionSource, setLastConditionSource] = useState<'bedrock' | 'heuristic' | null>(null)
+  const [customFlows, setCustomFlows] = useState<CustomFlow[]>([])
+
+  useEffect(() => {
+    if (stepType === 'run_custom_flow' && productCode) {
+      customFlowsApi.list(productCode).then(setCustomFlows).catch(() => setCustomFlows([]))
+    } else {
+      setCustomFlows([])
+    }
+  }, [stepType, productCode])
 
   const fields = STEP_CONFIG_FIELDS[stepType] ?? []
   const selectedSystem = systems.find(s => s.code === config['systemCode'])
@@ -680,6 +693,30 @@ function StepConfigForm({
 
   return (
     <div className="space-y-3">
+      {stepType === 'run_custom_flow' && (
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Custom flow</label>
+          <select
+            value={(config.customFlowId as string) ?? ''}
+            onChange={(e) => {
+              const id = e.target.value
+              const flow = customFlows.find((f) => f.id === id)
+              onChange({ ...config, customFlowId: id || undefined, customFlowName: flow?.name })
+            }}
+            className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Select flow...</option>
+            {customFlows.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name} {f.scope === 'product' ? `(${f.productLineCode})` : '(Universal)'}
+              </option>
+            ))}
+          </select>
+          {!productCode && (
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">Save the step after selecting a product context to see flows for this product.</p>
+          )}
+        </div>
+      )}
       {fields.length > 0 && (
       <div className="grid grid-cols-2 gap-3">
         {fields.map((f) => (

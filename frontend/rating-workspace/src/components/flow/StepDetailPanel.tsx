@@ -6,6 +6,7 @@ import { getServiceLabel, getEndpointLabel, type DiagramStep, type DiagramResult
 // ── Step type badge ───────────────────────────────────────────────────────────
 
 const STEP_BADGE_STYLES: Record<string, string> = {
+  run_custom_flow: 'bg-violet-100 text-violet-700',
   field_mapping: 'bg-blue-100 text-blue-700',
   apply_rules: 'bg-green-100 text-green-700',
   format_transform: 'bg-orange-100 text-orange-700',
