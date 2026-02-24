@@ -227,7 +227,12 @@ resource "aws_lb_listener_rule" "orchestrators" {
   }
 
   condition {
-    path_pattern { values = ["/api/v1/orchestrators", "/api/v1/orchestrators/*"] }
+    path_pattern {
+      values = [
+        "/api/v1/orchestrators", "/api/v1/orchestrators/*",
+        "/api/v1/custom-flows", "/api/v1/custom-flows/*",
+      ]
+    }
   }
 }
 
