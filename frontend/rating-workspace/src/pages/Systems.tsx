@@ -377,7 +377,7 @@ export function Systems() {
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Systems Registry</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Manage source and target systems used across product lines. {isProd ? 'Production endpoints shown.' : 'Local/dev endpoints shown.'}
+            Manage source and target systems used across product lines. {isProd ? 'Production endpoints shown.' : 'Local/dev endpoints shown.'} Localhost URLs point to local mock adapters. &quot;Active&quot; = enabled; mock systems skip the URL check and report healthy.
           </p>
         </div>
         <div className="flex items-center gap-2">
