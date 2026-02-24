@@ -7,6 +7,7 @@ import { cn } from '../lib/utils'
 const isProd = import.meta.env.MODE === 'production'
 
 function effectiveBaseUrl(sys: System): string | null {
+  if (sys.url != null && sys.url !== '') return sys.url
   const url = isProd && sys.baseUrlProd ? sys.baseUrlProd : sys.baseUrl
   return url || null
 }

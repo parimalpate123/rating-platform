@@ -19,6 +19,8 @@ export interface System {
   protocol: 'rest' | 'soap' | 'grpc' | 'mock';
   baseUrl?: string;
   baseUrlProd?: string;
+  /** Effective URL for display (set by API in production so mock systems don't show localhost) */
+  url?: string | null;
   authMethod?: AuthMethod;
   isMock: boolean;
   isActive: boolean;

@@ -75,8 +75,18 @@ export class MockSystemsController {
   }
 
   // ── Mock GW PolicyCenter init-rate ──────────────────────────────────────────
-  @Post('gw-policycenter/v1/init-rate')
+  // Support both /init-rate and /v1/init-rate (call_external_api uses endpoint as configured in step)
+  @Post('gw-policycenter/init-rate')
   gwInitRate(@Body() body: any) {
+    return this.gwInitRateHandler(body);
+  }
+
+  @Post('gw-policycenter/v1/init-rate')
+  gwInitRateV1(@Body() body: any) {
+    return this.gwInitRateHandler(body);
+  }
+
+  private gwInitRateHandler(body: any) {
     this.logger.log(`[Mock GW PolicyCenter] Received init-rate request`);
     const payload = body?.payload ?? body ?? {};
     const policyNumber = payload?.policyNumber || `POL-${Date.now()}`;

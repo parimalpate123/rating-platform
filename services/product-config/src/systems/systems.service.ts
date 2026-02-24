@@ -38,6 +38,16 @@ function getEffectiveBaseUrl(entity: SystemEntity): string | null {
   return url || null;
 }
 
+/** URL to show in UI. In production, mock systems with no baseUrlProd show Core Rating URL or a label instead of localhost. */
+function getDisplayUrl(entity: SystemEntity): string | null {
+  const effective = getEffectiveBaseUrl(entity);
+  const isProd = process.env.NODE_ENV === 'production';
+  if (isProd && entity.isMock && (!effective || effective.includes('localhost'))) {
+    return process.env.CORE_RATING_URL || '(Mock - routed via Core Rating)';
+  }
+  return effective;
+}
+
 /** Strip credentials from config.auth before sending to client */
 function sanitizeConfig(config: Record<string, unknown> | undefined): Record<string, unknown> {
   if (!config || !config.auth) return config ?? {};
@@ -94,15 +104,19 @@ export class SystemsService implements OnModuleInit {
     }
   }
 
-  async findAll(): Promise<SystemEntity[]> {
+  async findAll(): Promise<(SystemEntity & { url?: string | null })[]> {
     const list = await this.repo.find({ order: { createdAt: 'DESC' } });
-    return list.map((e) => ({ ...e, config: sanitizeConfig(e.config) })) as SystemEntity[];
+    return list.map((e) => ({
+      ...e,
+      config: sanitizeConfig(e.config),
+      url: getDisplayUrl(e),
+    })) as (SystemEntity & { url?: string | null })[];
   }
 
-  async findById(id: string): Promise<SystemEntity> {
+  async findById(id: string): Promise<SystemEntity & { url?: string | null }> {
     const entity = await this.repo.findOne({ where: { id } });
     if (!entity) throw new NotFoundException(`System with id "${id}" not found`);
-    return { ...entity, config: sanitizeConfig(entity.config) } as SystemEntity;
+    return { ...entity, config: sanitizeConfig(entity.config), url: getDisplayUrl(entity) } as SystemEntity & { url?: string | null };
   }
 
   async create(data: Partial<SystemEntity>): Promise<SystemEntity> {

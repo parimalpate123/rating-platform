@@ -20,6 +20,7 @@ locals {
 
   common_env = [
     { name = "NODE_ENV", value = "production" },
+    { name = "CORE_RATING_URL", value = "http://core-rating.${local.sd_namespace}:4000" },
     { name = "LINE_RATING_URL", value = "http://line-rating.${local.sd_namespace}:4001" },
     { name = "STATUS_SERVICE_URL", value = "http://status-service.${local.sd_namespace}:4013" },
     { name = "TRANSFORM_SERVICE_URL", value = "http://transform-service.${local.sd_namespace}:4011" },
