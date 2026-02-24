@@ -3,6 +3,7 @@
 // passing the execution context through each step handler.
 
 import { Injectable, Logger } from '@nestjs/common';
+import * as vm from 'node:vm';
 import { StepHandlerRegistry } from '../registry/step-handler.registry';
 
 // ── Local resilience / condition types (mirrors contracts package) ────────────
@@ -106,6 +107,42 @@ export class ExecutionService {
     }
   }
 
+  /**
+   * Evaluate an optional advanced condition expression.
+   * Expression runs in a sandbox with only `request` and `working` in scope.
+   * Must evaluate to a boolean (truthy = run step, falsy = skip).
+   * On syntax/runtime error or timeout, returns false (step is skipped).
+   */
+  private evaluateConditionExpression(
+    expression: string,
+    request: Record<string, unknown>,
+    working: Record<string, unknown>,
+    correlationId: string,
+  ): boolean {
+    const trimmed = expression?.trim();
+    if (!trimmed) return true;
+
+    const code = `(function() { return Boolean((${trimmed})); })()`;
+    const context = vm.createContext({
+      request: request ?? {},
+      working: working ?? {},
+    });
+
+    try {
+      const result = vm.runInNewContext(code, context, {
+        timeout: 100,
+        displayErrors: true,
+      });
+      return result === true;
+    } catch (err) {
+      this.logger.warn(
+        `Step condition expression error (step will be skipped): ${err instanceof Error ? err.message : String(err)}`,
+        correlationId,
+      );
+      return false;
+    }
+  }
+
   // ── Circuit breaker ─────────────────────────────────────────────────────────
 
   private isCircuitOpen(stepId: string, config: StepCircuitBreakerConfig): boolean {
@@ -190,8 +227,22 @@ export class ExecutionService {
       const onFailure = resilience?.onFailure ?? 'stop';
 
       // ── 1. Condition check ────────────────────────────────────────────────
+      const conditionExpression = (step.config as any)?.conditionExpression as string | undefined;
       const condition = (step.config as any)?.condition as StepCondition | undefined;
-      if (condition && !this.evaluateCondition(condition, context.working)) {
+
+      let conditionMet = true;
+      if (conditionExpression?.trim()) {
+        conditionMet = this.evaluateConditionExpression(
+          conditionExpression,
+          context.request as Record<string, unknown>,
+          context.working,
+          request.correlationId,
+        );
+      } else if (condition) {
+        conditionMet = this.evaluateCondition(condition, context.working);
+      }
+
+      if (!conditionMet) {
         this.logger.log(
           `Skipping step ${step.stepOrder}: ${step.name} — condition not met`,
           request.correlationId,

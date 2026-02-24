@@ -80,7 +80,16 @@ export const rulesApi = {
     rulesService.post<Rule>(`/rules/${id}/activate`).then((r) => r.data),
 
   generateWithAI: (dto: { productLineCode: string; requirements: string }) =>
-    rulesService.post<GenerateAIResponse>('/rules/generate-ai', dto).then((r) => r.data),
+    rulesService.post<GenerateAIResponse>('rules/generate-ai', dto).then((r) => r.data),
+
+  /** Generate a step run-condition expression from plain-English description (Bedrock or heuristic). */
+  generateConditionExpression: (dto: {
+    description: string
+    stepName?: string
+    stepType?: string
+    productLineCode?: string
+  }) =>
+    rulesService.post<{ expression: string; source?: 'bedrock' | 'heuristic' }>('rules/generate-condition-expression', dto).then((r) => r.data),
 
   // Scope tags
   listScopeTags: (ruleId: string) =>

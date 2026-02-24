@@ -1,5 +1,5 @@
 import React from 'react'
-import { CheckCircle, XCircle, Circle } from 'lucide-react'
+import { CheckCircle, XCircle, Circle, MinusCircle } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 // ── Shared types ──────────────────────────────────────────────────────────────
@@ -94,6 +94,7 @@ function StatusIcon({ status }: { status: string }) {
   const s = status.toLowerCase()
   if (s === 'completed') return <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
   if (s === 'failed') return <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+  if (s === 'skipped') return <MinusCircle className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" title="Skipped" />
   return <Circle className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" />
 }
 
@@ -102,6 +103,7 @@ function nodeRingClass(status?: string): string {
   const s = status.toLowerCase()
   if (s === 'completed') return 'ring-1 ring-green-400'
   if (s === 'failed') return 'ring-2 ring-red-400'
+  if (s === 'skipped') return 'ring-1 ring-amber-400'
   return ''
 }
 

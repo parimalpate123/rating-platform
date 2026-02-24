@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, X, Copy, ChevronRight, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, X, Copy, ChevronRight, AlertCircle, MinusCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { getServiceLabel } from './ExecutionFlowDiagram';
 
@@ -140,11 +140,13 @@ function TestStepDetailModal({
                   'inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium',
                   status === 'completed' && 'bg-green-100 text-green-700',
                   status === 'failed' && 'bg-red-100 text-red-700',
-                  !['completed', 'failed'].includes(status) && 'bg-gray-100 text-gray-700',
+                  status === 'skipped' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+                  !['completed', 'failed', 'skipped'].includes(status) && 'bg-gray-100 text-gray-700',
                 )}
               >
                 {status === 'completed' && <CheckCircle className="w-3.5 h-3.5" />}
                 {status === 'failed' && <XCircle className="w-3.5 h-3.5" />}
+                {status === 'skipped' && <MinusCircle className="w-3.5 h-3.5" />}
                 {status}
               </span>
               {getHttpStatusBadge(httpStatus)}
@@ -232,15 +234,20 @@ export function TestingFlowCircles({
           const status = result?.status?.toLowerCase();
           const serviceLabel = getServiceLabel(step.stepType, step.config);
           const isFailed = status === 'failed';
+          const isSkipped = status === 'skipped';
           const title = isFailed && result?.error
             ? `${step.name} · Failed: ${result.error}`
-            : `${step.name} · ${serviceLabel}`;
+            : isSkipped
+              ? `${step.name} · Skipped (condition not met)`
+              : `${step.name} · ${serviceLabel}`;
 
           const nodeContent = result ? (
             isFailed ? (
               <AlertCircle className="w-4 h-4 text-red-600" aria-label="Failed" />
             ) : status === 'completed' ? (
               <CheckCircle className="w-4 h-4" />
+            ) : isSkipped ? (
+              <MinusCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-label="Skipped" />
             ) : (
               <span className="text-[10px] font-bold">{index + 1}</span>
             )
@@ -253,7 +260,8 @@ export function TestingFlowCircles({
             : cn(
                 'w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors',
                 status === 'completed' && 'bg-green-100 border-green-400 text-green-700',
-                !result && 'bg-white border-gray-300 text-gray-400',
+                isSkipped && 'bg-amber-50 dark:bg-amber-900/30 border-amber-400 text-amber-700 dark:text-amber-300',
+                !result && !isSkipped && 'bg-white border-gray-300 text-gray-400',
               );
 
           return (

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { X, CheckCircle, XCircle, Circle } from 'lucide-react'
+import { X, CheckCircle, XCircle, Circle, MinusCircle } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { getServiceLabel, getEndpointLabel, type DiagramStep, type DiagramResult } from './ExecutionFlowDiagram'
 
@@ -32,6 +32,13 @@ function StatusDisplay({ status }: { status: string }) {
       <span className="flex items-center gap-1 text-red-600">
         <XCircle className="w-4 h-4" />
         <span className="text-xs font-medium">Failed</span>
+      </span>
+    )
+  if (s === 'skipped')
+    return (
+      <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+        <MinusCircle className="w-4 h-4" />
+        <span className="text-xs font-medium">Skipped (condition not met)</span>
       </span>
     )
   return (
@@ -75,9 +82,13 @@ export interface StepDetailPanelProps {
   step: DiagramStep
   result?: DiagramResult
   onClose: () => void
+  /** When set, panel uses this width and shows a resize handle (drag to expand). */
+  width?: number
+  /** Callback when user starts dragging the resize handle; parent should run resize logic. */
+  onResizeStart?: () => void
 }
 
-export function StepDetailPanel({ step, result, onClose }: StepDetailPanelProps) {
+export function StepDetailPanel({ step, result, onClose, width = 320, onResizeStart }: StepDetailPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
 
   // Close on Escape
@@ -98,10 +109,24 @@ export function StepDetailPanel({ step, result, onClose }: StepDetailPanelProps)
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/20" onClick={onClose} />
 
+      {onResizeStart && (
+        <div
+          role="button"
+          tabIndex={0}
+          onMouseDown={(e) => { e.preventDefault(); onResizeStart() }}
+          className="relative w-1.5 flex-shrink-0 bg-gray-200 dark:bg-gray-600 hover:bg-blue-400 dark:hover:bg-blue-600 cursor-col-resize transition-colors flex items-center justify-center group z-10"
+          style={{ minWidth: 6 }}
+          aria-label="Resize panel"
+        >
+          <div className="w-0.5 h-12 rounded-full bg-gray-400 group-hover:bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+      )}
+
       {/* Panel */}
       <div
         ref={panelRef}
-        className="relative w-80 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col overflow-hidden"
+        className="relative h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col overflow-hidden"
+        style={{ width: width }}
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-3 px-4 py-4 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">

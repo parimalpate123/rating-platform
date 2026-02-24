@@ -12,6 +12,7 @@ import {
   CheckCircle,
   XCircle,
   Circle,
+  MinusCircle,
   Settings,
   RefreshCw,
   Trash2,
@@ -19,6 +20,7 @@ import {
   ChevronDown,
   ChevronRight,
   Plus,
+  Sparkles,
 } from 'lucide-react'
 import { productsApi, type ProductLine } from '../api/products'
 import { cn, statusColor, formatDate } from '../lib/utils'
@@ -26,6 +28,7 @@ import { orchestratorApi, ratingApi, type ProductOrchestrator, type RateResponse
 import { systemsApi, type System } from '../api/systems'
 import { MappingsTab } from '../components/tabs/MappingsTab'
 import { RulesTab } from '../components/tabs/RulesTab'
+import { rulesApi } from '../api/rules'
 import { ScopesTab } from '../components/tabs/ScopesTab'
 import { ExecutionFlowDiagram, type DiagramStep, type DiagramResult } from '../components/flow/ExecutionFlowDiagram'
 import { StepDetailPanel } from '../components/flow/StepDetailPanel'
@@ -514,8 +517,40 @@ const STEP_TYPE_COLORS: Record<string, string> = {
 
 const CONFIG_PREVIEW_KEYS = ['direction', 'systemCode', 'formatDirection', 'format', 'engine', 'url', 'event']
 
+// Run condition: step runs only when this evaluates true against context.working (e.g. request payload).
+// Backend: execution.service evaluates step.config.condition and skips step if false.
+export type StepConditionOperator = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'not_in' | 'exists'
+
+export interface StepConditionConfig {
+  field: string
+  operator: StepConditionOperator
+  value?: unknown
+}
+
+const CONDITION_OPERATORS: { value: StepConditionOperator; label: string }[] = [
+  { value: 'exists', label: 'exists (is present)' },
+  { value: 'eq', label: 'equals' },
+  { value: 'neq', label: 'not equals' },
+  { value: 'gt', label: 'greater than' },
+  { value: 'gte', label: 'greater or equal' },
+  { value: 'lt', label: 'less than' },
+  { value: 'lte', label: 'less or equal' },
+  { value: 'in', label: 'in list (comma-separated)' },
+  { value: 'not_in', label: 'not in list (comma-separated)' },
+]
+
 function stepConfigPreview(config: Record<string, unknown>): string {
   const parts: string[] = []
+  const expr = config.conditionExpression as string | undefined
+  if (expr?.trim()) {
+    parts.push(`run when: expression`)
+  } else {
+    const cond = config.condition as StepConditionConfig | undefined
+    if (cond?.field && cond?.operator) {
+      const val = cond.operator === 'exists' ? '' : String(cond.value ?? '')
+      parts.push(`run when: ${cond.field} ${cond.operator}${val ? ` ${val}` : ''}`)
+    }
+  }
   for (const key of CONFIG_PREVIEW_KEYS) {
     if (config[key] !== undefined && config[key] !== null && config[key] !== '') {
       parts.push(`${key}: ${config[key]}`)
@@ -524,6 +559,7 @@ function stepConfigPreview(config: Record<string, unknown>): string {
   if (parts.length === 0) {
     const entries = Object.entries(config).slice(0, 2)
     for (const [k, v] of entries) {
+      if (k === 'condition') continue
       parts.push(`${k}: ${v}`)
     }
   }
@@ -583,19 +619,68 @@ function StepConfigForm({
   config,
   onChange,
   systems,
+  productCode,
+  stepName,
 }: {
   stepType: string
   config: Record<string, unknown>
   onChange: (config: Record<string, unknown>) => void
   systems: System[]
+  productCode?: string
+  stepName?: string
 }) {
-  const fields = STEP_CONFIG_FIELDS[stepType] ?? []
-  if (fields.length === 0) return null
+  const [showAIConditionModal, setShowAIConditionModal] = useState(false)
+  const [aiDescription, setAIDescription] = useState('')
+  const [aiLoading, setAILoading] = useState(false)
+  const [aiError, setAIError] = useState<string | null>(null)
+  const [lastConditionSource, setLastConditionSource] = useState<'bedrock' | 'heuristic' | null>(null)
 
+  const fields = STEP_CONFIG_FIELDS[stepType] ?? []
   const selectedSystem = systems.find(s => s.code === config['systemCode'])
+  const cond = (config.condition as StepConditionConfig | undefined) ?? { field: '', operator: 'exists' as StepConditionOperator, value: undefined }
+
+  const setCondition = (next: Partial<StepConditionConfig>) => {
+    const merged = { ...cond, ...next }
+    if (!merged.field && !merged.value) {
+      const { condition: _, ...rest } = config
+      onChange(rest)
+      return
+    }
+    if (!merged.field) return
+    let value: unknown = merged.value
+    if ((merged.operator === 'in' || merged.operator === 'not_in') && typeof merged.value === 'string') {
+      value = merged.value.split(',').map(s => s.trim()).filter(Boolean)
+    }
+    onChange({ ...config, condition: { ...merged, value } })
+  }
+
+  const handleGenerateConditionAI = async () => {
+    const desc = aiDescription.trim()
+    if (!desc) return
+    setAIError(null)
+    setAILoading(true)
+    try {
+      const { expression, source } = await rulesApi.generateConditionExpression({
+        description: desc,
+        stepName: stepName ?? undefined,
+        stepType: stepType || undefined,
+        productLineCode: productCode ?? undefined,
+      })
+      onChange({ ...config, conditionExpression: expression })
+      setLastConditionSource(source ?? null)
+      setShowAIConditionModal(false)
+      setAIDescription('')
+    } catch (err: unknown) {
+      const msg = (err as any)?.response?.data?.message ?? (err instanceof Error ? err.message : String(err))
+      setAIError(msg || 'AI generation failed. Check rules-service and AWS Bedrock credentials.')
+    } finally {
+      setAILoading(false)
+    }
+  }
 
   return (
     <div className="space-y-3">
+      {fields.length > 0 && (
       <div className="grid grid-cols-2 gap-3">
         {fields.map((f) => (
           <div key={f.key}>
@@ -635,9 +720,135 @@ function StepConfigForm({
           </div>
         ))}
       </div>
+      )}
+
+      {/* Run condition (optional): step runs only when this is true; otherwise step is skipped */}
+      <div className="border-t border-gray-100 dark:border-gray-700 pt-3 mt-3">
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Run this step only when (optional)</p>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[140px]">
+            <label className="block text-xs text-gray-400 mb-0.5">Field path</label>
+            <input
+              value={cond.field}
+              onChange={(e) => setCondition({ field: e.target.value.trim() })}
+              placeholder="e.g. policy.state or request.scope.coverageType"
+              className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          <div className="min-w-[160px]">
+            <label className="block text-xs text-gray-400 mb-0.5">Operator</label>
+            <select
+              value={cond.operator}
+              onChange={(e) => setCondition({ operator: e.target.value as StepConditionOperator })}
+              className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              {CONDITION_OPERATORS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+          {cond.operator !== 'exists' && (
+            <div className="min-w-[120px]">
+              <label className="block text-xs text-gray-400 mb-0.5">Value</label>
+              <input
+                value={Array.isArray(cond.value) ? (cond.value as string[]).join(', ') : String(cond.value ?? '')}
+                onChange={(e) => setCondition({ value: e.target.value })}
+                placeholder={cond.operator === 'in' || cond.operator === 'not_in' ? 'a, b, c' : 'value'}
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+          )}
+          {cond.field && (
+            <button
+              type="button"
+              onClick={() => setCondition({ field: '', operator: 'exists', value: undefined })}
+              className="text-xs text-gray-500 hover:text-red-600 dark:hover:text-red-400"
+            >
+              Clear condition
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-gray-400 mt-1">Path is from payload root (e.g. <code className="px-0.5 rounded bg-gray-200 dark:bg-gray-700">policy.state</code>, <code className="px-0.5 rounded bg-gray-200 dark:bg-gray-700">request.scope.coverageType</code>, or <code className="px-0.5 rounded bg-gray-200 dark:bg-gray-700">policy.dunsNumber</code>).</p>
+
+        {/* Advanced: expression (overrides simple condition when set) */}
+        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-2 mb-1">
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Advanced condition (optional)</label>
+            <button
+              type="button"
+              onClick={() => { setShowAIConditionModal(true); setAIError(null); setAIDescription('') }}
+              className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Generate with AI
+            </button>
+            {lastConditionSource && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                — Generated with {lastConditionSource === 'bedrock' ? 'Bedrock' : 'heuristic'}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-gray-400 mb-1.5">JavaScript expression; <code className="px-0.5 rounded bg-gray-200 dark:bg-gray-700">request</code> = original payload, <code className="px-0.5 rounded bg-gray-200 dark:bg-gray-700">working</code> = current state. When set, this overrides the simple condition above.</p>
+          <textarea
+            value={(config.conditionExpression as string) ?? ''}
+            onChange={(e) => {
+              const v = e.target.value
+              if (v.trim()) onChange({ ...config, conditionExpression: v })
+              else {
+                const { conditionExpression: _, ...rest } = config
+                onChange(rest)
+                setLastConditionSource(null)
+              }
+            }}
+            placeholder="e.g. working?.policy?.state === 'NY' || working?.coverage?.type === 'BOP'"
+            rows={2}
+            className="w-full px-2 py-1.5 text-sm font-mono border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-y min-h-[4rem]"
+          />
+          <p className="text-xs text-gray-400 mt-1">Expression must evaluate to true/false. No <code className="px-0.5 rounded bg-gray-200 dark:bg-gray-700">return</code>, async, or require. Timeout 100ms.</p>
+
+          {showAIConditionModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="ai-condition-title">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-md p-4">
+                <h3 id="ai-condition-title" className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  Generate condition with AI
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Describe in plain English when this step should run. AI will generate a JavaScript expression using <code className="px-0.5 rounded bg-gray-200 dark:bg-gray-700">request</code> and <code className="px-0.5 rounded bg-gray-200 dark:bg-gray-700">working</code>.</p>
+                <textarea
+                  value={aiDescription}
+                  onChange={(e) => setAIDescription(e.target.value)}
+                  placeholder="e.g. when a specific field is present, or when coverage type is BOP"
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+                  disabled={aiLoading}
+                />
+                {aiError && <p className="text-xs text-red-600 dark:text-red-400 mb-2">{aiError}</p>}
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setShowAIConditionModal(false); setAIError(null) }}
+                    className="px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGenerateConditionAI}
+                    disabled={aiLoading || !aiDescription.trim()}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    {aiLoading ? 'Generating…' : 'Generate'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* URL preview when a system is selected */}
-      {selectedSystem && (
+      {selectedSystem && fields.length > 0 && (
         <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-xs space-y-1">
           <div className="flex items-center gap-4 text-gray-500 dark:text-gray-400">
             <span>Base URL: <span className="font-mono text-gray-700 dark:text-gray-300">{selectedSystem.baseUrl || '—'}</span></span>
@@ -738,6 +949,12 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set())
   const [selectedStep, setSelectedStep] = useState<{ step: DiagramStep; result?: DiagramResult } | null>(null)
 
+  // Right pane (edit / view): resizable width
+  const [rightPanelWidth, setRightPanelWidth] = useState(420)
+  const [isResizingRightPanel, setIsResizingRightPanel] = useState(false)
+  const MIN_PANEL_WIDTH = 320
+  const MAX_PANEL_WIDTH = 900
+
   const orchestrator = flows.find(f => f.endpointPath === activeEndpoint) ?? null
 
   const load = () => {
@@ -762,6 +979,26 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
     systemsApi.list().then(setSystems).catch(() => {})
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productCode])
+
+  // Resize right panel by dragging left edge
+  useEffect(() => {
+    if (!isResizingRightPanel) return
+    const onMove = (e: MouseEvent) => {
+      const newWidth = window.innerWidth - e.clientX
+      setRightPanelWidth(Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, newWidth)))
+    }
+    const onUp = () => setIsResizingRightPanel(false)
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    return () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [isResizingRightPanel])
 
   const handleAutoGenerate = async (endpointPath = 'rate', onSuccess?: () => void) => {
     const ts = targetSystem.toLowerCase()
@@ -1175,70 +1412,6 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
                           <button onClick={() => handleDeleteStep(step.id, step.name)} className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 rounded transition-colors" title="Delete step"><Trash2 className="w-3.5 h-3.5" /></button>
                         </div>
                       </div>
-
-                      {/* Expanded config editor */}
-                      {isEditing && (
-                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Step Name</label>
-                              <input
-                                autoFocus
-                                value={editStepData.name}
-                                onChange={(e) => setEditStepData(prev => ({ ...prev, name: e.target.value }))}
-                                className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Step Type</label>
-                              <select
-                                value={editStepData.stepType}
-                                onChange={(e) => setEditStepData(prev => ({ ...prev, stepType: e.target.value, config: {} }))}
-                                className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              >
-                                {STEP_TYPES.map((t) => (
-                                  <option key={t.value} value={t.value}>{t.label}</option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-
-                          <StepConfigForm
-                            stepType={editStepData.stepType}
-                            config={editStepData.config}
-                            onChange={(c) => setEditStepData(prev => ({ ...prev, config: c }))}
-                            systems={systems}
-                          />
-
-                          <div className="flex items-center gap-4">
-                            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={editStepData.isActive}
-                                onChange={(e) => setEditStepData(prev => ({ ...prev, isActive: e.target.checked }))}
-                                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                              />
-                              Active
-                            </label>
-                          </div>
-
-                          <div className="flex items-center gap-2 pt-1">
-                            <button
-                              onClick={() => handleSaveStep(step.id)}
-                              disabled={!editStepData.name.trim()}
-                              className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                            >
-                              Save Changes
-                            </button>
-                            <button
-                              onClick={() => setEditingStepId(null)}
-                              className="px-4 py-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </div>
 
                     {/* Insert step here (between this step and the next) */}
@@ -1274,6 +1447,8 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
                           config={newStepConfig}
                           onChange={setNewStepConfig}
                           systems={systems}
+                          productCode={productCode}
+                          stepName={newStepName}
                         />
                         <div className="flex items-center gap-2 pt-1">
                           <button
@@ -1339,6 +1514,8 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
                     config={newStepConfig}
                     onChange={setNewStepConfig}
                     systems={systems}
+                    productCode={productCode}
+                    stepName={newStepName}
                   />
 
                   <div className="flex items-center gap-2 pt-1">
@@ -1466,8 +1643,13 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
                               <span className="w-4 h-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-[10px] font-bold text-gray-500 dark:text-gray-400 flex-shrink-0">{i + 1}</span>
                               {step.status === 'completed'
                                 ? <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
-                                : <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
-                              <span className="text-xs text-gray-800 dark:text-gray-200 flex-1 truncate">{step.stepName}</span>
+                                : step.status === 'skipped'
+                                  ? <MinusCircle className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" title="Skipped (condition not met)" />
+                                  : <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" title="Failed" />}
+                              <span className="text-xs text-gray-800 dark:text-gray-200 flex-1 truncate">
+                                {step.stepName}
+                                {step.status === 'skipped' && <span className="ml-1 text-amber-600 dark:text-amber-400">(skipped)</span>}
+                              </span>
                               <span className="text-xs text-gray-400 dark:text-gray-500">{step.durationMs}ms</span>
                               {expandedSteps.has(i) ? <ChevronDown className="w-3 h-3 text-gray-400 dark:text-gray-500" /> : <ChevronRight className="w-3 h-3 text-gray-400 dark:text-gray-500" />}
                             </button>
@@ -1499,11 +1681,110 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
             </div>
           </div>
 
-          {selectedStep && (
+          {/* Right-hand edit pane (resizable): step config form */}
+          {editingStepId && orchestrator && (() => {
+            const editingStep = orchestrator.steps.find((s: { id: string }) => s.id === editingStepId)
+            if (!editingStep) return null
+            return (
+              <div className="fixed inset-0 z-40 flex justify-end">
+                <div className="flex-1 min-w-0 bg-black/10 pointer-events-auto" onClick={() => setEditingStepId(null)} aria-hidden />
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onMouseDown={(e) => { e.preventDefault(); setIsResizingRightPanel(true) }}
+                  className="pointer-events-auto w-1.5 flex-shrink-0 bg-gray-200 dark:bg-gray-600 hover:bg-blue-400 dark:hover:bg-blue-600 cursor-col-resize transition-colors flex items-center justify-center group"
+                  style={{ minWidth: 6 }}
+                  aria-label="Resize panel"
+                >
+                  <div className="w-0.5 h-12 rounded-full bg-gray-400 group-hover:bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <div
+                  className="pointer-events-auto h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col overflow-hidden"
+                  style={{ width: rightPanelWidth }}
+                >
+                  <div className="flex items-start justify-between gap-3 px-4 py-4 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Edit step</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5 truncate">{editingStep.name}</p>
+                    </div>
+                    <button
+                      onClick={() => setEditingStepId(null)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 transition-colors flex-shrink-0"
+                      aria-label="Close"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+                    <div className="grid grid-cols-1 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Step Name</label>
+                        <input
+                          value={editStepData.name}
+                          onChange={(e) => setEditStepData(prev => ({ ...prev, name: e.target.value }))}
+                          className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Step Type</label>
+                        <select
+                          value={editStepData.stepType}
+                          onChange={(e) => setEditStepData(prev => ({ ...prev, stepType: e.target.value, config: {} }))}
+                          className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {STEP_TYPES.map((t) => (
+                            <option key={t.value} value={t.value}>{t.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <StepConfigForm
+                      stepType={editStepData.stepType}
+                      config={editStepData.config}
+                      onChange={(c) => setEditStepData(prev => ({ ...prev, config: c }))}
+                      systems={systems}
+                      productCode={productCode}
+                      stepName={editStepData.name}
+                    />
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editStepData.isActive}
+                          onChange={(e) => setEditStepData(prev => ({ ...prev, isActive: e.target.checked }))}
+                          className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                        />
+                        Active
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                      <button
+                        onClick={() => handleSaveStep(editingStep.id)}
+                        disabled={!editStepData.name.trim()}
+                        className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                      >
+                        Save Changes
+                      </button>
+                      <button
+                        onClick={() => setEditingStepId(null)}
+                        className="px-4 py-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
+
+          {selectedStep && !editingStepId && (
             <StepDetailPanel
               step={selectedStep.step}
               result={selectedStep.result}
               onClose={() => setSelectedStep(null)}
+              width={rightPanelWidth}
+              onResizeStart={() => setIsResizingRightPanel(true)}
             />
           )}
         </>

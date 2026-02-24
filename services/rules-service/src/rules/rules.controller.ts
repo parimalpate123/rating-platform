@@ -10,6 +10,8 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
+  BadRequestException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { RulesService } from './rules.service';
 import type { EvaluateRequest, EvaluateResponse } from './rules.service';
@@ -89,18 +91,27 @@ export class RulesController {
     const desc = body.requirements ?? body.context ?? '';
     const plCode = body.productLineCode ?? 'UNKNOWN';
 
-    const awsRegion = process.env.AWS_REGION;
+    const awsRegion = process.env.AWS_REGION || 'us-east-1';
     const awsKey = process.env.AWS_ACCESS_KEY_ID;
     const awsSecret = process.env.AWS_SECRET_ACCESS_KEY;
+    const awsSessionToken = process.env.AWS_SESSION_TOKEN;
     const modelId = process.env.BEDROCK_MODEL_ID ?? 'us.anthropic.claude-3-5-sonnet-20241022-v2:0';
+    const useExplicitCreds = !!(awsKey && awsSecret);
 
-    if (awsRegion && awsKey && awsSecret) {
-      try {
-        const { BedrockRuntimeClient, InvokeModelCommand } = await import('@aws-sdk/client-bedrock-runtime');
-        const client = new BedrockRuntimeClient({
-          region: awsRegion,
-          credentials: { accessKeyId: awsKey, secretAccessKey: awsSecret },
-        });
+    try {
+      const { BedrockRuntimeClient, InvokeModelCommand } = await import('@aws-sdk/client-bedrock-runtime');
+      const clientConfig: {
+        region: string;
+        credentials?: { accessKeyId: string; secretAccessKey: string; sessionToken?: string };
+      } = { region: awsRegion };
+      if (useExplicitCreds) {
+        clientConfig.credentials = {
+          accessKeyId: awsKey,
+          secretAccessKey: awsSecret,
+          ...(awsSessionToken && { sessionToken: awsSessionToken }),
+        };
+      }
+      const client = new BedrockRuntimeClient(clientConfig);
 
         const prompt = await this.aiPromptsService.buildPrompt(
           'rule-generate',
@@ -154,12 +165,203 @@ Rules:
           const parsed = JSON.parse(jsonMatch[0]);
           return { rule: this.buildRuleFromParsed(parsed, plCode), confidence: parsed.confidence ?? 0.9 };
         }
-      } catch (e: any) {
-        this.logger.warn(`Bedrock call failed: ${e.message} — falling back to heuristic`);
-      }
+    } catch (e: any) {
+      this.logger.warn(`Bedrock call failed: ${e?.message ?? e} — falling back to heuristic`);
     }
 
     return this.generateFromTemplate(desc, plCode);
+  }
+
+  /** Generate a step run-condition JavaScript expression from plain-English description. */
+  @Post('generate-condition-expression')
+  async generateConditionExpression(
+    @Body() body: { description: string; stepName?: string; stepType?: string; productLineCode?: string },
+  ): Promise<{ expression: string; source: 'bedrock' | 'heuristic' }> {
+    const desc = body.description?.trim() ?? '';
+    const stepName = body.stepName ?? 'this step';
+    const stepType = body.stepType ?? '';
+    const productLine = body.productLineCode ?? '';
+
+    const awsRegion = process.env.AWS_REGION || 'us-east-1';
+    const awsKey = process.env.AWS_ACCESS_KEY_ID;
+    const awsSecret = process.env.AWS_SECRET_ACCESS_KEY;
+    const awsSessionToken = process.env.AWS_SESSION_TOKEN;
+    const modelId = process.env.BEDROCK_MODEL_ID ?? 'us.anthropic.claude-3-5-sonnet-20241022-v2:0';
+
+    // Use Bedrock when we have a region. Credentials: from .env if set, otherwise SDK default chain (~/.aws/credentials, AWS_PROFILE, etc.)
+    const useExplicitCreds = !!(awsKey && awsSecret);
+    if (useExplicitCreds) {
+      this.logger.log('Generate condition: using Bedrock (credentials from .env)');
+    } else {
+      this.logger.log('Generate condition: using Bedrock (credentials from default chain: ~/.aws/credentials or env)');
+    }
+
+    try {
+      const { BedrockRuntimeClient, InvokeModelCommand } = await import('@aws-sdk/client-bedrock-runtime');
+      const clientConfig: {
+        region: string;
+        credentials?: { accessKeyId: string; secretAccessKey: string; sessionToken?: string };
+      } = { region: awsRegion };
+      if (useExplicitCreds) {
+        clientConfig.credentials = {
+          accessKeyId: awsKey,
+          secretAccessKey: awsSecret,
+          ...(awsSessionToken && { sessionToken: awsSessionToken }),
+        };
+      }
+      const client = new BedrockRuntimeClient(clientConfig);
+
+      const systemPrompt = `You generate exactly one JavaScript expression for a step "run condition". No other text.
+
+Context:
+- request = original request payload (object)
+- working = current pipeline state after previous steps (object)
+
+Rules:
+- Output ONLY the expression. No explanation, no markdown, no code fence, no "return", no semicolon.
+- Use optional chaining: working?.policy?.field, request?.scope?.type.
+- Expression must evaluate to true (run) or false (skip). For "X is present" use !!working?.path or Boolean(working?.path).
+- Only use request and working; no require, no async.
+
+Examples:
+- "if policy.dunsNumber is present" -> !!working?.policy?.dunsNumber
+- "when request has state" -> !!request?.state
+- "only if working has coverage type" -> !!working?.coverage?.type`;
+
+      const userPrompt = `Step: ${stepName}${stepType ? ` (${stepType})` : ''}${productLine ? ` | Product: ${productLine}` : ''}
+
+When should this step run?
+"${desc}"
+
+Output only the single JavaScript expression, nothing else.`;
+
+      const payload = {
+        anthropic_version: 'bedrock-2023-05-31',
+        max_tokens: 512,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      };
+
+      const cmd = new InvokeModelCommand({
+        modelId,
+        body: Buffer.from(JSON.stringify(payload)),
+        contentType: 'application/json',
+        accept: 'application/json',
+      });
+
+      const res = await client.send(cmd);
+      const bodyJson = JSON.parse(new TextDecoder().decode(res.body));
+      const content = bodyJson?.content?.[0];
+      const responseText =
+        typeof content?.text === 'string' ? content.text.trim() : JSON.stringify(bodyJson).slice(0, 500);
+      if (!responseText) {
+        throw new ServiceUnavailableException('Bedrock returned an empty response.');
+      }
+      // Strip markdown code block if present
+      let expression = responseText
+        .replace(/^```(?:js|javascript)?\s*\n?/i, '')
+        .replace(/\n?```\s*$/i, '')
+        .replace(/^\s*return\s+/i, '')
+        .replace(/;+\s*$/, '')
+        .trim();
+      if (!expression) {
+        expression = responseText.trim();
+      }
+      // Reject clearly broken or incomplete output (e.g. "working?.if" or truncated)
+      if (!this.isReasonableConditionExpression(expression)) {
+        this.logger.warn(`Bedrock condition expression rejected as invalid: "${expression}" — using heuristic`);
+        const fallback = this.generateConditionExpressionFromDescription(desc);
+        return { expression: fallback, source: 'heuristic' };
+      }
+      // Normalize "is present" logic: !! = run when present; ! or !!! invert it. Use exactly !! for path checks.
+      expression = this.normalizeConditionExpressionNegation(expression);
+      this.logger.log('Condition expression generated with Bedrock');
+      return { expression: expression || 'true', source: 'bedrock' };
+    } catch (err: any) {
+      const msg = err?.message ?? String(err);
+      const code = err?.name ?? err?.Code ?? '';
+      this.logger.warn(
+        `Bedrock condition-expression failed: ${msg}${code ? ` (${code})` : ''} — falling back to heuristic`,
+      );
+      if (err?.stack) this.logger.debug(err.stack);
+    }
+
+    this.logger.log('Condition expression generated with heuristic (Bedrock not configured or unavailable)');
+    return { expression: this.generateConditionExpressionFromDescription(desc), source: 'heuristic' };
+  }
+
+  /**
+   * Ensure "is present" style checks use !! (run when present), not ! or !!! (which invert logic).
+   * Bedrock sometimes returns !!!request?.policy?.dunsNumber; we normalize to !!request?.policy?.dunsNumber.
+   */
+  private normalizeConditionExpressionNegation(expression: string): string {
+    const m = expression.match(/^(!+)\s*((?:request|working)\?\..+)$/);
+    if (!m) return expression;
+    const leading = m[1];
+    const rest = m[2];
+    // Odd number of ! means "run when absent" — wrong for "is present". Use exactly !! so step runs when value is present.
+    if (leading.length % 2 === 1) {
+      return `!!${rest}`;
+    }
+    // Even (e.g. !! or !!!!) — keep !! for clarity
+    return leading.length >= 2 ? `!!${rest}` : expression;
+  }
+
+  /** Reject truncated or nonsensical Bedrock output so we can fall back to heuristic. */
+  private isReasonableConditionExpression(expression: string): boolean {
+    const s = expression.trim();
+    if (!s || s.length < 3) return false;
+    // Incomplete optional chain (e.g. "working?.if" or "working?.")
+    if (s.endsWith('?.') || /\?\.(?:if|else|return|function)\b/.test(s)) return false;
+    // Should look like a boolean expression: references request/working or is literal true/false
+    const hasRef = /\b(?:request|working)\b/.test(s) || /^\s*(?:true|false)\s*$/.test(s);
+    const noInvalid = !/\b(?:return|await|require|import)\b/.test(s);
+    return hasRef && noInvalid;
+  }
+
+  /** Path must be a real field path, not the words "if" or "when". */
+  private static readonly CONDITION_PATH_BLACKLIST = /\b(?:if|when|then|else|request|working)\b/i;
+
+  /**
+   * Heuristic fallback when Bedrock is not configured or fails (same pattern as rule generate-ai).
+   * Extracts field paths from "X is present" / "if X" style descriptions and returns a simple expression.
+   */
+  private generateConditionExpressionFromDescription(desc: string): string {
+    const lower = desc.toLowerCase();
+    const useRequest = /\b(request\.|in request|from request)\b/.test(lower);
+    const root = useRequest ? 'request' : 'working';
+
+    // Prefer a dotted path (e.g. policy.dunsNumber) — most reliable and can't be "if"/"when"
+    const dottedPath = desc.match(/\b([a-zA-Z_$][a-zA-Z0-9_]*\.[a-zA-Z0-9_$.]+)\b/);
+    if (dottedPath) {
+      const path = dottedPath[1].trim();
+      if (/^[a-zA-Z_$][a-zA-Z0-9_$.]*$/.test(path)) {
+        const chain = path.split('.').map((p) => p.trim()).filter(Boolean).join('?.');
+        return `!!${root}?.${chain}`;
+      }
+    }
+
+    // Match "policy.dunsNumber is present" or "dunsNumber present" (path not the word "if"/"when")
+    const pathPresentMatch = desc.match(/([a-zA-Z_$][a-zA-Z0-9_$.]+)\s*(?:is\s+)?(?:present|exists)/i);
+    if (pathPresentMatch) {
+      const path = pathPresentMatch[1].trim();
+      if (/^[a-zA-Z_$][a-zA-Z0-9_$.]*$/.test(path) && !RulesController.CONDITION_PATH_BLACKLIST.test(path)) {
+        const chain = path.split('.').map((p) => p.trim()).filter(Boolean).join('?.');
+        return `!!${root}?.${chain}`;
+      }
+    }
+
+    // Match "if X" / "when X" and take the next identifier or dotted path; reject "if"/"when" as path
+    const whenMatch = desc.match(/(?:when|if)\s+([a-zA-Z_$][a-zA-Z0-9_$.]+)(?:\s+(?:is\s+)?(?:present|exists))?/i);
+    if (whenMatch) {
+      const path = whenMatch[1].trim();
+      if (/^[a-zA-Z_$][a-zA-Z0-9_$.]*$/.test(path) && !RulesController.CONDITION_PATH_BLACKLIST.test(path)) {
+        const chain = path.split('.').map((p) => p.trim()).filter(Boolean).join('?.');
+        return `!!${root}?.${chain}`;
+      }
+    }
+
+    return 'true';
   }
 
   private buildRuleFromParsed(parsed: any, plCode: string): any {

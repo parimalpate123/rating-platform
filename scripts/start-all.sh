@@ -9,6 +9,14 @@ cd "$(dirname "$0")/.."
 
 mkdir -p logs
 
+# Load optional .env from repo root (gitignored). Use for AWS_BEDROCK / DB_* etc.
+if [ -f .env ]; then
+  set -a
+  source .env
+  set +a
+  echo "Loaded .env"
+fi
+
 # ── Start local PostgreSQL (port 5433) if not already running ─────────────
 if command -v docker >/dev/null 2>&1 && [ -f docker-compose.dev.yml ]; then
   if nc -z 127.0.0.1 5433 2>/dev/null; then
