@@ -45,7 +45,7 @@ const CUSTOM_FLOW_STEP_CONFIG: Record<string, ConfigField[]> = {
   ],
   generate_value: [
     { key: 'targetPath', label: 'Target Path', type: 'text', placeholder: 'e.g. policy.ratingInstanceId' },
-    { key: 'generator', label: 'Generator', type: 'select', options: ['uuid'] },
+    { key: 'generator', label: 'Generator', type: 'select', options: ['uuid', 'timestamp'] },
   ],
   field_mapping: [
     { key: 'direction', label: 'Direction', type: 'select', options: ['request', 'response'] },

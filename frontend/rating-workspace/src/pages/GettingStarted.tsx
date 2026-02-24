@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
+type Frequency = 'once' | 'per-release' | 'ongoing';
+
 interface StepItem {
   step: number;
   icon: React.ElementType;
@@ -22,7 +24,14 @@ interface StepItem {
   action: string;
   path: string;
   pathLabel?: string;
+  frequency: Frequency;
 }
+
+const FREQUENCY_LABELS: Record<Frequency, string> = {
+  once: 'Once',
+  'per-release': 'Per release',
+  ongoing: 'Ongoing',
+};
 
 const STEPS: StepItem[] = [
   {
@@ -33,6 +42,7 @@ const STEPS: StepItem[] = [
     action: 'Product Lines',
     path: '/products',
     pathLabel: 'Open Product Lines',
+    frequency: 'once',
   },
   {
     step: 2,
@@ -42,6 +52,7 @@ const STEPS: StepItem[] = [
     action: 'Product → Scopes tab',
     path: '/products',
     pathLabel: 'Open Products',
+    frequency: 'per-release',
   },
   {
     step: 3,
@@ -51,6 +62,7 @@ const STEPS: StepItem[] = [
     action: 'Systems Registry',
     path: '/systems',
     pathLabel: 'Open Systems',
+    frequency: 'once',
   },
   {
     step: 4,
@@ -60,6 +72,7 @@ const STEPS: StepItem[] = [
     action: 'Custom Flows',
     path: '/custom-flows',
     pathLabel: 'Open Custom Flows',
+    frequency: 'per-release',
   },
   {
     step: 5,
@@ -69,6 +82,7 @@ const STEPS: StepItem[] = [
     action: 'Product → Orchestrator tab',
     path: '/products',
     pathLabel: 'Open Products',
+    frequency: 'once',
   },
   {
     step: 6,
@@ -78,6 +92,7 @@ const STEPS: StepItem[] = [
     action: 'In Orchestrator → edit step',
     path: '/products',
     pathLabel: 'Open Products',
+    frequency: 'per-release',
   },
   {
     step: 7,
@@ -87,6 +102,7 @@ const STEPS: StepItem[] = [
     action: 'Product → Mappings / Rules tabs',
     path: '/products',
     pathLabel: 'Open Products',
+    frequency: 'ongoing',
   },
   {
     step: 8,
@@ -96,6 +112,7 @@ const STEPS: StepItem[] = [
     action: 'Test Rating',
     path: '/test',
     pathLabel: 'Open Test Rating',
+    frequency: 'ongoing',
   },
 ];
 
@@ -129,7 +146,19 @@ function StepCard({ item, isLast }: { item: StepItem; isLast: boolean }) {
                 <Icon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{item.title}</h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{item.title}</h3>
+                  <span
+                    className={cn(
+                      'inline-flex px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide',
+                      item.frequency === 'once' && 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
+                      item.frequency === 'per-release' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+                      item.frequency === 'ongoing' && 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+                    )}
+                  >
+                    {FREQUENCY_LABELS[item.frequency]}
+                  </span>
+                </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">{item.description}</p>
                 <p className="text-xs text-purple-600 dark:text-purple-400 mt-2 font-medium">{item.action}</p>
               </div>

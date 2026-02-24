@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
  *
  * Config:
  *   targetPath: string   — path in context.working to write the value
- *   generator: 'uuid'    — only supported generator for now
+ *   generator: 'uuid' | 'timestamp'  — uuid = random UUID, timestamp = ISO 8601 string
  */
 @Injectable()
 export class GenerateValueHandler {
@@ -27,6 +27,8 @@ export class GenerateValueHandler {
     let value: string;
     if (generator === 'uuid') {
       value = randomUUID();
+    } else if (generator === 'timestamp') {
+      value = new Date().toISOString();
     } else {
       this.logger.warn(`Unknown generator: ${generator}, defaulting to uuid`);
       value = randomUUID();
@@ -47,8 +49,8 @@ export class GenerateValueHandler {
     if (!config.targetPath || typeof config.targetPath !== 'string') {
       return { valid: false, errors: ['targetPath (string) is required'] };
     }
-    if (config.generator && config.generator !== 'uuid') {
-      return { valid: false, errors: ["generator must be 'uuid' (only supported value)"] };
+    if (config.generator && config.generator !== 'uuid' && config.generator !== 'timestamp') {
+      return { valid: false, errors: ["generator must be 'uuid' or 'timestamp'"] };
     }
     return { valid: true };
   }

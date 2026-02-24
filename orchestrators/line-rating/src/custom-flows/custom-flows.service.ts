@@ -9,6 +9,7 @@ const ALLOWED_CUSTOM_FLOW_STEP_TYPES = [
   'generate_value',
   'field_mapping',
   'enrich',
+  'publish_event',
 ];
 
 @Injectable()
