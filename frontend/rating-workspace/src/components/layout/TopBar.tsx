@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Moon, Sun, Zap, X, LayoutDashboard, Package, Server, GitBranch, Map, BarChart3, Activity, HelpCircle, Layers } from 'lucide-react';
+import { Search, Moon, Sun, Zap, X, LayoutDashboard, Package, Server, GitBranch, Map, BarChart3, Activity, HelpCircle, Layers, Workflow } from 'lucide-react';
 import type { ProductLine } from '../../api/products';
 
 const THEME_KEY = 'rating-workspace-theme';
@@ -96,6 +96,7 @@ const GLOBAL_NAV: { label: string; path: string; icon: typeof LayoutDashboard }[
   { label: 'Systems', path: '/systems', icon: Server },
   { label: 'Rules', path: '/rules', icon: GitBranch },
   { label: 'Mappings', path: '/mappings', icon: Map },
+  { label: 'Custom Flows', path: '/custom-flows', icon: Workflow },
   { label: 'Insights', path: '/insights', icon: BarChart3 },
   { label: 'Transactions', path: '/transactions', icon: Activity },
   { label: 'Test Rating', path: '/test', icon: Zap },
@@ -231,7 +232,7 @@ export function TopBar({ products = [] }: TopBarProps) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onFocus={() => setSearchOpen(true)}
-            placeholder="Search products, rules, mappings..."
+            placeholder="Search products, rules, mappings, custom flows..."
             className="w-full pl-8 pr-12 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 dark:focus:bg-gray-800"
           />
           <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 bg-gray-100 border border-gray-200 rounded px-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-500">⌘K</kbd>
