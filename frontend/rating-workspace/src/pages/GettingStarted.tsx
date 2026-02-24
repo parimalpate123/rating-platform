@@ -10,6 +10,7 @@ import {
   Zap,
   ArrowRight,
   HelpCircle,
+  Workflow,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -53,15 +54,24 @@ const STEPS: StepItem[] = [
   },
   {
     step: 4,
+    icon: Workflow,
+    title: 'Custom flows (optional)',
+    description: 'Create reusable sub-flows (validate, generate value, field mapping, enrich) under Configuration. Use them in the product Orchestrator via a "Run custom flow" step.',
+    action: 'Custom Flows',
+    path: '/custom-flows',
+    pathLabel: 'Open Custom Flows',
+  },
+  {
+    step: 5,
     icon: GitBranch,
     title: 'Add orchestrator flow',
-    description: 'In the product Orchestrator tab: create a flow (e.g. /rate) and add or auto-generate steps (validate, map, rules, call engine, etc.).',
+    description: 'In the product Orchestrator tab: create a flow (e.g. /rate) and add or auto-generate steps (validate, map, rules, call engine, run custom flow, etc.).',
     action: 'Product → Orchestrator tab',
     path: '/products',
     pathLabel: 'Open Products',
   },
   {
-    step: 5,
+    step: 6,
     icon: Settings,
     title: 'Configure step activity',
     description: 'For each step, set activity type: one-time (runs once per request) or iterative (runs per item in a list). Edit the step to change this.',
@@ -70,7 +80,7 @@ const STEPS: StepItem[] = [
     pathLabel: 'Open Products',
   },
   {
-    step: 6,
+    step: 7,
     icon: Map,
     title: 'Mappings & rules',
     description: 'Add field mappings (request/response) and business rules per product. Link them in the orchestrator step config.',
@@ -79,7 +89,7 @@ const STEPS: StepItem[] = [
     pathLabel: 'Open Products',
   },
   {
-    step: 7,
+    step: 8,
     icon: Zap,
     title: 'Run a test rating',
     description: 'Use Test Rating to submit a payload and see the execution trace. Check Transactions and Insights for history.',
