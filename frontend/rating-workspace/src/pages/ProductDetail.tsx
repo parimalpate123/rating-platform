@@ -1234,18 +1234,20 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
 
   return (
     <div className="space-y-4">
-      {/* ── Flow selector tabs ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3">
-        <div className="flex items-center gap-1 flex-wrap">
+      {/* ── Flow tabs + content as one card (tab strip on top, content below) ── */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {/* Tab strip: light grey panel — Flows | /rate | /init-rate | + Add Flow */}
+        <div className="flex items-end gap-0 px-4 pt-2 pb-0 bg-gray-200 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600">
+          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mr-3 pb-2.5">Flows</span>
           {flows.map(f => (
             <button
               key={f.endpointPath}
               onClick={() => { setActiveEndpoint(f.endpointPath); setTestPayload(getDefaultPayload(f.endpointPath)); setTestResult(null); setTestError(null); setSelectedStep(null) }}
               className={cn(
-                'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
+                'px-4 py-2.5 text-sm font-medium transition-colors border border-b-0 rounded-t-lg -mb-px',
                 activeEndpoint === f.endpointPath
-                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700',
+                  ? 'text-purple-700 dark:text-purple-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 border-b-white dark:border-b-gray-800 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-300 border-transparent hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600',
               )}
             >
               /{f.endpointPath}
@@ -1253,13 +1255,12 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
           ))}
           <button
             onClick={() => setShowNewFlowForm(true)}
-            className="px-2 py-1.5 text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1"
+            className="px-3 py-2.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-300 border border-transparent border-b-0 rounded-t-lg -mb-px hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
             Add Flow
           </button>
         </div>
-      </div>
 
       {/* ── New flow form ── */}
       {showNewFlowForm && (
@@ -1316,41 +1317,44 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
         </div>
       )}
 
-      {/* ── Selected flow content ── */}
-      {orchestrator && (
-        <>
-          {/* Flow header card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-5 py-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 flex items-center justify-center flex-shrink-0">
-                <GitBranch className="w-[18px] h-[18px] text-blue-600 dark:text-blue-400" />
+        {/* ── Selected flow content: context bar (Viewing /rate, status) + flow name; GUID in tooltip ── */}
+        {orchestrator && (
+          <>
+            <div className="flex items-center justify-between gap-4 px-5 py-2.5 bg-gray-50 dark:bg-gray-800/80 border-b border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Viewing</span>
+                <span className="font-mono text-sm font-semibold text-gray-900 dark:text-gray-100">/{orchestrator.endpointPath}</span>
+                <span className={cn(
+                  'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border',
+                  orchestrator.status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
+                    : orchestrator.status === 'draft' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600',
+                )}>
+                  {orchestrator.status}
+                </span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">
+                  {orchestrator.steps.length} step{orchestrator.steps.length !== 1 ? 's' : ''}
+                </span>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{orchestrator.name}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 font-mono mt-0.5">/{orchestrator.endpointPath} · {orchestrator.id}</p>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <span
+                  className="text-[10px] text-gray-400 dark:text-gray-500 font-mono truncate max-w-[180px]"
+                  title={`Flow ID (for API): ${orchestrator.id}`}
+                >
+                  {orchestrator.id}
+                </span>
+                <button
+                  onClick={handleDeleteFlow}
+                  className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 rounded transition-colors"
+                  title="Delete this flow"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className={cn(
-                'inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium border',
-                orchestrator.status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
-                  : orchestrator.status === 'draft' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600',
-              )}>
-                {orchestrator.status}
-              </span>
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                {orchestrator.steps.length} step{orchestrator.steps.length !== 1 ? 's' : ''}
-              </span>
-              <button
-                onClick={handleDeleteFlow}
-                className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 rounded transition-colors"
-                title="Delete this flow"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+            <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{orchestrator.name}</p>
             </div>
-          </div>
 
           {/* Flow diagram */}
           {orchestrator.steps.length > 0 && (
@@ -1827,12 +1831,13 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
         </>
       )}
 
-      {/* No flow selected but flows exist */}
-      {!orchestrator && flows.length > 0 && !showNewFlowForm && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Select a flow tab above to view its configuration.</p>
-        </div>
-      )}
+        {/* No flow selected but flows exist */}
+        {!orchestrator && flows.length > 0 && !showNewFlowForm && (
+          <div className="p-8 text-center border-t border-gray-100 dark:border-gray-700">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Select a flow tab above to view its configuration.</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
