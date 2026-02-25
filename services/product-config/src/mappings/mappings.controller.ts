@@ -80,7 +80,11 @@ export class MappingsController {
 
   @Post()
   create(@Body() dto: CreateMappingDto) {
-    return this.mappingsService.createMapping(dto);
+    const name = typeof dto?.name === 'string' ? dto.name.trim() : '';
+    if (!name) {
+      throw new BadRequestException('Mapping name is required.');
+    }
+    return this.mappingsService.createMapping({ ...dto, name });
   }
 
   // ── Parse text requirements → field suggestions ────────────────────────────

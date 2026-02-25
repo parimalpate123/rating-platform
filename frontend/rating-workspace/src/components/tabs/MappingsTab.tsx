@@ -875,6 +875,44 @@ const FIELD_DIRECTIONS = [
 
 const inputCls = 'w-full px-2 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800'
 
+/** Strip one level of surrounding double or single quotes so text fields don't display with quotes. */
+function stripSurroundingQuotes(s: string): string {
+  if (typeof s !== 'string') return ''
+  const t = s.trim()
+  if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
+    return t.slice(1, -1)
+  }
+  return t
+}
+
+/** Parse description line for legacy data that has no transformConfig/defaultValue in DB (e.g. AWS). */
+function parseDescriptionForDetails(description: string): { fieldDirection?: string; dataType?: string; defaultValue?: string; fieldIdentifier?: string } {
+  const out: { fieldDirection?: string; dataType?: string; defaultValue?: string; fieldIdentifier?: string } = {}
+  if (!description?.trim()) return out
+  const line = description.trim()
+  // Split by | or / so we get [ "source → target", "direction", "typePart" ] or similar
+  const parts = line.split(/\s*[\|/]\s*/).map((p) => p.trim()).filter(Boolean)
+  if (parts.length >= 2) {
+    const dirRaw = (parts.length >= 2 ? parts[1] : '').toLowerCase()
+    if (dirRaw === 'input') out.fieldDirection = 'input'
+    else if (dirRaw === 'output') out.fieldDirection = 'output'
+    else if (dirRaw === 'both') out.fieldDirection = 'both'
+  }
+  if (parts.length >= 3) {
+    const typePart = parts[2]
+    const quotedDefault = typePart.match(/,?\s*default:\s*["']([^"']*)["']\s*$/i)
+    const unquotedDefault = typePart.match(/,?\s*default:\s*(\S+)\s*$/i)
+    if (quotedDefault) out.defaultValue = quotedDefault[1]
+    else if (unquotedDefault) out.defaultValue = unquotedDefault[1]
+    const beforeDefault = typePart.replace(/,?\s*default:\s*.*$/i, '').trim()
+    const typeMatch = beforeDefault.match(/\b(string|number|integer|date|boolean|any)\b/i)
+    if (typeMatch) out.dataType = typeMatch[1].toLowerCase()
+  }
+  const arrowMatch = line.match(/(?:→|->)\s*([^\s|/]+)/)
+  if (arrowMatch) out.fieldIdentifier = arrowMatch[1].trim()
+  return out
+}
+
 interface FieldDetailState {
   defaultValue: string
   description: string
@@ -888,16 +926,29 @@ interface FieldDetailState {
 }
 
 function extractDetails(transformConfig: Record<string, unknown>, defaultValue?: string, description?: string): FieldDetailState {
-  return {
-    defaultValue: defaultValue ?? '',
+  const rawDefault = stripSurroundingQuotes(defaultValue ?? '')
+  const fromConfig = {
+    defaultValue: rawDefault,
     description: description ?? '',
-    dataType: String(transformConfig.dataType ?? ''),
-    fieldDirection: String(transformConfig.fieldDirection ?? 'both'),
-    fieldIdentifier: String(transformConfig.fieldIdentifier ?? ''),
-    skipMapping: Boolean(transformConfig.skipMapping),
-    skipBehavior: String(transformConfig.skipBehavior ?? 'exclude'),
-    sampleInput: String(transformConfig.sampleInput ?? ''),
-    sampleOutput: String(transformConfig.sampleOutput ?? ''),
+    dataType: String(transformConfig?.dataType ?? ''),
+    fieldDirection: String(transformConfig?.fieldDirection ?? 'both'),
+    fieldIdentifier: stripSurroundingQuotes(String(transformConfig?.fieldIdentifier ?? '')),
+    skipMapping: Boolean(transformConfig?.skipMapping),
+    skipBehavior: String(transformConfig?.skipBehavior ?? 'exclude'),
+    sampleInput: stripSurroundingQuotes(String(transformConfig?.sampleInput ?? '')),
+    sampleOutput: stripSurroundingQuotes(String(transformConfig?.sampleOutput ?? '')),
+  }
+  const hasStoredDetails = fromConfig.dataType || fromConfig.fieldDirection !== 'both' || (defaultValue != null && defaultValue !== '')
+  if (hasStoredDetails) return fromConfig
+  const parsed = parseDescriptionForDetails(description ?? '')
+  const parsedDefault = parsed.defaultValue != null ? stripSurroundingQuotes(parsed.defaultValue) : ''
+  const parsedIdentifier = parsed.fieldIdentifier != null ? stripSurroundingQuotes(parsed.fieldIdentifier) : ''
+  return {
+    ...fromConfig,
+    defaultValue: (fromConfig.defaultValue || parsedDefault) || '',
+    dataType: (fromConfig.dataType || parsed.dataType) ?? '',
+    fieldDirection: fromConfig.fieldDirection !== 'both' ? fromConfig.fieldDirection : (parsed.fieldDirection ?? 'both'),
+    fieldIdentifier: (fromConfig.fieldIdentifier || parsedIdentifier) || '',
   }
 }
 
@@ -1276,6 +1327,9 @@ function MappingAccordion({
 
   const dirColor = mapping.direction === 'request' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
 
+  const nameTrimmed = (mapping.name ?? '').trim()
+  const displayName = nameTrimmed || 'Unnamed mapping'
+
   const fmtDate = (iso: string) => {
     const d = new Date(iso)
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -1340,8 +1394,8 @@ function MappingAccordion({
               <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-[10px] font-semibold text-gray-500 dark:text-gray-400">
                 {index}
               </span>
-              {/* Name */}
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 flex-1 truncate min-w-0">{mapping.name}</span>
+              {/* Mapping name (exactly as stored) */}
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 flex-1 truncate min-w-0" title={displayName}>{displayName}</span>
               {/* Direction */}
               <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium flex-shrink-0', dirColor)}>{mapping.direction}</span>
               {/* Field count */}
@@ -1507,7 +1561,16 @@ export function MappingsTab({
             </button>
           </div>
         ) : (
-          mappings.map((m, i) => <MappingAccordion key={m.id} mapping={m} index={i + 1} onDeleted={load} onFieldsChanged={load} onUpdated={load} />)
+          mappings.map((m, i) => (
+            <MappingAccordion
+              key={m.id}
+              mapping={m}
+              index={i + 1}
+              onDeleted={load}
+              onFieldsChanged={load}
+              onUpdated={load}
+            />
+          ))
         )}
       </div>
     </>
