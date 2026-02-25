@@ -1,4 +1,4 @@
-# InsuRatePro — User Experience: Prototype vs MVP
+# InsuRateConnect — User Experience: Prototype vs MVP
 
 ## Definitions
 

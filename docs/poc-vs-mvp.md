@@ -1,4 +1,4 @@
-# InsuRatePro — Prototype vs MVP Assessment
+# InsuRateConnect — Prototype vs MVP Assessment
 
 ## Definitions
 

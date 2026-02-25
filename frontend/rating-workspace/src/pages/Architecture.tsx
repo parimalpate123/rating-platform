@@ -6,12 +6,12 @@ flowchart TB
     UI[Rating Workspace]
   end
 
-  subgraph platform["InsuRatePro Platform"]
+  subgraph platform["InsuRateConnect Platform"]
     CR[Core Rating\nOrchestrator]
     LR[Line Rating\nflow definitions]
     PC[Product Config\nMapper]
     TR[Transform Service]
-    RS[Rules Service]
+    RS[Rating Rules Service]
     SS[Status Service]
     DB[(Database)]
   end
@@ -50,13 +50,13 @@ flowchart LR
   subgraph plconfig["Per product line"]
     OF([Orchestration Flow])
     MP[/Mappings/]
-    RU{{Rules}}
+    RU{{Rating Rules}}
     SC{Scopes}
   end
 
   LR[Line Rating]
   PC[Product Config]
-  RS[Rules Service]
+  RS[Rating Rules Service]
 
   OF --> LR
   MP --> PC
@@ -108,7 +108,7 @@ export function Architecture() {
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Platform Architecture</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-          InsuRatePro rating orchestration — services and data flow.
+          InsuRateConnect rating orchestration — services and data flow.
         </p>
         <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 italic">
           This architecture is in draft and in progress.

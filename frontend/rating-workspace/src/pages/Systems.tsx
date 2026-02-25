@@ -294,17 +294,17 @@ export function Systems() {
 
   return (
     <div className="px-4 py-4 max-w-7xl mx-auto">
-      {/* InsuRatePro Platform Services health */}
+      {/* InsuRateConnect Platform Services health */}
       <section className="mb-8">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">InsuRatePro Platform Services</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">InsuRateConnect Platform Services</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               Health status of backend and orchestrator services. No add/remove — read-only.
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400 shrink-0" />
-              <span>AI icon = AI-enabled service (e.g. Rules, Mapper suggestions).</span>
+              <span>AI icon = AI-enabled service (e.g. Rating rules, Mapper suggestions).</span>
             </p>
           </div>
           <button

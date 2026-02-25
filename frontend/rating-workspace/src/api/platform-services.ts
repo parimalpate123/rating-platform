@@ -1,5 +1,5 @@
 /**
- * InsuRatePro platform services (backend/orchestrator) for health display.
+ * InsuRateConnect platform services (backend/orchestrator) for health display.
  * Probe URL: in dev we hit proxy paths; in prod we hit /api/v1 paths (ALB routes by path).
  */
 
@@ -20,7 +20,7 @@ export const PLATFORM_SERVICES: PlatformServiceDef[] = [
   { id: 'line-rating', name: 'Line Rating (Orchestrator)', path: 'orchestrators/health', devSlug: 'line-rating', usesAI: false },
   { id: 'product-config', name: 'Product Config (Mapper)', path: 'product-lines', devSlug: 'product-config', usesAI: true },
   { id: 'transform', name: 'Transform Service', path: 'transform/health', devSlug: 'transform', usesAI: false },
-  { id: 'rules', name: 'Rules Service', path: 'rules', devSlug: 'rules', usesAI: true },
+  { id: 'rules', name: 'Rating Rules Service', path: 'rules', devSlug: 'rules', usesAI: true },
   { id: 'status', name: 'Status Service', path: 'transactions', devSlug: 'status', usesAI: false },
   { id: 'database', name: 'Database', path: 'db-health', devSlug: 'product-config', usesAI: false },
 ];

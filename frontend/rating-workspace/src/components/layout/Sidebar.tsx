@@ -17,7 +17,7 @@ const iconNav = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
   { icon: Package, label: 'Products', path: '/products' },
   { icon: Server, label: 'Systems', path: '/systems' },
-  { icon: GitBranch, label: 'Rules', path: '/rules' },
+  { icon: GitBranch, label: 'Rating Rules', path: '/rules' },
   { icon: Map, label: 'Mappings', path: '/mappings' },
   { icon: BarChart3, label: 'Insights', path: '/insights' },
   { icon: Activity, label: 'Transactions', path: '/transactions' },
@@ -81,7 +81,7 @@ function ProductNavItem({ product }: { product: ProductLine }) {
         <div className="mt-0.5 space-y-0.5">
           <NavItem label="Orchestrator" path={`/products/${product.code}/orchestrator`} indent />
           <NavItem label="Mappings" path={`/products/${product.code}/mappings`} indent />
-          <NavItem label="Rules" path={`/products/${product.code}/rules`} indent />
+          <NavItem label="Rating Rules" path={`/products/${product.code}/rules`} indent />
           <NavItem label="Scopes" path={`/products/${product.code}/scopes`} indent />
         </div>
       )}

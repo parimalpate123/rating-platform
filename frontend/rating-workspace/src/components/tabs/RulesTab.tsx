@@ -73,7 +73,7 @@ function AIGenerateModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-purple-600" />
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Generate Rule with AI</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Generate Rating Rule with AI</h3>
           </div>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500">
             <X className="w-4 h-4" />
@@ -82,7 +82,7 @@ function AIGenerateModal({
 
         <div className="px-6 py-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Describe the rule in plain English</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Describe the rating rule in plain English</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {[
                 {
@@ -291,7 +291,7 @@ function RuleEditorModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div>
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{isNew ? 'New Rule' : 'Edit Rule'}</h2>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{isNew ? 'New Rating Rule' : 'Edit Rating Rule'}</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{productCode}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -310,7 +310,7 @@ function RuleEditorModal({
 
           {/* Basic info */}
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Rule Details</h3>
+            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Rating Rule Details</h3>
             <div className="grid grid-cols-[1fr_100px] gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Name <span className="text-red-500">*</span></label>
@@ -323,7 +323,7 @@ function RuleEditorModal({
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className={inputCls + ' resize-none'} placeholder="Describe what this rule does..." />
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className={inputCls + ' resize-none'} placeholder="Describe what this rating rule does..." />
             </div>
           </div>
 
@@ -386,7 +386,7 @@ function RuleEditorModal({
 
           {/* Rule Preview */}
           <div className="bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <h3 className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Rule Preview</h3>
+            <h3 className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Rating Rule Preview</h3>
             <div className="font-mono text-sm space-y-0.5">
               <div className="text-blue-600 font-semibold">IF</div>
               {conditions.map((c, i) => (
@@ -421,7 +421,7 @@ function RuleEditorModal({
                     </button>
                   </span>
                 ))}
-                {scopeTags.length === 0 && <span className="text-xs text-gray-400 dark:text-gray-500">No scope tags — rule applies to all requests</span>}
+                {scopeTags.length === 0 && <span className="text-xs text-gray-400 dark:text-gray-500">No scope tags — rating rule applies to all requests</span>}
               </div>
               <div className="flex items-center gap-2">
                 <select value={newTagType} onChange={(e) => { setNewTagType(e.target.value); setNewTagValue('') }} className="px-2 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
@@ -441,7 +441,7 @@ function RuleEditorModal({
                   + Add Tag
                 </button>
               </div>
-              <p className="text-[10px] text-gray-400 dark:text-gray-500">Tags restrict when this rule fires. Configure available scope values in the Scopes tab first.</p>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500">Tags restrict when this rating rule fires. Configure available scope values in the Scopes tab first.</p>
             </div>
           )}
         </div>
@@ -558,7 +558,7 @@ export function RulesTab({ productCode }: { productCode: string }) {
     rulesApi
       .list(productCode)
       .then(setRules)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load rules'))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load rating rules'))
       .finally(() => setLoading(false))
   }
 
@@ -587,21 +587,21 @@ export function RulesTab({ productCode }: { productCode: string }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{rules.length} rule{rules.length !== 1 ? 's' : ''} configured</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{rules.length} rating rule{rules.length !== 1 ? 's' : ''} configured</p>
         <button onClick={handleNew} className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
-          <Plus className="w-4 h-4" /> New Rule
+          <Plus className="w-4 h-4" /> New Rating Rule
         </button>
       </div>
 
       {rules.length === 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-12 text-center">
           <BookOpen className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">No rules yet</p>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">No rating rules yet</p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 max-w-xs mx-auto">
-            Create rules to apply business logic during rating. You can also use AI to generate rules from plain-English descriptions.
+            Create rating rules to apply business logic during rating. You can also use AI to generate rating rules from plain-English descriptions.
           </p>
           <button onClick={handleNew} className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-            <Plus className="w-4 h-4" /> New Rule
+            <Plus className="w-4 h-4" /> New Rating Rule
           </button>
         </div>
       )}

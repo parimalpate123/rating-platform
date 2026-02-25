@@ -1100,7 +1100,7 @@ Use `ajv` (Already JSON Schema Validator) — lightweight, fast, supports JSON S
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 const config = new DocumentBuilder()
-  .setTitle('InsuRatePro Platform API')
+  .setTitle('InsuRateConnect Platform API')
   .setDescription('Rating platform public API for external system integration')
   .setVersion('1.0')
   .addApiKey({ type: 'apiKey', name: 'X-API-Key', in: 'header' }, 'api-key')

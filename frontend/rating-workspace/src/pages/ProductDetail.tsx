@@ -260,7 +260,7 @@ const TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'orchestrator', label: 'Orchestrator' },
   { id: 'mappings', label: 'Mappings' },
-  { id: 'rules', label: 'Rules' },
+  { id: 'rules', label: 'Rating Rules' },
   { id: 'scopes', label: 'Scopes' },
 ]
 
@@ -574,7 +574,7 @@ const STEP_TYPES = [
   { value: 'validate_request', label: 'Validate Request' },
   { value: 'run_custom_flow', label: 'Run custom flow' },
   { value: 'field_mapping', label: 'Field Mapping' },
-  { value: 'apply_rules', label: 'Apply Rules' },
+  { value: 'apply_rules', label: 'Apply Rating Rules' },
   { value: 'call_rating_engine', label: 'Call Rating Engine' },
   { value: 'format_transform', label: 'Format Transform' },
   { value: 'call_external_api', label: 'Call External API' },

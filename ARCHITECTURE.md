@@ -1,4 +1,4 @@
-# InsuRatePro — Enterprise Rating Orchestration Framework
+# InsuRateConnect — Enterprise Rating Orchestration Framework
 
 > **Version:** 1.0 Draft
 > **Date:** February 2026
@@ -29,7 +29,7 @@
 
 ## 1. Vision & Overview
 
-InsuRatePro is an **enterprise-grade rating orchestration framework** that enables insurance companies to configure, execute, and monitor rating workflows for any product line (General Liability, Inland Marine, Workers' Comp, etc.) across any combination of source systems (Guidewire, Duck Creek, Salesforce) and rating engines (CGI Ratabase, Earnix, custom).
+InsuRateConnect is an **enterprise-grade rating orchestration framework** that enables insurance companies to configure, execute, and monitor rating workflows for any product line (General Liability, Inland Marine, Workers' Comp, etc.) across any combination of source systems (Guidewire, Duck Creek, Salesforce) and rating engines (CGI Ratabase, Earnix, custom).
 
 ### Core Principles
 

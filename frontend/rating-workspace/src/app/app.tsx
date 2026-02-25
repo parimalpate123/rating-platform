@@ -26,7 +26,7 @@ export function App() {
         <Route path="/products/:code" element={<ProductDetail />} />
         <Route path="/products/:code/:tab" element={<ProductDetail />} />
         <Route path="/systems" element={<Systems />} />
-        <Route path="/rules" element={<div className="p-6"><h1 className="text-xl font-semibold">Rules Engine</h1><p className="text-gray-500 mt-1">Select a product line from the sidebar to view its rules.</p></div>} />
+        <Route path="/rules" element={<div className="p-6"><h1 className="text-xl font-semibold">Rating Rules</h1><p className="text-gray-500 mt-1">Select a product line from the sidebar to view its rating rules.</p></div>} />
         <Route path="/mappings" element={<div className="p-6"><h1 className="text-xl font-semibold">Mappings</h1><p className="text-gray-500 mt-1">Select a product line from the sidebar to view its mappings.</p></div>} />
         <Route path="/decision-tables" element={<LookupTables />} />
         <Route path="/knowledge-base" element={<KnowledgeBase />} />

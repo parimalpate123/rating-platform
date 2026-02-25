@@ -40,7 +40,7 @@ function AboutDialog({ onClose }: { onClose: () => void }) {
           <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 ring-4 ring-white/10">
             <Zap className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">InsuRatePro</h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight">InsuRateConnect</h2>
           <p className="text-purple-100 text-sm mt-1.5 font-medium leading-snug">
             The Rating Domain Interoperability Layer —<br />One Bridge for Every Rating Engine
           </p>
@@ -55,7 +55,7 @@ function AboutDialog({ onClose }: { onClose: () => void }) {
         {/* Body */}
         <div className="px-8 py-6 space-y-5">
           <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-            InsuRatePro enables seamless integration between policy administration systems and rating engines across the insurance ecosystem. By abstracting rating logic into a unified domain layer, it eliminates point-to-point integrations and accelerates product deployment. Connect once, integrate everywhere, and scale without friction.
+            InsuRateConnect enables seamless integration between policy administration systems and rating engines across the insurance ecosystem. By abstracting rating logic into a unified domain layer, it eliminates point-to-point integrations and accelerates product deployment. Connect once, integrate everywhere, and scale without friction.
           </p>
 
           <div className="grid grid-cols-3 gap-3 text-center">
@@ -94,7 +94,7 @@ const GLOBAL_NAV: { label: string; path: string; icon: typeof LayoutDashboard }[
   { label: 'Dashboard', path: '/', icon: LayoutDashboard },
   { label: 'Products', path: '/products', icon: Package },
   { label: 'Systems', path: '/systems', icon: Server },
-  { label: 'Rules', path: '/rules', icon: GitBranch },
+  { label: 'Rating Rules', path: '/rules', icon: GitBranch },
   { label: 'Mappings', path: '/mappings', icon: Map },
   { label: 'Custom Flows', path: '/custom-flows', icon: Workflow },
   { label: 'Insights', path: '/insights', icon: BarChart3 },
@@ -215,12 +215,12 @@ export function TopBar({ products = [] }: TopBarProps) {
       <button
         onClick={() => setShowAbout(true)}
         className="flex items-center gap-2 min-w-[200px] hover:opacity-80 transition-opacity"
-        title="About InsuRatePro"
+        title="About InsuRateConnect"
       >
         <div className="w-7 h-7 rounded-lg bg-purple-600 flex items-center justify-center">
           <Zap className="w-4 h-4 text-white" />
         </div>
-        <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">InsuRatePro</span>
+        <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">InsuRateConnect</span>
       </button>
 
       {/* Search */}
@@ -232,7 +232,7 @@ export function TopBar({ products = [] }: TopBarProps) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onFocus={() => setSearchOpen(true)}
-            placeholder="Search products, rules, mappings, custom flows..."
+            placeholder="Search products, rating rules, mappings, custom flows..."
             className="w-full pl-8 pr-12 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 dark:focus:bg-gray-800"
           />
           <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 bg-gray-100 border border-gray-200 rounded px-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-500">⌘K</kbd>

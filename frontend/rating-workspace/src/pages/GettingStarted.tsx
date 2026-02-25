@@ -78,7 +78,7 @@ const STEPS: StepItem[] = [
     step: 5,
     icon: GitBranch,
     title: 'Add orchestrator flow',
-    description: 'In the product Orchestrator tab: create a flow (e.g. /rate) and add or auto-generate steps (validate, map, rules, call engine, run custom flow, etc.).',
+    description: 'In the product Orchestrator tab: create a flow (e.g. /rate) and add or auto-generate steps (validate, map, rating rules, call engine, run custom flow, etc.).',
     action: 'Product → Orchestrator tab',
     path: '/products',
     pathLabel: 'Open Products',
@@ -97,9 +97,9 @@ const STEPS: StepItem[] = [
   {
     step: 7,
     icon: Map,
-    title: 'Mappings & rules',
-    description: 'Add field mappings (request/response) and business rules per product. Link them in the orchestrator step config.',
-    action: 'Product → Mappings / Rules tabs',
+    title: 'Mappings & rating rules',
+    description: 'Add field mappings (request/response) and rating rules per product. Link them in the orchestrator step config.',
+    action: 'Product → Mappings / Rating Rules tabs',
     path: '/products',
     pathLabel: 'Open Products',
     frequency: 'ongoing',
@@ -212,7 +212,7 @@ export function GettingStarted() {
       <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg px-4 py-3 text-sm text-purple-800 dark:text-purple-200">
         <p className="font-medium">Tip</p>
         <p className="mt-0.5 text-purple-700 dark:text-purple-300">
-          Product-level items (scopes, orchestrator, mappings, rules) are under each product in the sidebar. Open a product line to see its Orchestrator, Mappings, Rules, and Scopes tabs.
+          Product-level items (scopes, orchestrator, mappings, rating rules) are under each product in the sidebar. Open a product line to see its Orchestrator, Mappings, Rating Rules, and Scopes tabs.
         </p>
       </div>
     </div>
