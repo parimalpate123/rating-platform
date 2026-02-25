@@ -294,11 +294,11 @@ export function Systems() {
 
   return (
     <div className="px-4 py-4 max-w-7xl mx-auto">
-      {/* InsurRateX Platform Services health */}
+      {/* InsuRatePro Platform Services health */}
       <section className="mb-8">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">InsurRateX Platform Services</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">InsuRatePro Platform Services</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               Health status of backend and orchestrator services. No add/remove — read-only.
             </p>

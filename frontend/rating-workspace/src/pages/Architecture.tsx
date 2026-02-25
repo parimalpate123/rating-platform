@@ -6,7 +6,7 @@ flowchart TB
     UI[Rating Workspace]
   end
 
-  subgraph platform["InsurRateX Platform"]
+  subgraph platform["InsuRatePro Platform"]
     CR[Core Rating\nOrchestrator]
     LR[Line Rating\nflow definitions]
     PC[Product Config\nMapper]
@@ -108,7 +108,7 @@ export function Architecture() {
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Platform Architecture</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-          InsurRateX rating orchestration — services and data flow.
+          InsuRatePro rating orchestration — services and data flow.
         </p>
         <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 italic">
           This architecture is in draft and in progress.

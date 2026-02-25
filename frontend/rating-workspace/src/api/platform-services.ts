@@ -1,5 +1,5 @@
 /**
- * InsurRateX platform services (backend/orchestrator) for health display.
+ * InsuRatePro platform services (backend/orchestrator) for health display.
  * Probe URL: in dev we hit proxy paths; in prod we hit /api/v1 paths (ALB routes by path).
  */
 

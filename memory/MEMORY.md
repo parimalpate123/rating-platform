@@ -1,4 +1,4 @@
-# Project Memory: rating-platform (InsurRateX)
+# Project Memory: rating-platform (InsuRatePro)
 
 ## Project Overview
 Nx monorepo — enterprise insurance rating orchestration platform.

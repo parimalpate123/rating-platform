@@ -1,4 +1,4 @@
-# InsurRateX — Implementation Phases (Phase 4–8)
+# InsuRatePro — Implementation Phases (Phase 4–8)
 
 > **Status:** Phase 3 COMPLETE. Ready for Phase 4.
 > **Date:** February 2026

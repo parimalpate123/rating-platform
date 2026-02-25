@@ -1,4 +1,4 @@
-# InsurRateX — Step-by-Step Usage Guide
+# InsuRatePro — Step-by-Step Usage Guide
 
 This guide walks through everything you need to go from a fresh start to running a live test rating request in the UI.
 

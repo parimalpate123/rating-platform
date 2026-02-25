@@ -40,7 +40,7 @@ function AboutDialog({ onClose }: { onClose: () => void }) {
           <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 ring-4 ring-white/10">
             <Zap className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">InsurRateX</h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight">InsuRatePro</h2>
           <p className="text-purple-100 text-sm mt-1.5 font-medium leading-snug">
             The Rating Domain Interoperability Layer —<br />One Bridge for Every Rating Engine
           </p>
@@ -55,7 +55,7 @@ function AboutDialog({ onClose }: { onClose: () => void }) {
         {/* Body */}
         <div className="px-8 py-6 space-y-5">
           <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-            InsurRateX enables seamless integration between policy administration systems and rating engines across the insurance ecosystem. By abstracting rating logic into a unified domain layer, it eliminates point-to-point integrations and accelerates product deployment. Connect once, integrate everywhere, and scale without friction.
+            InsuRatePro enables seamless integration between policy administration systems and rating engines across the insurance ecosystem. By abstracting rating logic into a unified domain layer, it eliminates point-to-point integrations and accelerates product deployment. Connect once, integrate everywhere, and scale without friction.
           </p>
 
           <div className="grid grid-cols-3 gap-3 text-center">
@@ -215,12 +215,12 @@ export function TopBar({ products = [] }: TopBarProps) {
       <button
         onClick={() => setShowAbout(true)}
         className="flex items-center gap-2 min-w-[200px] hover:opacity-80 transition-opacity"
-        title="About InsurRateX"
+        title="About InsuRatePro"
       >
         <div className="w-7 h-7 rounded-lg bg-purple-600 flex items-center justify-center">
           <Zap className="w-4 h-4 text-white" />
         </div>
-        <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">InsurRateX</span>
+        <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">InsuRatePro</span>
       </button>
 
       {/* Search */}
