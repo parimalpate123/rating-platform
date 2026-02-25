@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RulesController } from './rules.controller';
 import { RulesService } from './rules.service';
 import { AiPromptsModule } from '../ai-prompts/ai-prompts.module';
+import { ScriptController } from '../script/script.controller';
 import {
   RuleEntity,
   RuleConditionEntity,
@@ -20,7 +21,7 @@ import {
     ]),
     AiPromptsModule,
   ],
-  controllers: [RulesController],
+  controllers: [RulesController, ScriptController],
   providers: [RulesService],
   exports: [RulesService],
 })

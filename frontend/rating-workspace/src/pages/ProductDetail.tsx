@@ -30,6 +30,7 @@ import { systemsApi, type System } from '../api/systems'
 import { MappingsTab } from '../components/tabs/MappingsTab'
 import { RulesTab } from '../components/tabs/RulesTab'
 import { rulesApi } from '../api/rules'
+import { scriptApi } from '../api/script'
 import { ScopesTab } from '../components/tabs/ScopesTab'
 import { ExecutionFlowDiagram, type DiagramStep, type DiagramResult } from '../components/flow/ExecutionFlowDiagram'
 import { StepDetailPanel } from '../components/flow/StepDetailPanel'
@@ -508,6 +509,7 @@ function OverviewTab({ product }: { product: ProductLine }) {
 const STEP_TYPE_COLORS: Record<string, string> = {
   validate_request: 'bg-cyan-100 text-cyan-700 border-cyan-200',
   run_custom_flow: 'bg-violet-100 text-violet-700 border-violet-200',
+  run_script: 'bg-amber-100 text-amber-700 border-amber-200',
   field_mapping: 'bg-blue-100 text-blue-700 border-blue-200',
   apply_rules: 'bg-green-100 text-green-700 border-green-200',
   format_transform: 'bg-orange-100 text-orange-700 border-orange-200',
@@ -559,10 +561,14 @@ function stepConfigPreview(config: Record<string, unknown>): string {
     }
   }
   if (parts.length === 0) {
-    const entries = Object.entries(config).slice(0, 2)
+    const entries = Object.entries(config).slice(0, 3)
     for (const [k, v] of entries) {
-      if (k === 'condition') continue
-      parts.push(`${k}: ${v}`)
+      if (k === 'condition' || k === 'conditionExpression') continue
+      if (k === 'scriptSource') {
+        parts.push(`script (${String(v ?? '').length} chars)`)
+      } else {
+        parts.push(`${k}: ${v}`)
+      }
     }
   }
   return parts.join('  ·  ')
@@ -573,6 +579,7 @@ function stepConfigPreview(config: Record<string, unknown>): string {
 const STEP_TYPES = [
   { value: 'validate_request', label: 'Validate Request' },
   { value: 'run_custom_flow', label: 'Run custom flow' },
+  { value: 'run_script', label: 'Run script' },
   { value: 'field_mapping', label: 'Field Mapping' },
   { value: 'apply_rules', label: 'Apply Rating Rules' },
   { value: 'call_rating_engine', label: 'Call Rating Engine' },
@@ -616,6 +623,7 @@ const STEP_CONFIG_FIELDS: Record<string, ConfigField[]> = {
     { key: 'topic', label: 'Topic', type: 'text', placeholder: 'e.g. rating.completed' },
   ],
   run_custom_flow: [], // custom-flow dropdown rendered below when productCode is set
+  run_script: [], // script source + timeout rendered in custom block below
 }
 
 function StepConfigForm({
@@ -639,6 +647,15 @@ function StepConfigForm({
   const [aiError, setAIError] = useState<string | null>(null)
   const [lastConditionSource, setLastConditionSource] = useState<'bedrock' | 'heuristic' | null>(null)
   const [customFlows, setCustomFlows] = useState<CustomFlow[]>([])
+
+  // Run script: Generate with AI + Test panel
+  const [scriptGeneratePrompt, setScriptGeneratePrompt] = useState('')
+  const [scriptGenerateLoading, setScriptGenerateLoading] = useState(false)
+  const [scriptGenerateError, setScriptGenerateError] = useState<string | null>(null)
+  const [testExpanded, setTestExpanded] = useState(false)
+  const [sampleRequestJson, setSampleRequestJson] = useState('{}')
+  const [testLoading, setTestLoading] = useState(false)
+  const [testResult, setTestResult] = useState<{ working?: Record<string, unknown>; response?: Record<string, unknown>; error?: string; durationMs?: number } | null>(null)
 
   useEffect(() => {
     if (stepType === 'run_custom_flow' && productCode) {
@@ -691,8 +708,186 @@ function StepConfigForm({
     }
   }
 
+  const handleGenerateScript = async () => {
+    const prompt = scriptGeneratePrompt.trim()
+    if (!prompt) return
+    setScriptGenerateError(null)
+    setScriptGenerateLoading(true)
+    try {
+      let contextSample: Record<string, unknown> | undefined
+      try {
+        const parsed = JSON.parse(sampleRequestJson || '{}')
+        if (parsed && typeof parsed === 'object') contextSample = parsed
+      } catch {
+        // ignore invalid JSON
+      }
+      const { scriptSource } = await scriptApi.generate({
+        prompt,
+        productLineCode: productCode,
+        contextSample,
+      })
+      onChange({ ...config, scriptSource })
+      setScriptGeneratePrompt('')
+    } catch (err: unknown) {
+      const msg = (err as any)?.response?.data?.message ?? (err instanceof Error ? err.message : String(err))
+      setScriptGenerateError(msg || 'AI script generation failed. Check rules-service and Bedrock.')
+    } finally {
+      setScriptGenerateLoading(false)
+    }
+  }
+
+  const handleRunScriptTest = async () => {
+    const scriptSource = (config.scriptSource as string)?.trim()
+    if (!scriptSource) {
+      setTestResult({ error: 'Enter script first.' })
+      return
+    }
+    setTestResult(null)
+    setTestLoading(true)
+    try {
+      let request: Record<string, unknown> = {}
+      try {
+        request = JSON.parse(sampleRequestJson || '{}') as Record<string, unknown>
+      } catch {
+        setTestResult({ error: 'Invalid request JSON.' })
+        return
+      }
+      const result = await scriptApi.run({
+        scriptSource,
+        request,
+        timeoutMs: config.timeoutMs != null ? Number(config.timeoutMs) : 5000,
+      })
+      if (result.error) setTestResult({ error: result.error, durationMs: result.durationMs })
+      else setTestResult({ working: result.working, response: result.response, durationMs: result.durationMs })
+    } catch (err: unknown) {
+      const msg = (err as any)?.response?.data?.message ?? (err instanceof Error ? err.message : String(err))
+      setTestResult({ error: msg || 'Test request failed.' })
+    } finally {
+      setTestLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-3">
+      {stepType === 'run_script' && (
+        <div className="space-y-3">
+          {/* Generate with AI */}
+          <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/20 p-3 space-y-2">
+            <p className="text-xs font-medium text-amber-800 dark:text-amber-200 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              Generate with AI
+            </p>
+            <textarea
+              value={scriptGeneratePrompt}
+              onChange={(e) => { setScriptGeneratePrompt(e.target.value); setScriptGenerateError(null); }}
+              placeholder="Describe the transformation..."
+              rows={2}
+              className="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 select-all cursor-text" title="Click to select, then copy">
+              Example: Normalize Guidewire Policy.EffectiveDate to working.policy.effectiveDate (ISO); copy Policy.PolicyNumber to working.policyNumber
+            </p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400">Uses sample request below as context if provided.</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleGenerateScript}
+                disabled={!scriptGeneratePrompt.trim() || scriptGenerateLoading}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50"
+              >
+                {scriptGenerateLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                Generate
+              </button>
+              {scriptGenerateError && <span className="text-xs text-red-600 dark:text-red-400">{scriptGenerateError}</span>}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Script (JavaScript)</label>
+            <textarea
+              value={(config.scriptSource as string) ?? ''}
+              onChange={(e) => onChange({ ...config, scriptSource: e.target.value })}
+              placeholder="// Request payload transformation (e.g. Guidewire). Mutate working/response. Example:&#10;working.policy.effectiveDate = request?.Policy?.EffectiveDate ? new Date(request.Policy.EffectiveDate).toISOString().slice(0,10) : undefined;"
+              rows={8}
+              className="w-full px-3 py-2 text-sm font-mono border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Function body only. No require/process. Timeout applies.</p>
+          </div>
+          <div className="max-w-[200px]">
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Timeout (ms)</label>
+            <input
+              type="number"
+              min={100}
+              max={30000}
+              value={config.timeoutMs != null ? Number(config.timeoutMs) : 5000}
+              onChange={(e) => onChange({ ...config, timeoutMs: e.target.value === '' ? undefined : Number(e.target.value) })}
+              className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+          </div>
+
+          {/* Test */}
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setTestExpanded((v) => !v)}
+              className="w-full flex items-center justify-between px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <span>Test</span>
+              {testExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </button>
+            {testExpanded && (
+              <div className="p-3 pt-0 space-y-2 border-t border-gray-200 dark:border-gray-700">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">Sample request (JSON)</label>
+                <textarea
+                  value={sampleRequestJson}
+                  onChange={(e) => setSampleRequestJson(e.target.value)}
+                  placeholder='{"state":"CA","premium":1000}'
+                  rows={3}
+                  className="w-full px-2.5 py-1.5 text-sm font-mono border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleRunScriptTest}
+                  disabled={testLoading}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50"
+                >
+                  {testLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+                  Run test
+                </button>
+                {testResult && (
+                  <div className="mt-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-2.5">
+                    {testResult.error ? (
+                      <p className="text-xs text-red-600 dark:text-red-400">{testResult.error}</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {testResult.working != null && (
+                          <div>
+                            <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase mb-0.5">working</p>
+                            <pre className="text-[10px] font-mono overflow-auto max-h-32 text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-all">
+                              {JSON.stringify(testResult.working, null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                        {testResult.response != null && (
+                          <div>
+                            <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase mb-0.5">response</p>
+                            <pre className="text-[10px] font-mono overflow-auto max-h-32 text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-all">
+                              {JSON.stringify(testResult.response, null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {testResult.durationMs != null && (
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">{testResult.durationMs}ms</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {stepType === 'run_custom_flow' && (
         <div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Custom flow</label>

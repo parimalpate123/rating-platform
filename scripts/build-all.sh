@@ -3,8 +3,19 @@
 # Usage: ./scripts/build-all.sh [service-name]
 #   No args  → builds all services
 #   With arg → builds only that service (e.g. ./scripts/build-all.sh core-rating)
+#
+# Requires: run "npm install" from repo root first. If you see "Could not find Nx modules",
+# run: npm install
 
 cd "$(dirname "$0")/.."
+
+if [ ! -d "node_modules/nx" ]; then
+  echo "Nx not found in node_modules. Run from repo root: npm install"
+  exit 1
+fi
+
+# Use project's nx (npm exec) so we don't pull a different version via npx
+NX_CMD="npm exec -- nx"
 
 declare -a services=(
   "core-rating"
@@ -20,7 +31,7 @@ declare -a services=(
 
 if [ -n "$1" ]; then
   echo "Building $1..."
-  npx nx build "$1"
+  $NX_CMD build "$1"
   exit $?
 fi
 
@@ -30,7 +41,7 @@ echo ""
 failed=0
 for svc in "${services[@]}"; do
   echo "── Building $svc ──"
-  if npx nx build "$svc" 2>&1; then
+  if $NX_CMD build "$svc" 2>&1; then
     echo "  ✓ $svc built successfully"
   else
     echo "  ✗ $svc build FAILED"

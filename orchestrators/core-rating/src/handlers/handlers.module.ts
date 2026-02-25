@@ -11,6 +11,7 @@ import { CallExternalApiHandler } from './call-external-api.handler';
 import { EnrichHandler } from './enrich.handler';
 import { GenerateValueHandler } from './generate-value.handler';
 import { RunCustomFlowHandler } from './run-custom-flow.handler';
+import { RunScriptHandler } from './run-script.handler';
 
 @Module({
   imports: [RegistryModule],
@@ -25,6 +26,7 @@ import { RunCustomFlowHandler } from './run-custom-flow.handler';
     EnrichHandler,
     GenerateValueHandler,
     RunCustomFlowHandler,
+    RunScriptHandler,
   ],
   exports: [
     FieldMappingHandler,
@@ -37,6 +39,7 @@ import { RunCustomFlowHandler } from './run-custom-flow.handler';
     EnrichHandler,
     GenerateValueHandler,
     RunCustomFlowHandler,
+    RunScriptHandler,
   ],
 })
 export class HandlersModule implements OnModuleInit {
@@ -52,6 +55,7 @@ export class HandlersModule implements OnModuleInit {
     private readonly enrich: EnrichHandler,
     private readonly generateValue: GenerateValueHandler,
     private readonly runCustomFlow: RunCustomFlowHandler,
+    private readonly runScript: RunScriptHandler,
   ) {}
 
   onModuleInit() {
@@ -65,5 +69,6 @@ export class HandlersModule implements OnModuleInit {
     this.registry.register(this.enrich);
     this.registry.register(this.generateValue);
     this.registry.register(this.runCustomFlow);
+    this.registry.register(this.runScript);
   }
 }

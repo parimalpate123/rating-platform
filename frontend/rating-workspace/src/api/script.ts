@@ -1,0 +1,39 @@
+import { coreRating } from './client';
+import { rulesService } from './client';
+
+export interface ScriptRunRequest {
+  scriptSource: string;
+  request: Record<string, unknown>;
+  working?: Record<string, unknown>;
+  response?: Record<string, unknown>;
+  scope?: Record<string, unknown>;
+  timeoutMs?: number;
+}
+
+export interface ScriptRunResponse {
+  working?: Record<string, unknown>;
+  response?: Record<string, unknown>;
+  error?: string;
+  durationMs?: number;
+}
+
+export interface ScriptGenerateRequest {
+  prompt: string;
+  productLineCode?: string;
+  contextSample?: Record<string, unknown>;
+}
+
+export interface ScriptGenerateResponse {
+  scriptSource: string;
+  confidence?: number;
+}
+
+export const scriptApi = {
+  /** Run script with sample payload (test without executing full flow). */
+  run: (body: ScriptRunRequest) =>
+    coreRating.post<ScriptRunResponse>('/script/run', body).then((r) => r.data),
+
+  /** Generate script body from plain-English description (Bedrock). */
+  generate: (body: ScriptGenerateRequest) =>
+    rulesService.post<ScriptGenerateResponse>('/script/generate', body).then((r) => r.data),
+};

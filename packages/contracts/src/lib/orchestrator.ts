@@ -9,7 +9,8 @@ export type OrchestratorStepType =
   | 'call_external_api'
   | 'call_orchestrator'
   | 'publish_event'
-  | 'enrich';
+  | 'enrich'
+  | 'run_script';
 
 export type ImplementationType = 'built_in' | 'library' | 'external_api';
 
@@ -78,6 +79,10 @@ export interface StepConfig {
   libraryName?: string;
   apiEndpoint?: string;
   apiMethod?: 'GET' | 'POST' | 'PUT';
+
+  // run_script: inline JavaScript that receives (request, working, response, scope) and may mutate working/response in place. No I/O.
+  scriptSource?: string;
+  timeoutMs?: number;
 
   // condition (optional — skip step if not met)
   condition?: StepCondition;
