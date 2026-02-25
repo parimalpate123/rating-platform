@@ -1685,8 +1685,8 @@ function OrchestratorTab({ productCode, targetSystem }: OrchestratorTabProps) {
                               {step.status === 'completed'
                                 ? <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
                                 : step.status === 'skipped'
-                                  ? <MinusCircle className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" title="Skipped (condition not met)" />
-                                  : <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" title="Failed" />}
+                                  ? <span title="Skipped (condition not met)"><MinusCircle className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" /></span>
+                                  : <span title="Failed"><XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" /></span>}
                               <span className="text-xs text-gray-800 dark:text-gray-200 flex-1 truncate">
                                 {step.stepName}
                                 {step.status === 'skipped' && <span className="ml-1 text-amber-600 dark:text-amber-400">(skipped)</span>}

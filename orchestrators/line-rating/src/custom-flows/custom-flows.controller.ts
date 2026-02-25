@@ -75,7 +75,12 @@ export class CustomFlowsController {
       stepOrder?: number;
     },
   ) {
-    return this.customFlowsService.addStep(id, body);
+    return this.customFlowsService.addStep(id, {
+      stepType: body.stepType,
+      name: body.name,
+      config: body.config ?? {},
+      stepOrder: body.stepOrder,
+    });
   }
 
   @Put('steps/:stepId')

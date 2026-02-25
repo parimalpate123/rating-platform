@@ -10,7 +10,6 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
-  BadRequestException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { RulesService } from './rules.service';

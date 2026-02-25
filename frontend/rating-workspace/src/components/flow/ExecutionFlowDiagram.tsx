@@ -100,7 +100,7 @@ function StatusIcon({ status }: { status: string }) {
   const s = status.toLowerCase()
   if (s === 'completed') return <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
   if (s === 'failed') return <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-  if (s === 'skipped') return <MinusCircle className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" title="Skipped" />
+  if (s === 'skipped') return <span title="Skipped"><MinusCircle className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" /></span>
   return <Circle className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" />
 }
 

@@ -9,7 +9,6 @@ import {
   Trash2,
   CheckCircle,
   Circle,
-  X,
 } from 'lucide-react';
 import { customFlowsApi, type CustomFlow, type CustomFlowStep } from '../api/custom-flows';
 import { productsApi, type ProductLine } from '../api/products';
@@ -90,7 +89,7 @@ function CustomFlowStepConfigForm({
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{f.label}</label>
           {f.type === 'select' ? (
             <select
-              value={(effectiveConfig[f.key] as string) ?? ''}
+              value={((effectiveConfig as Record<string, unknown>)[f.key] as string) ?? ''}
               onChange={(e) => handleChange(f.key, e.target.value)}
               className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -101,7 +100,7 @@ function CustomFlowStepConfigForm({
             </select>
           ) : (
             <input
-              value={(effectiveConfig[f.key] as string) ?? ''}
+              value={((effectiveConfig as Record<string, unknown>)[f.key] as string) ?? ''}
               onChange={(e) => handleChange(f.key, e.target.value)}
               placeholder={f.placeholder}
               className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -257,22 +256,6 @@ export function CustomFlowEdit() {
       setSteps((prev) => prev.filter((s) => s.id !== stepId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete step');
-    }
-  };
-
-  const handleReorder = async (stepIds: string[]) => {
-    if (!flow) return;
-    try {
-      await customFlowsApi.reorderSteps(flow.id, stepIds);
-      setSteps((prev) => {
-        const byId = new Map(prev.map((s) => [s.id, s]));
-        return stepIds.map((id, i) => {
-          const s = byId.get(id);
-          return s ? { ...s, stepOrder: i } : s;
-        }).filter(Boolean) as CustomFlowStep[];
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reorder steps');
     }
   };
 
