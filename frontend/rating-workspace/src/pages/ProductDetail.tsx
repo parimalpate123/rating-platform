@@ -591,7 +591,7 @@ interface ConfigField {
 
 const STEP_CONFIG_FIELDS: Record<string, ConfigField[]> = {
   validate_request: [
-    { key: 'schema', label: 'Schema Name (coming soon)', type: 'text', placeholder: 'e.g. rate-request, init-rate-request' },
+    { key: 'schema', label: 'Schema Name (under development)', type: 'text', placeholder: 'e.g. rate-request, init-rate-request' },
     { key: 'strictMode', label: 'Strict Mode', type: 'select', options: ['true', 'false'] },
   ],
   field_mapping: [

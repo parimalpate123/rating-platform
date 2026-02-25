@@ -177,7 +177,7 @@ export function KnowledgeBase() {
         <div>
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-800 mr-3">
             <Clock className="h-4 w-4" />
-            Coming soon
+            Under development
           </span>
         </div>
         <div>

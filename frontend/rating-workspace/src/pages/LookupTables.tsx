@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Trash2, ChevronDown, ChevronRight, Loader2, Database, RefreshCw, X } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronRight, Loader2, Database, RefreshCw, X, Clock } from 'lucide-react'
 import { lookupTablesApi, type LookupTable, type LookupEntry } from '../api/lookupTables'
 import { productsApi, type ProductLine } from '../api/products'
 import { formatDate } from '../lib/utils'
@@ -325,12 +325,16 @@ export function LookupTables() {
       {/* Header */}
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Lookup Tables</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Key-value tables used by the <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">enrich</code> step type to merge data into rating context
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Lookup Tables</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Key-value tables used by the <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">enrich</code> step type to merge data into rating context
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+            <Clock className="h-4 w-4" />
+            Under development
+          </span>
           <button
             onClick={load}
             className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"

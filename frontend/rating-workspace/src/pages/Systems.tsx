@@ -374,14 +374,14 @@ export function Systems() {
         </div>
       </section>
 
-      <div className="mb-6 flex items-center justify-between">
-        <div>
+      <div className="mb-6 flex items-center justify-between gap-4 flex-nowrap">
+        <div className="min-w-0">
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Systems Registry</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Manage source and target systems used across product lines. {isProd ? 'Production endpoints shown.' : 'Local/dev endpoints shown.'} Localhost URLs point to local mock adapters. &quot;Active&quot; = enabled; mock systems skip the URL check and report healthy.
+            Manage source and target systems used across product lines. {isProd ? 'Production endpoints shown.' : 'Local/dev endpoints shown.'} Use Check to verify URL health.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {systems.length > 0 && (
             <button
               onClick={() => setCheckAllTrigger((t) => t + 1)}

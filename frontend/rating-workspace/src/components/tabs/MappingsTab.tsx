@@ -553,7 +553,7 @@ function NewMappingWizard({
                   <div className="text-xs font-medium text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
                     {m.label}
                     {m.disabled && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-medium bg-yellow-100 text-yellow-700 rounded">Coming Soon</span>
+                      <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 rounded">Under development</span>
                     )}
                   </div>
                   <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{m.desc}</div>

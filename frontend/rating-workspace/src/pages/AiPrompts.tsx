@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Bot, Save, RotateCcw, ChevronDown, ChevronUp,
-  Info, CheckCircle2, AlertCircle,
+  Info, CheckCircle2, AlertCircle, Clock,
 } from 'lucide-react';
 import { aiPromptsApi, AiPrompt } from '../api/ai-prompts';
 
@@ -212,11 +212,17 @@ export function AiPrompts() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">AI Prompts</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Manage the prompt templates used by AI features across the platform. Changes take effect immediately — no deployment needed.
-        </p>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">AI Prompts</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Manage the prompt templates used by AI features across the platform. Changes take effect immediately — no deployment needed.
+          </p>
+        </div>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+          <Clock className="h-4 w-4" />
+          Under development
+        </span>
       </div>
 
       {/* RAG notice */}
