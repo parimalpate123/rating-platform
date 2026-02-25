@@ -2,7 +2,10 @@
   "name": "@rating-platform/rating-workspace",
   "version": "0.0.1",
   "private": true,
-  "nx": {
-    "name": "rating-workspace"
+  "nx": { "name": "rating-workspace" },
+  "dependencies": {
+    "prism-react-renderer": "^2.4.0",
+    "prismjs": "^1.29.0",
+    "react-simple-code-editor": "^0.14.0"
   }
 }

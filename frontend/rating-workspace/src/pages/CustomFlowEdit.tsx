@@ -17,6 +17,7 @@ import {
 import { customFlowsApi, type CustomFlow, type CustomFlowStep } from '../api/custom-flows';
 import { productsApi, type ProductLine } from '../api/products';
 import { scriptApi } from '../api/script';
+import { ScriptEditor } from '../components/ScriptEditor';
 import { cn } from '../lib/utils';
 
 // Step types allowed in custom flows (plan: validate_request, generate_value, field_mapping, enrich)
@@ -87,7 +88,18 @@ function CustomFlowStepConfigForm({
   const [scriptGenerateLoading, setScriptGenerateLoading] = useState(false);
   const [scriptGenerateError, setScriptGenerateError] = useState<string | null>(null);
   const [testExpanded, setTestExpanded] = useState(false);
-  const [sampleRequestJson, setSampleRequestJson] = useState('{}');
+  const SAMPLE_REQUEST_JSON = JSON.stringify(
+  {
+    Policy: {
+      EffectiveDate: '2025-03-01',
+      PolicyNumber: 'POL-12345',
+    },
+    Locations: [{ BuildingNumber: 'B001', LocationNumber: 'LOC-1' }],
+  },
+  null,
+  2
+);
+const [sampleRequestJson, setSampleRequestJson] = useState('{}');
   const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<{
     working?: Record<string, unknown>;
@@ -200,12 +212,12 @@ function CustomFlowStepConfigForm({
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Script (JavaScript)</label>
-          <textarea
+          <ScriptEditor
             value={(config.scriptSource as string) ?? ''}
-            onChange={(e) => onChange({ ...config, scriptSource: e.target.value })}
-            placeholder="// Request payload transformation (e.g. Guidewire). Example: working.policy.effectiveDate = request?.Policy?.EffectiveDate ? new Date(request.Policy.EffectiveDate).toISOString().slice(0,10) : undefined;"
-            rows={6}
-            className="w-full px-3 py-2 text-sm font-mono border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            onChange={(scriptSource) => onChange({ ...config, scriptSource })}
+            placeholder="// Request payload transformation (e.g. Guidewire)..."
+            minHeight={180}
+            showValidateButton
           />
         </div>
         <div className="max-w-[200px]">
@@ -230,7 +242,16 @@ function CustomFlowStepConfigForm({
           </button>
           {testExpanded && (
             <div className="p-3 pt-0 space-y-2 border-t border-gray-200 dark:border-gray-700">
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">Sample request (JSON)</label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Sample request (JSON)</label>
+                <button
+                  type="button"
+                  onClick={() => setSampleRequestJson(SAMPLE_REQUEST_JSON)}
+                  className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 underline focus:outline-none"
+                >
+                  Insert sample request
+                </button>
+              </div>
               <textarea
                 value={sampleRequestJson}
                 onChange={(e) => setSampleRequestJson(e.target.value)}
