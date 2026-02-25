@@ -20,6 +20,7 @@ function MappingPreviewModal({
   initialDirection,
   onCreated,
   onClose,
+  onSuccessClose,
 }: {
   suggestions: FieldMappingSuggestion[]
   mode: 'create' | 'append'
@@ -29,6 +30,8 @@ function MappingPreviewModal({
   initialDirection?: 'request' | 'response'
   onCreated: () => void
   onClose: () => void
+  /** When provided, called after successful create (mode === 'create') to close the entire wizard instead of going back. */
+  onSuccessClose?: () => void
 }) {
   const [selected, setSelected] = useState<Set<number>>(
     new Set(suggestions.map((_, i) => i)),
@@ -98,11 +101,21 @@ function MappingPreviewModal({
     try {
       if (mode === 'create') {
         if (!name.trim()) return
+        const buildTransformConfig = (s: typeof accepted[0]) => {
+          const cfg: Record<string, unknown> = {};
+          if (s.dataType) cfg.dataType = s.dataType;
+          if (s.fieldDirection) cfg.fieldDirection = s.fieldDirection;
+          if (s.format) cfg.format = s.format;
+          if (s.fieldIdentifier ?? s.targetPath) cfg.fieldIdentifier = s.fieldIdentifier ?? s.targetPath;
+          return Object.keys(cfg).length ? cfg : undefined;
+        }
         const fields = accepted.map((s) => ({
           sourcePath: s.sourcePath,
           targetPath: s.targetPath,
           transformationType: s.transformationType,
           description: s.reasoning,
+          transformConfig: buildTransformConfig(s),
+          defaultValue: s.defaultValue,
         }))
         await mappingsApi.createWithFields({
           name: name.trim(),
@@ -123,21 +136,34 @@ function MappingPreviewModal({
               targetPath: f.sourcePath,   // swapped
               transformationType: reverseTransformType(f.transformationType ?? 'direct'),
               description: f.description ? `[Mirrored] ${f.description}` : undefined,
+              transformConfig: f.transformConfig,
+              defaultValue: f.defaultValue,
             })),
           })
         }
       } else {
         for (const s of accepted) {
+          const transformConfig: Record<string, unknown> = {};
+          if (s.dataType) transformConfig.dataType = s.dataType;
+          if (s.fieldDirection) transformConfig.fieldDirection = s.fieldDirection;
+          if (s.format) transformConfig.format = s.format;
+          if (s.fieldIdentifier ?? s.targetPath) transformConfig.fieldIdentifier = s.fieldIdentifier ?? s.targetPath;
           await mappingsApi.createField(mappingId!, {
             sourcePath: s.sourcePath,
             targetPath: s.targetPath,
             transformationType: s.transformationType as TransformationType,
             description: s.reasoning,
+            ...(Object.keys(transformConfig).length ? { transformConfig } : {}),
+            ...(s.defaultValue !== undefined ? { defaultValue: s.defaultValue } : {}),
           })
         }
       }
       onCreated()
-      onClose()
+      if (mode === 'create' && onSuccessClose) {
+        onSuccessClose()
+      } else {
+        onClose()
+      }
     } finally {
       setSaving(false)
     }
@@ -342,12 +368,14 @@ function NewMappingWizard({
   productTargetSystem,
   onCreated,
   onClose,
+  onError,
 }: {
   productCode: string
   productSourceSystem?: string
   productTargetSystem?: string
   onCreated: () => void
   onClose: () => void
+  onError?: (message: string) => void
 }) {
   const [method, setMethod] = useState<WizardMethod>('manual')
   const [name, setName] = useState('')
@@ -409,7 +437,10 @@ function NewMappingWizard({
   ]
 
   const handleManualCreate = async () => {
-    if (!name.trim()) return
+    if (!name.trim()) {
+      setError('Please enter a mapping name.')
+      return
+    }
     setLoading(true)
     setError(null)
     try {
@@ -417,10 +448,11 @@ function NewMappingWizard({
       if (mirror && reverseName) {
         await mappingsApi.create({ name: reverseName, productLineCode: productCode, direction: reverseDir, status: 'draft' })
       }
-      onCreated()
       onClose()
+      onCreated()
     } catch (_e) {
-      setError('Failed to create mapping. Please try again.')
+      onClose()
+      onError?.('Failed to create mapping. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -472,6 +504,7 @@ function NewMappingWizard({
         initialDirection={direction}
         onCreated={onCreated}
         onClose={() => setSuggestions(null)}
+        onSuccessClose={onClose}
       />
     )
   }
@@ -1409,6 +1442,7 @@ export function MappingsTab({
   const [mappings, setMappings] = useState<Mapping[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [createError, setCreateError] = useState<string | null>(null)
   const [showWizard, setShowWizard] = useState(false)
 
   const load = () => {
@@ -1438,8 +1472,15 @@ export function MappingsTab({
           productSourceSystem={sourceSystem}
           productTargetSystem={targetSystem}
           onCreated={load}
-          onClose={() => setShowWizard(false)}
+          onClose={() => { setShowWizard(false); setCreateError(null) }}
+          onError={setCreateError}
         />
+      )}
+      {createError && (
+        <div className="flex items-center justify-between gap-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm text-red-700 dark:text-red-300">
+          <span>{createError}</span>
+          <button type="button" onClick={() => setCreateError(null)} className="text-red-600 dark:text-red-400 hover:underline">Dismiss</button>
+        </div>
       )}
       <div className="space-y-3">
         <div className="flex items-center justify-between">

@@ -39,6 +39,11 @@ export interface FieldMappingSuggestion {
   transformationType: string;
   confidence: number; // 0.0 – 1.0
   reasoning?: string;
+  fieldDirection?: string;
+  dataType?: string;
+  format?: string;       // e.g. YYYY-MM-DD for date type
+  fieldIdentifier?: string; // e.g. policy.quoteId, usually same as targetPath
+  defaultValue?: string;
 }
 
 export interface ParseResult {
@@ -97,7 +102,14 @@ export const mappingsApi = {
     productLineCode: string;
     direction: 'request' | 'response';
     status?: string;
-    fields?: Array<{ sourcePath: string; targetPath: string; transformationType?: string; description?: string }>;
+    fields?: Array<{
+      sourcePath: string;
+      targetPath: string;
+      transformationType?: string;
+      description?: string;
+      transformConfig?: Record<string, unknown>;
+      defaultValue?: string;
+    }>;
   }) => productConfig.post<Mapping>('/mappings/create-with-fields', dto).then((r) => r.data),
 
   listFields: (mappingId: string) =>

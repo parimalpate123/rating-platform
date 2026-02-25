@@ -30,7 +30,10 @@ locals {
       cpu    = 256
       memory = 512
       health = "/api/v1/health"
-      env    = concat(local.common_env, local.db_env, [{ name = "PORT", value = "4010" }])
+      env = concat(local.common_env, local.db_env, [
+        { name = "PORT", value = "4010" },
+        { name = "AWS_REGION", value = var.aws_region },
+      ])
       task_role_arn = aws_iam_role.ecs_task_default.arn
     }
     transform-service = {

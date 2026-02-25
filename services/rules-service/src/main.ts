@@ -6,16 +6,19 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
+import { loadAwsCredentialsFromSecretsManager } from './load-aws-credentials';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
+  await loadAwsCredentialsFromSecretsManager();
+
   const hasRegion = !!process.env.AWS_REGION;
   const hasExplicitCreds =
     !!process.env.AWS_ACCESS_KEY_ID && !!process.env.AWS_SECRET_ACCESS_KEY;
   if (hasRegion || hasExplicitCreds) {
     logger.log(
       hasExplicitCreds
-        ? 'Bedrock: AWS_REGION + credentials from .env'
+        ? 'Bedrock: AWS_REGION + credentials from .env or Secrets Manager'
         : 'Bedrock: credentials from default chain (~/.aws/credentials or env). Set AWS_REGION in .env to choose region.',
     );
   } else {
