@@ -385,6 +385,34 @@ Respond ONLY with a JSON array. Include fieldDirection, dataType, format, fieldI
     return this.mappingsService.updateMapping(id, dto);
   }
 
+  @Post(':id/activate')
+  @HttpCode(HttpStatus.OK)
+  activate(@Param('id') id: string) {
+    return this.mappingsService.activateMapping(id);
+  }
+
+  @Post(':id/clone')
+  @HttpCode(HttpStatus.CREATED)
+  clone(@Param('id') id: string, @Body() body: { name?: string; productLineCode?: string }) {
+    return this.mappingsService.cloneMapping(id, body.name, body.productLineCode);
+  }
+
+  @Get(':id/scope-tags')
+  listScopeTags(@Param('id') id: string) {
+    return this.mappingsService.listScopeTags(id);
+  }
+
+  @Post(':id/scope-tags')
+  addScopeTag(@Param('id') id: string, @Body() body: { scopeType: string; scopeValue: string }) {
+    return this.mappingsService.addScopeTag(id, body.scopeType, body.scopeValue);
+  }
+
+  @Delete(':id/scope-tags/:tagId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteScopeTag(@Param('id') id: string, @Param('tagId') tagId: string) {
+    await this.mappingsService.deleteScopeTag(id, tagId);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param('id') id: string) {

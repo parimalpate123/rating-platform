@@ -73,6 +73,9 @@ export const mappingsApi = {
   delete: (id: string) =>
     productConfig.delete(`/mappings/${id}`),
 
+  activate: (id: string) =>
+    productConfig.post<Mapping>(`/mappings/${id}/activate`).then((r) => r.data),
+
   // AI / text parsing
   parseText: (dto: {
     text: string;

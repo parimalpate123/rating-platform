@@ -19,22 +19,31 @@ const OPERATORS: { value: RuleOperator; label: string }[] = [
   { value: '>=', label: '>= (gte)' },
   { value: '<', label: 'less than (<)' },
   { value: '<=', label: '<= (lte)' },
+  { value: 'between', label: 'between (range)' },
   { value: 'contains', label: 'contains' },
   { value: 'in', label: 'in list' },
   { value: 'not_in', label: 'not in list' },
+  { value: 'regex', label: 'matches regex' },
   { value: 'is_null', label: 'is null' },
   { value: 'is_not_null', label: 'is not null' },
 ]
 
-const ACTION_TYPES: { value: ActionType; label: string }[] = [
-  { value: 'surcharge', label: 'Surcharge (%)' },
-  { value: 'discount', label: 'Discount (%)' },
-  { value: 'multiply', label: 'Multiply By' },
-  { value: 'set', label: 'Set Value' },
-  { value: 'add', label: 'Add Amount' },
-  { value: 'subtract', label: 'Subtract Amount' },
-  { value: 'reject', label: 'Reject Quote' },
+const ACTION_TYPES: { value: ActionType; label: string; hint: string }[] = [
+  { value: 'surcharge', label: 'Surcharge (%)', hint: '0.20 = 20%' },
+  { value: 'discount', label: 'Discount (%)', hint: '0.10 = 10%' },
+  { value: 'multiply', label: 'Multiply By', hint: '1.15' },
+  { value: 'set', label: 'Set Value', hint: 'new value' },
+  { value: 'add', label: 'Add Amount', hint: '500' },
+  { value: 'subtract', label: 'Subtract Amount', hint: '200' },
+  { value: 'divide', label: 'Divide By', hint: '100' },
+  { value: 'flag', label: 'Flag', hint: 'e.g. high_risk' },
+  { value: 'skip_step', label: 'Skip Step', hint: 'step name' },
+  { value: 'copy_field', label: 'Copy Field', hint: 'source.field.path' },
+  { value: 'append', label: 'Append to Array', hint: 'value to append' },
+  { value: 'reject', label: 'Reject Quote', hint: 'rejection reason' },
 ]
+
+const NO_VALUE_OPERATORS: RuleOperator[] = ['is_null', 'is_not_null', 'is_empty', 'is_not_empty']
 
 // ── AI Modal ─────────────────────────────────────────────────────────────────
 
@@ -215,7 +224,11 @@ function RuleEditorModal({
         conditions: conditions.filter((c) => c.field.trim()).map((c, i) => ({
           field: c.field,
           operator: c.operator,
-          value: c.operator === 'is_null' || c.operator === 'is_not_null' ? null : c.value,
+          value: NO_VALUE_OPERATORS.includes(c.operator)
+            ? null
+            : c.operator === 'between'
+              ? c.value.split(',').map((v) => Number(v.trim())).filter((n) => !isNaN(n))
+              : c.value,
           logicalGroup: 0,
         })),
         actions: actions.filter((a) => a.targetField.trim() || a.actionType === 'reject').map((a, i) => ({
@@ -348,7 +361,15 @@ function RuleEditorModal({
                   <select value={cond.operator} onChange={(e) => updateCond(i, { operator: e.target.value as RuleOperator })} className={selectCls}>
                     {OPERATORS.map((op) => <option key={op.value} value={op.value}>{op.label}</option>)}
                   </select>
-                  <input value={cond.value} onChange={(e) => updateCond(i, { value: e.target.value })} className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800" placeholder="NY" disabled={cond.operator === 'is_null' || cond.operator === 'is_not_null'} />
+                  {NO_VALUE_OPERATORS.includes(cond.operator) ? (
+                    <span className="px-2 py-1.5 text-xs text-gray-400 dark:text-gray-500 italic">no value needed</span>
+                  ) : cond.operator === 'between' ? (
+                    <input value={cond.value} onChange={(e) => updateCond(i, { value: e.target.value })} className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800" placeholder="min,max  e.g. 10000,100000" />
+                  ) : cond.operator === 'regex' ? (
+                    <input value={cond.value} onChange={(e) => updateCond(i, { value: e.target.value })} className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800 font-mono" placeholder="^[A-Z]{2}$" />
+                  ) : (
+                    <input value={cond.value} onChange={(e) => updateCond(i, { value: e.target.value })} className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800" placeholder="NY" />
+                  )}
                   <button onClick={() => removeCond(i)} disabled={conditions.length === 1} className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-30">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -370,18 +391,44 @@ function RuleEditorModal({
             <div className="text-[10px] text-gray-400 dark:text-gray-500 uppercase grid grid-cols-[140px_1fr_1fr_28px] gap-2 px-1">
               <span>Action type</span><span>Target field</span><span>Value</span><span />
             </div>
-            {actions.map((act, i) => (
-              <div key={i} className="grid grid-cols-[140px_1fr_1fr_28px] gap-2 items-center">
-                <select value={act.actionType} onChange={(e) => updateAction(i, { actionType: e.target.value as ActionType })} className={selectCls}>
-                  {ACTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
-                <input value={act.targetField} onChange={(e) => updateAction(i, { targetField: e.target.value })} className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800" placeholder="premium" disabled={act.actionType === 'reject'} />
-                <input value={act.value} onChange={(e) => updateAction(i, { value: e.target.value })} className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800" placeholder={act.actionType === 'reject' ? 'reason' : '0.20'} />
-                <button onClick={() => removeAction(i)} disabled={actions.length === 1} className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-30">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
+            {actions.map((act, i) => {
+              const meta = ACTION_TYPES.find((t) => t.value === act.actionType)
+              const isFlag = act.actionType === 'flag'
+              const isSkip = act.actionType === 'skip_step'
+              const isReject = act.actionType === 'reject'
+              const autoTarget = isFlag ? '_flags' : isSkip ? '_skipSteps' : ''
+              return (
+                <div key={i} className="grid grid-cols-[140px_1fr_1fr_28px] gap-2 items-center">
+                  <select
+                    value={act.actionType}
+                    onChange={(e) => {
+                      const t = e.target.value as ActionType
+                      const newTarget = t === 'flag' ? '_flags' : t === 'skip_step' ? '_skipSteps' : t === 'reject' ? '_rejected' : act.targetField
+                      updateAction(i, { actionType: t, targetField: newTarget })
+                    }}
+                    className={selectCls}
+                  >
+                    {ACTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                  <input
+                    value={isFlag || isSkip ? autoTarget : act.targetField}
+                    onChange={(e) => updateAction(i, { targetField: e.target.value })}
+                    className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800"
+                    placeholder={isReject ? '(auto)' : 'premium.base'}
+                    disabled={isFlag || isSkip || isReject}
+                  />
+                  <input
+                    value={act.value}
+                    onChange={(e) => updateAction(i, { value: e.target.value })}
+                    className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 dark:bg-gray-800"
+                    placeholder={meta?.hint ?? '0.20'}
+                  />
+                  <button onClick={() => removeAction(i)} disabled={actions.length === 1} className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-30">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )
+            })}
           </div>
 
           {/* Rule Preview */}

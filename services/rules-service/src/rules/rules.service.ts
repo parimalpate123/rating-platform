@@ -324,6 +324,20 @@ export class RulesService {
         return fieldValue === null || fieldValue === undefined || fieldValue === '' || (Array.isArray(fieldValue) && fieldValue.length === 0);
       case 'is_not_empty':
         return fieldValue !== null && fieldValue !== undefined && fieldValue !== '' && (!Array.isArray(fieldValue) || fieldValue.length > 0);
+      case 'between': {
+        const range = Array.isArray(expectedValue) ? expectedValue : null;
+        if (!range || range.length < 2) return false;
+        const numVal = Number(fieldValue);
+        return !isNaN(numVal) && numVal >= Number(range[0]) && numVal <= Number(range[1]);
+      }
+      case 'regex': {
+        try {
+          const pattern = new RegExp(String(expectedValue));
+          return pattern.test(String(fieldValue));
+        } catch {
+          return false; // Invalid regex → condition not met
+        }
+      }
       default:
         this.logger.warn(`Unknown operator: ${condition.operator}`);
         return false;
@@ -351,41 +365,256 @@ export class RulesService {
       case 'set_field':
         modifiedFields[action.targetField] = action.value;
         break;
+
       case 'add':
       case 'increment':
-      case 'add_to_field':
-        modifiedFields[action.targetField] = Number(currentValue) + Number(action.value);
+      case 'add_to_field': {
+        const numCurrent = Number(currentValue);
+        const numAction = Number(action.value);
+        if (isNaN(numCurrent) || isNaN(numAction)) {
+          this.logger.warn(`Non-numeric value in add action for ${action.targetField}`);
+          break;
+        }
+        modifiedFields[action.targetField] = numCurrent + numAction;
         break;
+      }
+
       case 'subtract':
-      case 'decrement':
-        modifiedFields[action.targetField] = Number(currentValue) - Number(action.value);
+      case 'decrement': {
+        const numCurrent = Number(currentValue);
+        const numAction = Number(action.value);
+        if (isNaN(numCurrent) || isNaN(numAction)) {
+          this.logger.warn(`Non-numeric value in subtract action for ${action.targetField}`);
+          break;
+        }
+        modifiedFields[action.targetField] = numCurrent - numAction;
         break;
+      }
+
       case 'multiply':
       case 'multiply_field':
-      case 'apply_factor':
-        modifiedFields[action.targetField] = Number(currentValue) * Number(action.value);
+      case 'apply_factor': {
+        const numCurrent = Number(currentValue);
+        const numAction = Number(action.value);
+        if (isNaN(numCurrent) || isNaN(numAction)) {
+          this.logger.warn(`Non-numeric value in multiply action for ${action.targetField}`);
+          break;
+        }
+        modifiedFields[action.targetField] = numCurrent * numAction;
         break;
-      case 'divide':
-        modifiedFields[action.targetField] = Number(currentValue) / Number(action.value);
+      }
+
+      case 'divide': {
+        const numCurrent = Number(currentValue);
+        const divisor = Number(action.value);
+        if (isNaN(numCurrent) || isNaN(divisor)) {
+          this.logger.warn(`Non-numeric value in divide action for ${action.targetField}`);
+          break;
+        }
+        if (divisor === 0) {
+          this.logger.warn(`Division by zero in divide action for ${action.targetField}`);
+          break;
+        }
+        modifiedFields[action.targetField] = numCurrent / divisor;
         break;
-      case 'surcharge':
+      }
+
+      case 'surcharge': {
         // Surcharge: multiply by (1 + value), e.g. value=0.20 means 20% surcharge
-        modifiedFields[action.targetField] = Number(currentValue) * (1 + Number(action.value));
+        const numCurrent = Number(currentValue);
+        const numAction = Number(action.value);
+        if (isNaN(numCurrent) || isNaN(numAction)) {
+          this.logger.warn(`Non-numeric value in surcharge action for ${action.targetField}`);
+          break;
+        }
+        modifiedFields[action.targetField] = numCurrent * (1 + numAction);
         break;
-      case 'discount':
+      }
+
+      case 'discount': {
         // Discount: multiply by (1 - value), e.g. value=0.15 means 15% discount
-        modifiedFields[action.targetField] = Number(currentValue) * (1 - Number(action.value));
+        const numCurrent = Number(currentValue);
+        const numAction = Number(action.value);
+        if (isNaN(numCurrent) || isNaN(numAction)) {
+          this.logger.warn(`Non-numeric value in discount action for ${action.targetField}`);
+          break;
+        }
+        modifiedFields[action.targetField] = numCurrent * (1 - numAction);
         break;
+      }
+
       case 'set_premium':
         modifiedFields['premium'] = action.value;
         break;
+
       case 'reject':
         modifiedFields['_rejected'] = true;
         modifiedFields['_rejectReason'] = action.value;
         break;
+
+      case 'flag': {
+        // Add a flag marker — downstream steps can check context.working._flags
+        const flags = (modifiedFields['_flags'] as string[]) || [];
+        flags.push(String(action.value));
+        modifiedFields['_flags'] = flags;
+        break;
+      }
+
+      case 'skip_step': {
+        // Mark a step to be skipped — execution engine checks _skipSteps
+        const skippedSteps = (modifiedFields['_skipSteps'] as string[]) || [];
+        skippedSteps.push(String(action.value));
+        modifiedFields['_skipSteps'] = skippedSteps;
+        break;
+      }
+
+      case 'copy_field': {
+        // Copy value from source field path to targetField
+        const sourceField = String(action.value);
+        const sourceValue = this.getNestedValue(context, sourceField);
+        if (sourceValue !== undefined) {
+          modifiedFields[action.targetField] = sourceValue;
+        }
+        break;
+      }
+
+      case 'append': {
+        // Append value to an array field
+        const existing = modifiedFields[action.targetField] ?? this.getNestedValue(context, action.targetField);
+        const arr = Array.isArray(existing) ? [...existing] : (existing != null ? [existing] : []);
+        arr.push(action.value);
+        modifiedFields[action.targetField] = arr;
+        break;
+      }
+
       default:
         this.logger.warn(`Unknown action type: ${action.actionType}`);
     }
+  }
+
+  // ── Dry-Run ─────────────────────────────────────────────────────────────────
+
+  async dryRun(request: EvaluateRequest): Promise<DryRunResponse> {
+    const start = Date.now();
+
+    const rules = await this.ruleRepo.find({
+      where: { productLineCode: request.productLineCode, isActive: true },
+      order: { priority: 'DESC', createdAt: 'ASC' },
+    });
+
+    const ruleIds = rules.map((r) => r.id);
+    const scopeTags = ruleIds.length
+      ? await this.scopeTagRepo.find({ where: { entityType: 'rule', entityId: In(ruleIds) } })
+      : [];
+    const scopeTagsByRule = new Map<string, ScopeTagEntity[]>();
+    for (const tag of scopeTags) {
+      if (!scopeTagsByRule.has(tag.entityId)) scopeTagsByRule.set(tag.entityId, []);
+      scopeTagsByRule.get(tag.entityId)!.push(tag);
+    }
+
+    const scopeMatchingRules = rules.filter((rule) => {
+      const tags = scopeTagsByRule.get(rule.id) ?? [];
+      if (tags.length === 0) return true;
+      const tagsByType = new Map<string, string[]>();
+      for (const tag of tags) {
+        if (!tagsByType.has(tag.scopeType)) tagsByType.set(tag.scopeType, []);
+        tagsByType.get(tag.scopeType)!.push(tag.scopeValue);
+      }
+      for (const [scopeType, values] of tagsByType) {
+        const key = scopeType === 'transaction_type' ? 'transactionType' : scopeType;
+        const requestValue = request.scope?.[key as keyof typeof request.scope];
+        if (!requestValue || !values.includes(requestValue)) return false;
+      }
+      return true;
+    });
+
+    const skippedRules: DryRunResponse['skippedRules'] = rules
+      .filter((r) => !scopeMatchingRules.find((sr) => sr.id === r.id))
+      .map((r) => ({ ruleId: r.id, ruleName: r.name, reason: 'Scope mismatch' }));
+
+    const modifiedFields: Record<string, any> = {};
+    const appliedRules: DryRunResponse['appliedRules'] = [];
+    const beforeState = JSON.parse(JSON.stringify(request.context));
+
+    for (const rule of scopeMatchingRules) {
+      try {
+        const conditions = await this.conditionRepo.find({ where: { ruleId: rule.id } });
+        const conditionsDetail = conditions.map((c) => {
+          const actual = this.getNestedValue(request.context, c.field);
+          const result = this.evaluateCondition(c, request.context);
+          return { field: c.field, operator: c.operator, value: c.value, actual, result };
+        });
+
+        const matched = this.evaluateRuleConditions(conditions, request.context);
+        if (!matched) {
+          skippedRules.push({ ruleId: rule.id, ruleName: rule.name, reason: 'Conditions not met' });
+          continue;
+        }
+
+        const actions = await this.actionRepo.find({ where: { ruleId: rule.id }, order: { sortOrder: 'ASC' } });
+        const actionsApplied: DryRunResponse['appliedRules'][0]['actionsApplied'] = [];
+
+        for (const action of actions) {
+          const before = modifiedFields[action.targetField]
+            ?? this.getNestedValue(request.context, action.targetField);
+          this.applyAction(action, modifiedFields, request.context);
+          const after = modifiedFields[action.targetField];
+          actionsApplied.push({ actionType: action.actionType, targetField: action.targetField, value: action.value, before, after });
+        }
+
+        appliedRules.push({ ruleId: rule.id, ruleName: rule.name, conditionsMet: true, conditionsDetail, actionsApplied });
+      } catch (error: any) {
+        this.logger.error(`Error in dry-run for rule '${rule.name}': ${error.message}`);
+      }
+    }
+
+    return {
+      rulesEvaluated: scopeMatchingRules.length,
+      rulesApplied: appliedRules.length,
+      appliedRules,
+      skippedRules,
+      beforeState,
+      afterState: { ...request.context, ...modifiedFields },
+      modifiedFields,
+      durationMs: Date.now() - start,
+    };
+  }
+
+  async testRule(ruleId: string, context: Record<string, any>, scope?: EvaluateRequest['scope']): Promise<DryRunResponse> {
+    const rule = await this.findOne(ruleId);
+    const start = Date.now();
+    const modifiedFields: Record<string, any> = {};
+    const beforeState = JSON.parse(JSON.stringify(context));
+
+    const conditionsDetail = rule.conditions.map((c: any) => {
+      const actual = this.getNestedValue(context, c.field);
+      const result = this.evaluateCondition(c, context);
+      return { field: c.field, operator: c.operator, value: c.value, actual, result };
+    });
+    const matched = this.evaluateRuleConditions(rule.conditions, context);
+    const appliedRules: DryRunResponse['appliedRules'] = [];
+
+    if (matched) {
+      const actionsApplied: DryRunResponse['appliedRules'][0]['actionsApplied'] = [];
+      for (const action of rule.actions) {
+        const before = this.getNestedValue(context, action.targetField);
+        this.applyAction(action, modifiedFields, context);
+        const after = modifiedFields[action.targetField];
+        actionsApplied.push({ actionType: action.actionType, targetField: action.targetField, value: action.value, before, after });
+      }
+      appliedRules.push({ ruleId: rule.id, ruleName: rule.name, conditionsMet: true, conditionsDetail, actionsApplied });
+    }
+
+    return {
+      rulesEvaluated: 1,
+      rulesApplied: matched ? 1 : 0,
+      appliedRules,
+      skippedRules: matched ? [] : [{ ruleId: rule.id, ruleName: rule.name, reason: 'Conditions not met' }],
+      beforeState,
+      afterState: { ...context, ...modifiedFields },
+      modifiedFields,
+      durationMs: Date.now() - start,
+    };
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -395,4 +624,21 @@ export class RulesService {
     return path.split('.').reduce((o, k) => o?.[k], obj);
   }
 
+}
+
+export interface DryRunResponse {
+  rulesEvaluated: number;
+  rulesApplied: number;
+  appliedRules: Array<{
+    ruleId: string;
+    ruleName: string;
+    conditionsMet: boolean;
+    conditionsDetail: Array<{ field: string; operator: string; value: unknown; actual: unknown; result: boolean }>;
+    actionsApplied: Array<{ actionType: string; targetField: string; value: unknown; before: unknown; after: unknown }>;
+  }>;
+  skippedRules: Array<{ ruleId: string; ruleName: string; reason: string }>;
+  beforeState: Record<string, any>;
+  afterState: Record<string, any>;
+  modifiedFields: Record<string, any>;
+  durationMs: number;
 }

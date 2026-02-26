@@ -227,6 +227,23 @@ export class ExecutionService {
       const resilience = (step.config as any)?.resilience as StepResilienceConfig | undefined;
       const onFailure = resilience?.onFailure ?? 'stop';
 
+      // ── 0. skip_step check (set by rules engine via _skipSteps) ──────────
+      const skipSteps = (context.working as any)?._skipSteps as string[] | undefined;
+      if (skipSteps?.includes(step.name) || skipSteps?.includes(step.stepType)) {
+        this.logger.log(
+          `Skipping step ${step.stepOrder}: ${step.name} — skipped by rule action`,
+          request.correlationId,
+        );
+        stepResults.push({
+          stepId: step.id,
+          stepType: step.stepType,
+          stepName: step.name,
+          status: 'skipped',
+          durationMs: 0,
+        });
+        continue;
+      }
+
       // ── 1. Condition check ────────────────────────────────────────────────
       const conditionExpression = (step.config as any)?.conditionExpression as string | undefined;
       const condition = (step.config as any)?.condition as StepCondition | undefined;

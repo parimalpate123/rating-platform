@@ -22,9 +22,15 @@ export type RuleActionType =
   | 'multiply'
   | 'add'
   | 'subtract'
+  | 'divide'
+  | 'surcharge'
+  | 'discount'
+  | 'set_premium'
   | 'reject'
   | 'flag'
-  | 'skip_step';
+  | 'skip_step'
+  | 'copy_field'
+  | 'append';
 
 export interface RuleCondition {
   id: string;

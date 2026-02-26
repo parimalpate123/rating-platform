@@ -13,7 +13,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { RulesService } from './rules.service';
-import type { EvaluateRequest, EvaluateResponse } from './rules.service';
+import type { EvaluateRequest, EvaluateResponse, DryRunResponse } from './rules.service';
 import { AiPromptsService } from '../ai-prompts/ai-prompts.service';
 
 @Controller('rules')
@@ -58,9 +58,22 @@ export class RulesController {
     return this.rulesService.activate(id);
   }
 
+  @Post(':id/test')
+  testRule(
+    @Param('id') id: string,
+    @Body() body: { context: Record<string, any>; scope?: EvaluateRequest['scope'] },
+  ): Promise<DryRunResponse> {
+    return this.rulesService.testRule(id, body.context, body.scope);
+  }
+
   @Post('evaluate')
   evaluate(@Body() body: EvaluateRequest): Promise<EvaluateResponse> {
     return this.rulesService.evaluate(body);
+  }
+
+  @Post('dry-run')
+  dryRun(@Body() body: EvaluateRequest): Promise<DryRunResponse> {
+    return this.rulesService.dryRun(body);
   }
 
   // ── Scope Tags ────────────────────────────────────────────────────────────

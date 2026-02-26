@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
+import { executeTransform } from './transforms/transform-executor';
 
 @Injectable()
 export class FieldMappingHandler {
@@ -64,19 +65,64 @@ export class FieldMappingHandler {
 
       const target = { ...context.working };
       let applied = 0;
-      const fieldDetails: Array<{ source: string; target: string; value: unknown }> = [];
+      const fieldDetails: Array<{ source: string; target: string; value: unknown; transformationType?: string }> = [];
+      const transformErrors: Array<{ field: string; type: string; error: string }> = [];
+      const requiredFieldErrors: Array<{ field: string; error: string }> = [];
 
       for (const field of fields) {
-        const value = getNestedValue(source, field.sourcePath);
-        if (value !== undefined) {
-          setNestedValue(target, field.targetPath, value);
-          applied++;
-          fieldDetails.push({ source: field.sourcePath, target: field.targetPath, value });
-        } else if (field.defaultValue !== undefined) {
-          setNestedValue(target, field.targetPath, field.defaultValue);
-          applied++;
-          fieldDetails.push({ source: field.sourcePath, target: field.targetPath, value: field.defaultValue });
+        // 1. Skip logic
+        if (field.transformConfig?.skipMapping) {
+          if (field.transformConfig.skipBehavior === 'use_default' && field.defaultValue != null) {
+            setNestedValue(target, field.targetPath, field.defaultValue);
+            applied++;
+            fieldDetails.push({ source: field.sourcePath, target: field.targetPath, value: field.defaultValue });
+          }
+          continue;
         }
+
+        // 2. Extract source value
+        let value = getNestedValue(source, field.sourcePath);
+
+        // 3. Handle missing value
+        if (value === undefined || value === null) {
+          if (field.isRequired) {
+            requiredFieldErrors.push({ field: field.sourcePath, error: 'Required field missing' });
+            continue;
+          }
+          if (field.defaultValue != null) {
+            value = field.defaultValue;
+          } else {
+            continue; // No value, no default → skip
+          }
+        }
+
+        // 4. Apply transformation
+        const result = executeTransform({
+          value,
+          transformationType: field.transformationType || 'direct',
+          transformConfig: field.transformConfig || {},
+          defaultValue: field.defaultValue,
+          sourcePath: field.sourcePath,
+          targetPath: field.targetPath,
+          fullContext: context.working,
+        });
+
+        if (result.error) {
+          this.logger.warn(
+            `Transform error on field ${field.sourcePath} → ${field.targetPath} (${field.transformationType}): ${result.error}`
+          );
+          transformErrors.push({ field: field.sourcePath, type: field.transformationType || 'direct', error: result.error });
+        }
+
+        // 5. Set transformed value
+        setNestedValue(target, field.targetPath, result.value);
+        applied++;
+        fieldDetails.push({
+          source: field.sourcePath,
+          target: field.targetPath,
+          value: result.value,
+          transformationType: field.transformationType,
+        });
       }
 
       context.working = target;
@@ -85,7 +131,13 @@ export class FieldMappingHandler {
         status: 'completed',
         output: {
           serviceRequest: { direction, mappingId: mapping.id, mappingName: mapping.name, source },
-          serviceResponse: { fieldsApplied: applied, totalFields: fields.length, fieldDetails },
+          serviceResponse: {
+            fieldsApplied: applied,
+            totalFields: fields.length,
+            fieldDetails,
+            ...(transformErrors.length > 0 && { transformErrors }),
+            ...(requiredFieldErrors.length > 0 && { requiredFieldErrors }),
+          },
           httpStatus: 200,
         },
         durationMs: Date.now() - start,

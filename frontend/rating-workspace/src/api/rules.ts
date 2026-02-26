@@ -6,12 +6,14 @@ export type RuleOperator =
   | '==' | '!=' | '>' | '>=' | '<' | '<='
   | 'contains' | 'not_contains' | 'starts_with' | 'ends_with'
   | 'in' | 'not_in' | 'is_null' | 'is_not_null'
-  | 'is_empty' | 'is_not_empty';
+  | 'is_empty' | 'is_not_empty'
+  | 'between' | 'regex';
 
 export type ActionType =
   | 'set' | 'set_value' | 'add' | 'increment'
   | 'subtract' | 'decrement' | 'multiply' | 'divide'
-  | 'surcharge' | 'discount' | 'reject';
+  | 'surcharge' | 'discount' | 'reject'
+  | 'flag' | 'skip_step' | 'copy_field' | 'append';
 
 export interface RuleCondition {
   id?: string;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import {
   Loader2, ChevronRight, ChevronDown, Plus, Pencil, Trash2, X, Check, Map,
-  Sparkles, Upload, FileText, Link, ArrowRight, Info, Filter, Maximize2, Minimize2,
+  Sparkles, Upload, FileText, Link, ArrowRight, Info, Filter, Maximize2, Minimize2, Zap,
 } from 'lucide-react'
 import {
   mappingsApi,
@@ -1272,6 +1272,7 @@ function MappingAccordion({
   const [editName, setEditName] = useState(mapping.name)
   const [editDirection, setEditDirection] = useState<'request' | 'response'>(mapping.direction as 'request' | 'response')
   const [editSaving, setEditSaving] = useState(false)
+  const [activating, setActivating] = useState(false)
 
   const loadFields = async () => {
     setLoading(true)
@@ -1323,6 +1324,17 @@ function MappingAccordion({
     setEditMode(false)
     setEditName(mapping.name)
     setEditDirection(mapping.direction as 'request' | 'response')
+  }
+
+  const handleActivate = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setActivating(true)
+    try {
+      await mappingsApi.activate(mapping.id)
+      onUpdated?.()
+    } finally {
+      setActivating(false)
+    }
   }
 
   const dirColor = mapping.direction === 'request' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
@@ -1398,6 +1410,13 @@ function MappingAccordion({
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 flex-1 truncate min-w-0" title={displayName}>{displayName}</span>
               {/* Direction */}
               <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium flex-shrink-0', dirColor)}>{mapping.direction}</span>
+              {/* Status */}
+              <span className={cn(
+                'px-2 py-0.5 rounded text-[10px] font-medium flex-shrink-0',
+                mapping.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700',
+              )}>
+                {mapping.status ?? 'draft'}
+              </span>
               {/* Field count */}
               <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 w-16 text-right">
                 {loaded ? `${fields.length} field${fields.length !== 1 ? 's' : ''}` : ''}
@@ -1419,6 +1438,17 @@ function MappingAccordion({
           {/* Action buttons — hidden during edit mode (edit has its own save/cancel) */}
           {!editMode && (
             <>
+              {mapping.status !== 'active' && (
+                <button
+                  onClick={handleActivate}
+                  disabled={activating}
+                  title="Activate mapping"
+                  className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 dark:text-amber-300 dark:bg-amber-900/20 dark:border-amber-700 dark:hover:bg-amber-900/40 rounded-full transition-colors flex-shrink-0"
+                >
+                  {activating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                  <span className="hidden sm:inline">{activating ? '' : 'Activate'}</span>
+                </button>
+              )}
               <button
                 onClick={handleSuggest}
                 disabled={suggesting}
