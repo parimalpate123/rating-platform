@@ -824,6 +824,7 @@ const [sampleRequestJson, setSampleRequestJson] = useState('{}')
               showValidateButton
             />
             <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Function body only. No require/process. Timeout applies.</p>
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">AI-generated code — please review and update if necessary before saving.</p>
           </div>
           <div className="max-w-[200px]">
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Timeout (ms)</label>

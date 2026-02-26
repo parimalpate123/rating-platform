@@ -219,6 +219,7 @@ const [sampleRequestJson, setSampleRequestJson] = useState('{}');
             minHeight={180}
             showValidateButton
           />
+          <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">AI-generated code — please review and update if necessary before saving.</p>
         </div>
         <div className="max-w-[200px]">
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Timeout (ms)</label>

@@ -20,17 +20,22 @@ Rules:
 - Output ONLY the JavaScript function body. No markdown, no code fences, no explanation, no \`\`\`.
 - Mutate only working and/or response in place. No return statement for the whole script.
 - No require(), process, global, or I/O. Only request, working, response, scope are available.
-- Use optional chaining: request?.Policy?.EffectiveDate, working?.policy?.effectiveDate.`;
+- Use optional chaining: request?.Policy?.EffectiveDate, working?.policy?.effectiveDate.
+- No space between dot and property name: write request.Policy.PolicyNumber not request.Policy. PolicyNumber.`;
 
 const EXAMPLES = `
-Example 1 — normalize Guidewire Policy effective date and copy policy number into working:
+Example 1 — normalize Guidewire Policy effective date and copy policy number (use if when value may be absent):
 working.policy = working.policy || {};
-working.policy.effectiveDate = request?.Policy?.EffectiveDate ? new Date(request.Policy.EffectiveDate).toISOString().slice(0, 10) : undefined;
-working.policy.policyNumber = request?.Policy?.PolicyNumber;
+if (request?.Policy?.EffectiveDate) {
+  working.policy.effectiveDate = new Date(request.Policy.EffectiveDate).toISOString().slice(0, 10);
+}
+if (request?.Policy?.PolicyNumber) {
+  working.policyNumber = request.Policy.PolicyNumber;
+}
 
 Example 2 — copy first location building number from GW request into working for downstream:
 const loc = request?.Locations?.[0] || request?.Policy?.Locations?.[0];
-working.locationId = loc?.BuildingNumber ?? loc?.LocationNumber;
+if (loc) working.locationId = loc?.BuildingNumber ?? loc?.LocationNumber;
 `;
 
 @Controller('script')
@@ -92,6 +97,7 @@ export class ScriptController {
       const payload = {
         anthropic_version: 'bedrock-2023-05-31',
         max_tokens: 1024,
+        temperature: 0,
         system: SCRIPT_CONTRACT + EXAMPLES,
         messages: [{ role: 'user', content: userContent }],
       };
@@ -121,6 +127,9 @@ export class ScriptController {
         .replace(/^```(?:js|javascript)?\s*\n?/i, '')
         .replace(/\n?```\s*$/i, '')
         .trim();
+
+      // Fix common LLM typo: "request.Policy. PolicyNumber" -> "request.Policy.PolicyNumber" (no space after dot)
+      scriptSource = scriptSource.replace(/\.\s+(\w)/g, '.$1');
 
       if (scriptSource.length > 50000) {
         scriptSource = scriptSource.slice(0, 50000);
