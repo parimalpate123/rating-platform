@@ -1,5 +1,6 @@
 import { Controller, Post, Body, Param, HttpCode } from '@nestjs/common';
-import { RatingService, RateRequest } from './rating.service';
+import { RatingService } from './rating.service';
+import { normalizeBody } from './normalize-body';
 
 @Controller('rate')
 export class RatingController {
@@ -9,9 +10,9 @@ export class RatingController {
   @HttpCode(200)
   async rate(
     @Param('productLineCode') productLineCode: string,
-    @Body() body: Omit<RateRequest, 'productLineCode'>,
+    @Body() body: Record<string, unknown>,
   ) {
-    return this.ratingService.rate({ productLineCode, ...body });
+    return this.ratingService.rate({ productLineCode, ...normalizeBody(body) });
   }
 
   @Post(':productLineCode/:endpointPath')
@@ -19,8 +20,8 @@ export class RatingController {
   async rateWithEndpoint(
     @Param('productLineCode') productLineCode: string,
     @Param('endpointPath') endpointPath: string,
-    @Body() body: Omit<RateRequest, 'productLineCode' | 'endpointPath'>,
+    @Body() body: Record<string, unknown>,
   ) {
-    return this.ratingService.rate({ productLineCode, endpointPath, ...body });
+    return this.ratingService.rate({ productLineCode, endpointPath, ...normalizeBody(body) });
   }
 }
