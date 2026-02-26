@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Loader2, Server, CheckCircle, AlertCircle, RefreshCw, Plus, Pencil, Trash2, Sparkles } from 'lucide-react'
 import { systemsApi, type System, type AuthMethod } from '../api/systems'
-import { checkAllPlatformHealth, PLATFORM_SERVICES, type PlatformHealthResult } from '../api/platform-services'
+import { checkAllPlatformHealth, type PlatformHealthResult } from '../api/platform-services'
 import { cn } from '../lib/utils'
 
 const isProd = import.meta.env.MODE === 'production'
@@ -39,6 +39,15 @@ function FormatBadge({ format }: { format: System['format'] }) {
 }
 
 type HealthState = 'idle' | 'checking' | 'healthy' | 'unhealthy' | 'error'
+
+interface LineHealthItem {
+  code: string;
+  name: string;
+  status: 'checking' | 'healthy' | 'no-flow' | 'error';
+  stepCount?: number;
+  durationMs?: number;
+  error?: string;
+}
 
 function HealthCheckCell({ systemId, checkAllTrigger, onResult }: { systemId: string; checkAllTrigger?: number; onResult?: (err?: string, durationMs?: number) => void }) {
   const [state, setState] = useState<HealthState>('idle')
@@ -215,6 +224,9 @@ export function Systems() {
   const [platformHealth, setPlatformHealth] = useState<PlatformHealthResult[] | null>(null)
   const [platformChecking, setPlatformChecking] = useState(false)
   const [platformCheckTrigger, setPlatformCheckTrigger] = useState(0)
+  const [lineHealth, setLineHealth] = useState<LineHealthItem[] | null>(null)
+  const [lineHealthChecking, setLineHealthChecking] = useState(false)
+  const [lineHealthTrigger, setLineHealthTrigger] = useState(0)
 
   const runPlatformHealthCheck = useCallback(async () => {
     setPlatformChecking(true)
@@ -229,6 +241,53 @@ export function Systems() {
   useEffect(() => {
     runPlatformHealthCheck()
   }, [platformCheckTrigger, runPlatformHealthCheck])
+
+  const runLineHealthCheck = useCallback(async () => {
+    setLineHealthChecking(true)
+    try {
+      const plUrl = isProd ? '/api/v1/product-lines' : '/api/product-config/product-lines'
+      const plRes = await fetch(plUrl)
+      const productLines: Array<{ code: string; name: string; isActive?: boolean }> = plRes.ok ? await plRes.json() : []
+      // Show all product lines — don't filter by isActive to avoid missing ones with null/undefined
+      const active = Array.isArray(productLines) ? productLines : []
+
+      // Initialise all as checking
+      setLineHealth(active.map((pl) => ({ code: pl.code, name: pl.name, status: 'checking' })))
+
+      const results = await Promise.all(
+        active.map(async (pl): Promise<LineHealthItem> => {
+          const url = isProd
+            ? `/api/v1/orchestrators/${pl.code}/flow/rate`
+            : `/api/line-rating/orchestrators/${pl.code}/flow/rate`
+          const start = performance.now()
+          try {
+            const res = await fetch(url)
+            const durationMs = Math.round(performance.now() - start)
+            if (res.ok) {
+              const data = await res.json()
+              return { code: pl.code, name: pl.name, status: 'healthy', stepCount: data.steps?.length ?? 0, durationMs }
+            }
+            if (res.status === 404) {
+              return { code: pl.code, name: pl.name, status: 'no-flow', durationMs, error: 'No flow configured' }
+            }
+            return { code: pl.code, name: pl.name, status: 'error', durationMs, error: `HTTP ${res.status}` }
+          } catch (e) {
+            const durationMs = Math.round(performance.now() - start)
+            return { code: pl.code, name: pl.name, status: 'error', durationMs, error: e instanceof Error ? e.message : 'Request failed' }
+          }
+        }),
+      )
+      setLineHealth(results)
+    } catch (e) {
+      setLineHealth([])
+    } finally {
+      setLineHealthChecking(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    runLineHealthCheck()
+  }, [lineHealthTrigger, runLineHealthCheck])
 
   const load = () => {
     systemsApi.list().then(setSystems).catch((err: unknown) => {
@@ -294,84 +353,147 @@ export function Systems() {
 
   return (
     <div className="px-4 py-4 max-w-7xl mx-auto">
-      {/* InsuRateConnect Platform Services health */}
-      <section className="mb-8">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">InsuRateConnect Platform Services</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              Health status of backend and orchestrator services. No add/remove — read-only.
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400 shrink-0" />
-              <span>AI icon = AI-enabled service (e.g. Rating rules, Mapper suggestions).</span>
-            </p>
+      {/* InsuRateConnect Product API Health — compact pill row */}
+      <section className="mb-5 pb-5 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">InsuRateConnect API Health</h2>
+            <span className="text-gray-300 dark:text-gray-600 text-xs">•</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-violet-400 shrink-0" /> = AI-enabled
+            </span>
           </div>
           <button
             onClick={() => setPlatformCheckTrigger((t) => t + 1)}
             disabled={platformChecking}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
           >
-            {platformChecking ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            {platformChecking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
             Check all
           </button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {(platformHealth ?? PLATFORM_SERVICES.map((s) => ({ id: s.id, name: s.name, usesAI: s.usesAI, status: 'checking' as const }))).map((r) => (
-            <div
-              key={r.id}
-              className={cn(
-                'rounded-lg border p-4 flex items-start justify-between gap-3',
-                r.status === 'healthy' && 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800',
-                r.status === 'unhealthy' && 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800',
-                (r.status === 'error' || r.status === 'checking') && 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700',
-              )}
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{r.name}</span>
-                  {r.usesAI && (
-                    <span className="shrink-0 text-violet-600 dark:text-violet-400" title="Uses AI">
-                      <Sparkles className="w-4 h-4" />
-                    </span>
-                  )}
-                </div>
-                <div className="mt-1 flex items-center gap-1.5 text-xs">
-                  {r.status === 'checking' && (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />
-                      <span className="text-gray-500">Checking...</span>
-                    </>
-                  )}
-                  {r.status === 'healthy' && (
-                    <>
-                      <CheckCircle className="w-3.5 h-3.5 text-green-600 dark:text-green-400 shrink-0" />
-                      <span className="text-green-700 dark:text-green-300">
-                        Healthy{r.durationMs != null ? ` (${r.durationMs}ms)` : ''}{r.detail ? ` — ${r.detail}` : ''}
-                      </span>
-                    </>
-                  )}
-                  {r.status === 'unhealthy' && (
-                    <>
-                      <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                      <span className="text-amber-700 dark:text-amber-300 truncate" title={r.error}>
-                        Unhealthy{r.error ? ` — ${r.error}` : ''}
-                      </span>
-                    </>
-                  )}
-                  {r.status === 'error' && (
-                    <>
-                      <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
-                      <span className="text-red-700 dark:text-red-300 truncate" title={r.error}>
-                        Error{r.error ? ` — ${r.error}` : ''}
-                      </span>
-                    </>
-                  )}
-                </div>
+        {platformChecking && platformHealth === null && (
+          <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 py-1">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Checking services...
+          </div>
+        )}
+        {platformHealth !== null && (
+          <div className="flex flex-wrap gap-2">
+            {platformHealth.map((r) => (
+              <div
+                key={r.id}
+                title={r.error ?? r.detail}
+                className={cn(
+                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium',
+                  r.status === 'healthy'   && 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300',
+                  r.status === 'unhealthy' && 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300',
+                  r.status === 'error'     && 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700 text-red-700 dark:text-red-300',
+                  r.status === 'checking'  && 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400',
+                )}
+              >
+                {r.status === 'checking'  && <Loader2 className="w-3 h-3 animate-spin shrink-0" />}
+                {r.status === 'healthy'   && <CheckCircle className="w-3 h-3 shrink-0" />}
+                {(r.status === 'unhealthy' || r.status === 'error') && <AlertCircle className="w-3 h-3 shrink-0" />}
+                <span>{r.name}</span>
+                {r.usesAI && <Sparkles className="w-3 h-3 text-violet-400 dark:text-violet-300 shrink-0" />}
+                {r.durationMs != null && r.status === 'healthy' && (
+                  <span className="font-normal opacity-70">{r.durationMs}ms</span>
+                )}
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Line Health */}
+      <section className="mb-8">
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">InsuRateConnect Line Health</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              Verifies each active product line has a configured <span className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">rate</span> orchestrator flow.
+            </p>
+          </div>
+          <button
+            onClick={() => setLineHealthTrigger((t) => t + 1)}
+            disabled={lineHealthChecking}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors flex-shrink-0"
+          >
+            {lineHealthChecking ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            Check all
+          </button>
         </div>
+
+        {lineHealth === null && !lineHealthChecking && (
+          <div className="text-xs text-gray-400 dark:text-gray-500 py-2">
+            Click &quot;Check all&quot; to verify product line orchestrator health.
+          </div>
+        )}
+
+        {lineHealthChecking && lineHealth === null && (
+          <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 py-4">
+            <Loader2 className="w-4 h-4 animate-spin" /> Checking product lines...
+          </div>
+        )}
+
+        {lineHealth !== null && lineHealth.length === 0 && (
+          <div className="text-xs text-gray-400 dark:text-gray-500 py-2">No active product lines found.</div>
+        )}
+
+        {lineHealth !== null && lineHealth.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase">Product Line</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase">Code</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase">Flow</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase">Steps</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase">Latency</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                {lineHealth.map((item) => (
+                  <tr key={item.code} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                    <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-gray-100">{item.name}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">{item.code}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-gray-400 dark:text-gray-500">rate</td>
+                    <td className="px-4 py-2.5 text-xs text-gray-600 dark:text-gray-300">
+                      {item.stepCount != null ? `${item.stepCount} steps` : '—'}
+                    </td>
+                    <td className="px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
+                      {item.durationMs != null ? `${item.durationMs}ms` : '—'}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      {item.status === 'checking' && (
+                        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Checking...
+                        </div>
+                      )}
+                      {item.status === 'healthy' && (
+                        <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+                          <CheckCircle className="w-3.5 h-3.5 shrink-0" /> Active
+                        </div>
+                      )}
+                      {item.status === 'no-flow' && (
+                        <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" /> No flow configured
+                        </div>
+                      )}
+                      {item.status === 'error' && (
+                        <div className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400" title={item.error}>
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate max-w-[160px]">{item.error ?? 'Error'}</span>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <div className="mb-6 flex items-center justify-between gap-4 flex-nowrap">
@@ -519,14 +641,36 @@ export function Systems() {
                   </select>
                 </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Base URL (dev/local)</label>
-                <input value={form.baseUrl} onChange={(e) => setForm({ ...form, baseUrl: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" placeholder="http://localhost:3020" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Base URL (production)</label>
-                <input value={form.baseUrlProd} onChange={(e) => setForm({ ...form, baseUrlProd: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" placeholder="https://api.example.com" />
-              </div>
+              {/* Show production URL first when running in prod so the active field is obvious */}
+              {isProd ? (
+                <>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">Base URL (production)</label>
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700">Active</span>
+                    </div>
+                    <input value={form.baseUrlProd} onChange={(e) => setForm({ ...form, baseUrlProd: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" placeholder="https://api.example.com" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Base URL (dev/local)</label>
+                    <input value={form.baseUrl} onChange={(e) => setForm({ ...form, baseUrl: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" placeholder="http://localhost:3020" />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">Base URL (dev/local)</label>
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700">Active</span>
+                    </div>
+                    <input value={form.baseUrl} onChange={(e) => setForm({ ...form, baseUrl: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" placeholder="http://localhost:3020" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Base URL (production)</label>
+                    <input value={form.baseUrlProd} onChange={(e) => setForm({ ...form, baseUrlProd: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" placeholder="https://api.example.com" />
+                  </div>
+                </>
+              )}
               <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Authentication</label>
                 <select value={form.authMethod} onChange={(e) => setForm({ ...form, authMethod: e.target.value as AuthMethod })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">

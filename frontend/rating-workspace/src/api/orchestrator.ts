@@ -71,6 +71,19 @@ export const ratingApi = {
       : `/rate/${productLineCode}`;
     return coreRating.post<RateResponse>(path, { payload, scope }).then(r => r.data);
   },
+
+  // Public product-first API: POST /{productCode}/rate[/{flowName}]
+  ratePublic: (
+    productLineCode: string,
+    payload: Record<string, unknown>,
+    scope?: Record<string, string>,
+    flowName?: string,
+  ) => {
+    const path = flowName && flowName !== 'rate'
+      ? `/${productLineCode}/rate/${flowName}`
+      : `/${productLineCode}/rate`;
+    return coreRating.post<RateResponse>(path, { payload, scope }).then(r => r.data);
+  },
 };
 
 export const orchestratorApi = {

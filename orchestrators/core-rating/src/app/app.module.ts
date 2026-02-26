@@ -7,9 +7,10 @@ import { HandlersModule } from '../handlers/handlers.module';
 import { RatingModule } from '../rating/rating.module';
 import { MockSystemsModule } from '../mock/mock-systems.module';
 import { ScriptModule } from '../script/script.module';
+import { PlatformApiModule } from '../platform-api/platform-api.module';
 
 @Module({
-  imports: [RegistryModule, ExecutionModule, HandlersModule, RatingModule, MockSystemsModule, ScriptModule],
+  imports: [RegistryModule, ExecutionModule, HandlersModule, RatingModule, MockSystemsModule, ScriptModule, PlatformApiModule],
   controllers: [AppController],
   providers: [AppService],
 })

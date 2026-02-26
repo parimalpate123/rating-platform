@@ -131,6 +131,8 @@ jobs:
           PREVIOUS_TAG: ${{ steps.restore-tag.outputs.tag }}
         run: |
           DEPLOYABLE="core-rating line-rating product-config transform-service rules-service status-service rating-workspace adapter-kafka adapter-dnb adapter-gw"
+          # Always build rules-service so script-generation (Bedrock) prompt/behavior stays in sync with prod
+          ALWAYS_BUILD="rules-service"
           AFFECTED=""
           if git rev-parse --verify origin/main >/dev/null 2>&1; then
             RAW=$(npx nx print-affected -t build --base=origin/main --head=HEAD --select=projects 2>/dev/null || true)
@@ -146,6 +148,12 @@ jobs:
           if [ -z "$AFFECTED" ]; then
             AFFECTED=$DEPLOYABLE
           fi
+          # Merge always-build list so e.g. rules-service (script generation) is always current in prod
+          for p in $ALWAYS_BUILD; do
+            if ! echo "$AFFECTED" | grep -qE "\b$p\b"; then
+              AFFECTED="$AFFECTED $p"
+            fi
+          done
           # For Terraform: when no previous tag (first run / no S3), pass [] so TF uses single tag for all
           if [ -z "${PREVIOUS_TAG}" ]; then
             TF_AFFECTED="[]"

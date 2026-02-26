@@ -7,5 +7,6 @@ import { ExecutionModule } from '../execution/execution.module';
   imports: [ExecutionModule],
   providers: [RatingService],
   controllers: [RatingController],
+  exports: [RatingService],
 })
 export class RatingModule {}

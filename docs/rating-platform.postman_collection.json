@@ -1,0 +1,555 @@
+{
+  "info": {
+    "name": "InsuRateConnect — Rating Platform",
+    "_postman_id": "rating-platform-v1",
+    "description": "Full API collection for all InsuRateConnect microservices.\n\nPorts:\n- core-rating     : 4000\n- line-rating     : 4001\n- product-config  : 4010\n- transform-service: 4011\n- rules-service   : 4012\n- status-service  : 4013",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "core_rating_url",      "value": "http://localhost:4000/api/v1" },
+    { "key": "line_rating_url",      "value": "http://localhost:4001/api/v1" },
+    { "key": "product_config_url",   "value": "http://localhost:4010/api/v1" },
+    { "key": "transform_url",        "value": "http://localhost:4011/api/v1" },
+    { "key": "rules_url",            "value": "http://localhost:4012/api/v1" },
+    { "key": "status_url",           "value": "http://localhost:4013/api/v1" },
+    { "key": "product_code",         "value": "IMCE" },
+    { "key": "product_line_id",      "value": "" },
+    { "key": "mapping_id",           "value": "" },
+    { "key": "rule_id",              "value": "" },
+    { "key": "orchestrator_id",      "value": "" },
+    { "key": "transaction_id",       "value": "" }
+  ],
+  "item": [
+
+    {
+      "name": "Health Checks",
+      "item": [
+        {
+          "name": "core-rating health",
+          "request": { "method": "GET", "url": "{{core_rating_url}}/health" }
+        },
+        {
+          "name": "line-rating health",
+          "request": { "method": "GET", "url": "{{line_rating_url}}/health" }
+        },
+        {
+          "name": "product-config health",
+          "request": { "method": "GET", "url": "{{product_config_url}}/health" }
+        },
+        {
+          "name": "transform-service health",
+          "request": { "method": "GET", "url": "{{transform_url}}/health" }
+        },
+        {
+          "name": "rules-service health",
+          "request": { "method": "GET", "url": "{{rules_url}}/health" }
+        },
+        {
+          "name": "status-service health",
+          "request": { "method": "GET", "url": "{{status_url}}/health" }
+        }
+      ]
+    },
+
+    {
+      "name": "Rating API (Public — New)",
+      "description": "Product-first public API added in Phase 3. Use {{product_code}}/rate instead of rate/{{product_code}}.",
+      "item": [
+        {
+          "name": "Rate — default flow",
+          "request": {
+            "method": "POST",
+            "url": "{{core_rating_url}}/{{product_code}}/rate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payload\": {\n    \"quoteNumber\": \"Q-12345\",\n    \"insured\": {\n      \"name\": \"Acme Construction LLC\",\n      \"state\": \"NY\",\n      \"annualRevenue\": 5000000\n    },\n    \"coverage\": {\n      \"type\": \"BOP\",\n      \"limit\": 1000000,\n      \"deductible\": 5000\n    },\n    \"premium\": {\n      \"base\": 50000\n    },\n    \"policy\": {\n      \"effectiveDate\": \"2026-04-01\",\n      \"expirationDate\": \"2027-04-01\"\n    }\n  },\n  \"scope\": {\n    \"state\": \"NY\",\n    \"coverage\": \"BOP\",\n    \"transactionType\": \"new_business\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Rate — named flow (init-rate)",
+          "request": {
+            "method": "POST",
+            "url": "{{core_rating_url}}/{{product_code}}/rate/init-rate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payload\": {\n    \"quoteNumber\": \"Q-12345\",\n    \"insured\": { \"state\": \"NY\" },\n    \"premium\": { \"base\": 50000 }\n  },\n  \"scope\": {\n    \"state\": \"NY\",\n    \"transactionType\": \"new_business\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Rate — named flow (quote)",
+          "request": {
+            "method": "POST",
+            "url": "{{core_rating_url}}/{{product_code}}/rate/quote",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payload\": {\n    \"quoteNumber\": \"Q-12345\",\n    \"insured\": { \"state\": \"CA\" },\n    \"premium\": { \"base\": 75000 }\n  },\n  \"scope\": {\n    \"state\": \"CA\",\n    \"transactionType\": \"renewal\"\n  }\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Rating API (Internal — Existing)",
+      "description": "Original verb-first internal endpoints. Unchanged.",
+      "item": [
+        {
+          "name": "Rate — default flow",
+          "request": {
+            "method": "POST",
+            "url": "{{core_rating_url}}/rate/{{product_code}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payload\": {\n    \"quoteNumber\": \"Q-12345\",\n    \"insured\": { \"state\": \"NY\" },\n    \"premium\": { \"base\": 50000 }\n  },\n  \"scope\": {\n    \"state\": \"NY\",\n    \"coverage\": \"BOP\",\n    \"transactionType\": \"new_business\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Rate — named flow (init-rate)",
+          "request": {
+            "method": "POST",
+            "url": "{{core_rating_url}}/rate/{{product_code}}/init-rate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payload\": {\n    \"quoteNumber\": \"Q-12345\",\n    \"insured\": { \"state\": \"NY\" },\n    \"premium\": { \"base\": 50000 }\n  },\n  \"scope\": {\n    \"state\": \"NY\",\n    \"transactionType\": \"new_business\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Execute pipeline directly",
+          "request": {
+            "method": "POST",
+            "url": "{{core_rating_url}}/execute",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correlationId\": \"test-correlation-id\",\n  \"productLineCode\": \"IMCE\",\n  \"scope\": { \"state\": \"NY\" },\n  \"payload\": { \"quoteNumber\": \"Q-123\" },\n  \"steps\": []\n}"
+            }
+          }
+        },
+        {
+          "name": "List registered handlers",
+          "request": { "method": "GET", "url": "{{core_rating_url}}/registry/handlers" }
+        }
+      ]
+    },
+
+    {
+      "name": "Mock Rating Engines",
+      "description": "Mock external systems built into core-rating (port 4000).",
+      "item": [
+        {
+          "name": "Mock Earnix — rate",
+          "request": {
+            "method": "POST",
+            "url": "{{core_rating_url}}/mock/earnix/rate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quoteNumber\": \"Q-123\",\n  \"insured\": { \"state\": \"NY\" },\n  \"premium\": { \"base\": 50000 }\n}"
+            }
+          }
+        },
+        {
+          "name": "Mock CGI Ratabase — rate",
+          "request": {
+            "method": "POST",
+            "url": "{{core_rating_url}}/mock/ratabase/rate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quoteNumber\": \"Q-123\",\n  \"insured\": { \"state\": \"NY\" },\n  \"premium\": { \"base\": 50000 }\n}"
+            }
+          }
+        },
+        {
+          "name": "Mock Duck Creek — rate",
+          "request": {
+            "method": "POST",
+            "url": "{{core_rating_url}}/mock/duck-creek/rate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quoteNumber\": \"Q-123\",\n  \"insured\": { \"state\": \"NY\" },\n  \"premium\": { \"base\": 50000 }\n}"
+            }
+          }
+        },
+        {
+          "name": "Mock GW PolicyCenter — init-rate",
+          "request": {
+            "method": "POST",
+            "url": "{{core_rating_url}}/mock/gw-policycenter/init-rate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quoteNumber\": \"Q-123\",\n  \"insured\": { \"state\": \"NY\" }\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Product Config",
+      "item": [
+        {
+          "name": "Product Lines",
+          "item": [
+            {
+              "name": "List product lines",
+              "request": { "method": "GET", "url": "{{product_config_url}}/product-lines" }
+            },
+            {
+              "name": "Get product line",
+              "request": { "method": "GET", "url": "{{product_config_url}}/product-lines/{{product_line_id}}" }
+            },
+            {
+              "name": "Create product line",
+              "request": {
+                "method": "POST",
+                "url": "{{product_config_url}}/product-lines",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"GL\",\n  \"name\": \"General Liability\",\n  \"description\": \"Commercial general liability coverage\",\n  \"isActive\": true\n}"
+                }
+              }
+            },
+            {
+              "name": "Update product line",
+              "request": {
+                "method": "PUT",
+                "url": "{{product_config_url}}/product-lines/{{product_line_id}}",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"General Liability Updated\",\n  \"isActive\": true\n}"
+                }
+              }
+            },
+            {
+              "name": "Delete product line",
+              "request": { "method": "DELETE", "url": "{{product_config_url}}/product-lines/{{product_line_id}}" }
+            }
+          ]
+        },
+        {
+          "name": "Mappings",
+          "item": [
+            {
+              "name": "List mappings",
+              "request": { "method": "GET", "url": "{{product_config_url}}/mappings" }
+            },
+            {
+              "name": "List mappings by product",
+              "request": { "method": "GET", "url": "{{product_config_url}}/mappings?productLineCode={{product_code}}" }
+            },
+            {
+              "name": "Get mapping",
+              "request": { "method": "GET", "url": "{{product_config_url}}/mappings/{{mapping_id}}" }
+            },
+            {
+              "name": "Create mapping",
+              "request": {
+                "method": "POST",
+                "url": "{{product_config_url}}/mappings",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"IMCE Request Mapping\",\n  \"productLineCode\": \"IMCE\",\n  \"direction\": \"request\",\n  \"description\": \"Maps incoming payload to CGI Ratabase format\"\n}"
+                }
+              }
+            },
+            {
+              "name": "Update mapping",
+              "request": {
+                "method": "PUT",
+                "url": "{{product_config_url}}/mappings/{{mapping_id}}",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"IMCE Request Mapping v2\"\n}"
+                }
+              }
+            },
+            {
+              "name": "Delete mapping",
+              "request": { "method": "DELETE", "url": "{{product_config_url}}/mappings/{{mapping_id}}" }
+            },
+            {
+              "name": "List mapping fields",
+              "request": { "method": "GET", "url": "{{product_config_url}}/mappings/{{mapping_id}}/fields" }
+            },
+            {
+              "name": "Add mapping field",
+              "request": {
+                "method": "POST",
+                "url": "{{product_config_url}}/mappings/{{mapping_id}}/fields",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sourcePath\": \"premium.base\",\n  \"targetPath\": \"rating.basePremium\",\n  \"transformationType\": \"multiply\",\n  \"transformConfig\": { \"factor\": 1.15 },\n  \"isRequired\": true,\n  \"fieldOrder\": 1\n}"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rules",
+          "item": [
+            {
+              "name": "List rules",
+              "request": { "method": "GET", "url": "{{product_config_url}}/rules" }
+            },
+            {
+              "name": "List rules by product",
+              "request": { "method": "GET", "url": "{{product_config_url}}/rules?productLineCode={{product_code}}" }
+            },
+            {
+              "name": "Get rule",
+              "request": { "method": "GET", "url": "{{product_config_url}}/rules/{{rule_id}}" }
+            },
+            {
+              "name": "Create rule",
+              "request": {
+                "method": "POST",
+                "url": "{{product_config_url}}/rules",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"NY Building Age Surcharge\",\n  \"productLineCode\": \"IMCE\",\n  \"phase\": \"pre_rating\",\n  \"priority\": 10,\n  \"isActive\": true,\n  \"conditions\": [\n    {\n      \"field\": \"building.yearBuilt\",\n      \"operator\": \"less_than\",\n      \"value\": 1990,\n      \"logicalOperator\": \"AND\"\n    }\n  ],\n  \"actions\": [\n    {\n      \"actionType\": \"surcharge\",\n      \"targetField\": \"premium.base\",\n      \"value\": 0.15\n    }\n  ]\n}"
+                }
+              }
+            },
+            {
+              "name": "Update rule",
+              "request": {
+                "method": "PUT",
+                "url": "{{product_config_url}}/rules/{{rule_id}}",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"isActive\": false\n}"
+                }
+              }
+            },
+            {
+              "name": "Delete rule",
+              "request": { "method": "DELETE", "url": "{{product_config_url}}/rules/{{rule_id}}" }
+            }
+          ]
+        },
+        {
+          "name": "Systems",
+          "item": [
+            {
+              "name": "List systems",
+              "request": { "method": "GET", "url": "{{product_config_url}}/systems" }
+            },
+            {
+              "name": "Get system",
+              "request": { "method": "GET", "url": "{{product_config_url}}/systems/cgi-ratabase" }
+            }
+          ]
+        },
+        {
+          "name": "Scopes",
+          "item": [
+            {
+              "name": "List scopes by product",
+              "request": { "method": "GET", "url": "{{product_config_url}}/product-scopes?productLineCode={{product_code}}" }
+            },
+            {
+              "name": "Create scope",
+              "request": {
+                "method": "POST",
+                "url": "{{product_config_url}}/product-scopes",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"productLineCode\": \"IMCE\",\n  \"scopeType\": \"state\",\n  \"scopeValue\": \"NY\",\n  \"isActive\": true\n}"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Orchestrators (line-rating)",
+      "item": [
+        {
+          "name": "List orchestrators",
+          "request": { "method": "GET", "url": "{{line_rating_url}}/orchestrators" }
+        },
+        {
+          "name": "List orchestrators by product",
+          "request": { "method": "GET", "url": "{{line_rating_url}}/orchestrators?productLineCode={{product_code}}" }
+        },
+        {
+          "name": "Get orchestrator",
+          "request": { "method": "GET", "url": "{{line_rating_url}}/orchestrators/{{orchestrator_id}}" }
+        },
+        {
+          "name": "Get flow by product + endpoint",
+          "request": { "method": "GET", "url": "{{line_rating_url}}/orchestrators/{{product_code}}/flow/rate" }
+        },
+        {
+          "name": "Create orchestrator",
+          "request": {
+            "method": "POST",
+            "url": "{{line_rating_url}}/orchestrators",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productLineCode\": \"GL\",\n  \"name\": \"GL Rating Flow\",\n  \"endpointPath\": \"rate\",\n  \"isActive\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Auto-generate orchestrator",
+          "request": {
+            "method": "POST",
+            "url": "{{line_rating_url}}/orchestrators/auto-generate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productLineCode\": \"GL\",\n  \"systemCode\": \"cgi-ratabase\",\n  \"endpointPath\": \"rate\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Add step to orchestrator",
+          "request": {
+            "method": "POST",
+            "url": "{{line_rating_url}}/orchestrators/{{orchestrator_id}}/steps",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stepType\": \"apply_rules\",\n  \"name\": \"Pre-Rating Rules\",\n  \"stepOrder\": 3,\n  \"isActive\": true,\n  \"config\": {\n    \"productLineCode\": \"IMCE\",\n    \"phase\": \"pre_rating\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Update orchestrator step",
+          "request": {
+            "method": "PUT",
+            "url": "{{line_rating_url}}/orchestrators/{{orchestrator_id}}/steps/{{step_id}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete orchestrator step",
+          "request": { "method": "DELETE", "url": "{{line_rating_url}}/orchestrators/{{orchestrator_id}}/steps/{{step_id}}" }
+        }
+      ]
+    },
+
+    {
+      "name": "Rules Service",
+      "item": [
+        {
+          "name": "Evaluate rules",
+          "request": {
+            "method": "POST",
+            "url": "{{rules_url}}/rules/evaluate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productLineCode\": \"IMCE\",\n  \"phase\": \"pre_rating\",\n  \"scope\": {\n    \"state\": \"NY\",\n    \"coverage\": \"BOP\",\n    \"transactionType\": \"new_business\"\n  },\n  \"context\": {\n    \"quoteNumber\": \"Q-123\",\n    \"insured\": { \"state\": \"NY\" },\n    \"building\": { \"yearBuilt\": 1985 },\n    \"premium\": { \"base\": 50000 }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Generate rule with AI",
+          "request": {
+            "method": "POST",
+            "url": "{{rules_url}}/rules/generate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productLineCode\": \"IMCE\",\n  \"description\": \"Apply a 15% surcharge on buildings built before 1990 in New York\",\n  \"phase\": \"pre_rating\"\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Transform Service",
+      "item": [
+        {
+          "name": "JSON to XML",
+          "request": {
+            "method": "POST",
+            "url": "{{transform_url}}/transform",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"json_to_xml\",\n  \"data\": {\n    \"policy\": {\n      \"quoteId\": \"Q-123\",\n      \"state\": \"NY\"\n    },\n    \"premium\": {\n      \"base\": 50000\n    }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "XML to JSON",
+          "request": {
+            "method": "POST",
+            "url": "{{transform_url}}/transform",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"xml_to_json\",\n  \"data\": \"<root><policy><quoteId>Q-123</quoteId><state>NY</state></policy><premium><base>50000</base></premium></root>\"\n}"
+            }
+          }
+        },
+        {
+          "name": "JSON to SOAP",
+          "request": {
+            "method": "POST",
+            "url": "{{transform_url}}/transform",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"json_to_soap\",\n  \"data\": {\n    \"quoteId\": \"Q-123\",\n    \"state\": \"NY\"\n  }\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Transactions (status-service)",
+      "item": [
+        {
+          "name": "List transactions",
+          "request": { "method": "GET", "url": "{{status_url}}/transactions" }
+        },
+        {
+          "name": "List transactions by product",
+          "request": { "method": "GET", "url": "{{status_url}}/transactions?productLineCode={{product_code}}" }
+        },
+        {
+          "name": "Get transaction",
+          "request": { "method": "GET", "url": "{{status_url}}/transactions/{{transaction_id}}" }
+        },
+        {
+          "name": "Get transaction steps",
+          "request": { "method": "GET", "url": "{{status_url}}/transactions/{{transaction_id}}/steps" }
+        }
+      ]
+    }
+
+  ]
+}

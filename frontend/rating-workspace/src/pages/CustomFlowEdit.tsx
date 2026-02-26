@@ -87,6 +87,7 @@ function CustomFlowStepConfigForm({
   const [scriptGeneratePrompt, setScriptGeneratePrompt] = useState('');
   const [scriptGenerateLoading, setScriptGenerateLoading] = useState(false);
   const [scriptGenerateError, setScriptGenerateError] = useState<string | null>(null);
+  const [scriptGenerateSource, setScriptGenerateSource] = useState<'bedrock' | null>(null);
   const [testExpanded, setTestExpanded] = useState(false);
   const SAMPLE_REQUEST_JSON = JSON.stringify(
   {
@@ -130,13 +131,14 @@ const [sampleRequestJson, setSampleRequestJson] = useState('{}');
       } catch {
         /* ignore */
       }
-      const { scriptSource } = await scriptApi.generate({
+      const res = await scriptApi.generate({
         prompt,
         productLineCode,
         contextSample,
       });
-      onChange({ ...config, scriptSource });
+      onChange({ ...config, scriptSource: res.scriptSource });
       setScriptGeneratePrompt('');
+      setScriptGenerateSource(res.source ?? null);
     } catch (err: unknown) {
       const msg = (err as any)?.response?.data?.message ?? (err instanceof Error ? err.message : String(err));
       setScriptGenerateError(msg || 'AI script generation failed.');
@@ -189,6 +191,7 @@ const [sampleRequestJson, setSampleRequestJson] = useState('{}');
             onChange={(e) => {
               setScriptGeneratePrompt(e.target.value);
               setScriptGenerateError(null);
+              setScriptGenerateSource(null);
             }}
             placeholder="Describe the transformation..."
             rows={2}
@@ -208,6 +211,7 @@ const [sampleRequestJson, setSampleRequestJson] = useState('{}');
               Generate
             </button>
             {scriptGenerateError && <span className="text-xs text-red-600 dark:text-red-400">{scriptGenerateError}</span>}
+            {scriptGenerateSource === 'bedrock' && <span className="text-xs text-green-600 dark:text-green-400">Generated with Bedrock</span>}
           </div>
         </div>
         <div>

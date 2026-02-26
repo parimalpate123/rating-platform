@@ -21,23 +21,28 @@ Rules:
 - Mutate only working and/or response in place. No return statement for the whole script.
 - No require(), process, global, or I/O. Only request, working, response, scope are available.
 - Use optional chaining: request?.Policy?.EffectiveDate, working?.policy?.effectiveDate.
-- No space between dot and property name: write request.Policy.PolicyNumber not request.Policy. PolicyNumber.`;
+- No space between dot and property name: write request.Policy.PolicyNumber not request.Policy. PolicyNumber.
+- Style: ALWAYS use \`if (value) { ... }\` when assigning from request or working. Do NOT use ternary operators or direct assignment without an if guard. Match the example format exactly.`;
 
 const EXAMPLES = `
-Example 1 — normalize Guidewire Policy effective date and copy policy number (use if when value may be absent):
-working.policy = working.policy || {};
-if (request?.Policy?.EffectiveDate) {
-  working.policy.effectiveDate = new Date(request.Policy.EffectiveDate).toISOString().slice(0, 10);
+Correct format (use this style only — if blocks, no ternary):
+if (working?.policy?.effectiveDate) {
+  working.policy.effectiveDate = new Date(working.policy.effectiveDate).toISOString();
 }
 if (request?.Policy?.PolicyNumber) {
   working.policyNumber = request.Policy.PolicyNumber;
 }
 
-Example 2 — copy first location building number from GW request into working for downstream:
-const loc = request?.Locations?.[0] || request?.Policy?.Locations?.[0];
-if (loc) working.locationId = loc?.BuildingNumber ?? loc?.LocationNumber;
+Wrong — do NOT use ternary or direct assignment without if:
+working.policy = working.policy || {};
+working.policy.effectiveDate = request?.Policy?.EffectiveDate ? new Date(...).toISOString().slice(0, 10) : undefined;
+working.policyNumber = request?.Policy?.PolicyNumber;
 `;
 
+/**
+ * Script generation uses Bedrock only (no heuristic). For prod to match local output,
+ * deploy the same rules-service image to AWS as you run locally (same prompt, temperature: 0).
+ */
 @Controller('script')
 export class ScriptController {
   private readonly logger = new Logger(ScriptController.name);
@@ -50,7 +55,7 @@ export class ScriptController {
       productLineCode?: string;
       contextSample?: Record<string, unknown>;
     },
-  ): Promise<{ scriptSource: string; confidence?: number }> {
+  ): Promise<{ scriptSource: string; confidence?: number; source: 'bedrock' }> {
     const prompt = (body.prompt ?? '').trim();
     if (!prompt) {
       throw new ServiceUnavailableException('prompt is required');
@@ -86,7 +91,7 @@ export class ScriptController {
       }
       const client = new BedrockRuntimeClient(clientConfig);
 
-      let userContent = `What the script should do:\n"${prompt}"`;
+      let userContent = `What the script should do:\n"${prompt}"\n\nOutput format: use only if (value) { assignment } blocks. Do not use ternary (?:) or single-line assignment without an if guard. Copy the structure of the "Correct format" example above.`;
       if (body.contextSample && Object.keys(body.contextSample).length > 0) {
         userContent += `\n\nExample context shape (use these field names if relevant):\n${JSON.stringify(body.contextSample, null, 2)}`;
       }
@@ -136,7 +141,7 @@ export class ScriptController {
       }
 
       this.logger.log('Script generated with Bedrock');
-      return { scriptSource, confidence: 0.9 };
+      return { scriptSource, confidence: 0.9, source: 'bedrock' };
     } catch (err: any) {
       const msg = err?.message ?? String(err);
       this.logger.warn(`Script generate failed: ${msg}`);

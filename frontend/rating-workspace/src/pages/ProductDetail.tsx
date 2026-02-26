@@ -653,6 +653,7 @@ function StepConfigForm({
   const [scriptGeneratePrompt, setScriptGeneratePrompt] = useState('')
   const [scriptGenerateLoading, setScriptGenerateLoading] = useState(false)
   const [scriptGenerateError, setScriptGenerateError] = useState<string | null>(null)
+  const [scriptGenerateSource, setScriptGenerateSource] = useState<'bedrock' | null>(null)
   const [testExpanded, setTestExpanded] = useState(false)
   const SAMPLE_REQUEST_JSON = JSON.stringify(
   {
@@ -733,13 +734,14 @@ const [sampleRequestJson, setSampleRequestJson] = useState('{}')
       } catch {
         // ignore invalid JSON
       }
-      const { scriptSource } = await scriptApi.generate({
+      const res = await scriptApi.generate({
         prompt,
         productLineCode: productCode,
         contextSample,
       })
-      onChange({ ...config, scriptSource })
+      onChange({ ...config, scriptSource: res.scriptSource })
       setScriptGeneratePrompt('')
+      setScriptGenerateSource(res.source ?? null)
     } catch (err: unknown) {
       const msg = (err as any)?.response?.data?.message ?? (err instanceof Error ? err.message : String(err))
       setScriptGenerateError(msg || 'AI script generation failed. Check rules-service and Bedrock.')
@@ -791,7 +793,7 @@ const [sampleRequestJson, setSampleRequestJson] = useState('{}')
             </p>
             <textarea
               value={scriptGeneratePrompt}
-              onChange={(e) => { setScriptGeneratePrompt(e.target.value); setScriptGenerateError(null); }}
+              onChange={(e) => { setScriptGeneratePrompt(e.target.value); setScriptGenerateError(null); setScriptGenerateSource(null); }}
               placeholder="Describe the transformation..."
               rows={2}
               className="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -811,6 +813,7 @@ const [sampleRequestJson, setSampleRequestJson] = useState('{}')
                 Generate
               </button>
               {scriptGenerateError && <span className="text-xs text-red-600 dark:text-red-400">{scriptGenerateError}</span>}
+              {scriptGenerateSource === 'bedrock' && <span className="text-xs text-green-600 dark:text-green-400">Generated with Bedrock</span>}
             </div>
           </div>
 

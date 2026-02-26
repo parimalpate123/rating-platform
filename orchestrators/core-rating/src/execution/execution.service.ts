@@ -69,6 +69,7 @@ export interface ExecutionResult {
   status: 'completed' | 'failed';
   stepResults: StepResultEntry[];
   response: Record<string, unknown>;
+  working: Record<string, unknown>;
   totalDurationMs: number;
 }
 
@@ -278,6 +279,7 @@ export class ExecutionService {
             status: 'failed',
             stepResults,
             response: context.response,
+            working: context.working,
             totalDurationMs: Date.now() - startTime,
           };
         }
@@ -304,6 +306,7 @@ export class ExecutionService {
           status: 'failed',
           stepResults,
           response: context.response,
+          working: context.working,
           totalDurationMs: Date.now() - startTime,
         };
       }
@@ -350,6 +353,7 @@ export class ExecutionService {
             status: 'failed',
             stepResults,
             response: context.response,
+            working: context.working,
             totalDurationMs: Date.now() - startTime,
           };
         }
@@ -376,6 +380,7 @@ export class ExecutionService {
             status: 'failed',
             stepResults,
             response: context.response,
+            working: context.working,
             totalDurationMs: Date.now() - startTime,
           };
         }
@@ -387,6 +392,7 @@ export class ExecutionService {
       status: 'completed',
       stepResults,
       response: context.response,
+      working: context.working,
       totalDurationMs: Date.now() - startTime,
     };
   }

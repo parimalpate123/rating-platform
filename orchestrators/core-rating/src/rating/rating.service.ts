@@ -23,6 +23,7 @@ export interface RateResponse {
   correlationId: string;
   productLineCode: string;
   status: 'completed' | 'failed';
+  data: Record<string, unknown>;
   response: Record<string, unknown>;
   stepResults: Array<{
     stepId: string;
@@ -116,6 +117,7 @@ export class RatingService {
         {
           status: executionResult.status === 'completed' ? 'COMPLETED' : 'FAILED',
           responsePayload: executionResult.response,
+          workingData: executionResult.working,
           durationMs: totalDurationMs,
           completedSteps: executionResult.stepResults.filter((r) => r.status === 'completed').length,
           premiumResult: (executionResult.response as any)?.premium ?? null,
@@ -156,6 +158,7 @@ export class RatingService {
       correlationId,
       productLineCode: request.productLineCode,
       status: executionResult.status,
+      data: executionResult.working,
       response: executionResult.response,
       stepResults: executionResult.stepResults,
       totalDurationMs,

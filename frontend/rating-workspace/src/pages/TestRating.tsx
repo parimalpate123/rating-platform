@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
-import { Play, Loader2, CheckCircle, XCircle, ChevronDown, ChevronRight, Zap } from 'lucide-react';
+import { Play, Loader2, CheckCircle, XCircle, ChevronDown, ChevronRight, Zap, Copy, Download } from 'lucide-react';
 import { ratingApi, orchestratorApi, type RateResponse, type ProductOrchestrator } from '../api/orchestrator';
 import { type ProductLine } from '../api/products';
 import { cn, statusColor } from '../lib/utils';
@@ -23,6 +23,64 @@ const DEFAULT_PAYLOAD = JSON.stringify({
   },
 }, null, 2);
 
+const SAMPLE_REQUESTS: Array<{
+  label: string;
+  apiStyle: 'internal' | 'public';
+  flowName: string;
+  state: string;
+  coverage: string;
+  transactionType: string;
+  payload: Record<string, unknown>;
+}> = [
+  {
+    label: 'BOP — New Business (NY)',
+    apiStyle: 'public',
+    flowName: 'rate',
+    state: 'NY', coverage: 'BOP', transactionType: 'new_business',
+    payload: {
+      quoteNumber: 'Q-12345',
+      insured: { name: 'Acme Construction LLC', state: 'NY', annualRevenue: 5000000 },
+      coverage: { type: 'BOP', limit: 1000000, deductible: 5000 },
+      premium: { base: 50000 },
+      policy: { effectiveDate: new Date().toISOString().split('T')[0] },
+    },
+  },
+  {
+    label: 'BOP — Renewal (CA)',
+    apiStyle: 'public',
+    flowName: 'rate',
+    state: 'CA', coverage: 'BOP', transactionType: 'renewal',
+    payload: {
+      quoteNumber: 'Q-22222',
+      insured: { name: 'Pacific Builders Inc', state: 'CA', annualRevenue: 7500000 },
+      coverage: { type: 'BOP', limit: 2000000, deductible: 10000 },
+      premium: { base: 75000 },
+      policy: { effectiveDate: new Date().toISOString().split('T')[0] },
+    },
+  },
+  {
+    label: 'Init-Rate flow (NY)',
+    apiStyle: 'public',
+    flowName: 'init-rate',
+    state: 'NY', coverage: '', transactionType: 'new_business',
+    payload: {
+      quoteNumber: 'Q-99001',
+      insured: { name: 'Metro Services LLC', state: 'NY' },
+      policy: { effectiveDate: new Date().toISOString().split('T')[0] },
+    },
+  },
+  {
+    label: 'Internal API — default flow',
+    apiStyle: 'internal',
+    flowName: 'rate',
+    state: 'NY', coverage: 'BOP', transactionType: 'new_business',
+    payload: {
+      policy: { insuredName: 'ACME Corporation', annualRevenue: 5000000, employeeCount: 50, state: 'NY', effectiveDate: new Date().toISOString().split('T')[0] },
+      coverage: { type: 'BOP', limit: 1000000, deductible: 5000 },
+    },
+  },
+];
+
 export function TestRating() {
   const { products } = useOutletContext<{ products: ProductLine[] }>();
   const navigate = useNavigate();
@@ -30,6 +88,7 @@ export function TestRating() {
   const [selectedProduct, setSelectedProduct] = useState('');
   const [availableFlows, setAvailableFlows] = useState<ProductOrchestrator[]>([]);
   const [selectedEndpoint, setSelectedEndpoint] = useState('rate');
+  const [apiStyle, setApiStyle] = useState<'internal' | 'public'>('public');
   const [payload, setPayload] = useState(DEFAULT_PAYLOAD);
   const [state, setState] = useState('');
   const [coverage, setCoverage] = useState('');
@@ -52,6 +111,25 @@ export function TestRating() {
   const [error, setError] = useState<string | null>(null);
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
   const [selectedStep, setSelectedStep] = useState<{ step: DiagramStep; result?: DiagramResult } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!result) return;
+    navigator.clipboard.writeText(JSON.stringify(result, null, 2));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = () => {
+    if (!result) return;
+    const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rating-${result.transactionId ?? 'result'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const handleRun = async () => {
     if (!selectedProduct) return;
@@ -72,8 +150,10 @@ export function TestRating() {
       if (state) scope['state'] = state;
       if (coverage) scope['coverage'] = coverage;
       if (transactionType) scope['transactionType'] = transactionType;
-
-      const res = await ratingApi.rate(selectedProduct, parsedPayload, Object.keys(scope).length > 0 ? scope : undefined, selectedEndpoint);
+      const scopeArg = Object.keys(scope).length > 0 ? scope : undefined;
+      const res = apiStyle === 'public'
+        ? await ratingApi.ratePublic(selectedProduct, parsedPayload, scopeArg, selectedEndpoint)
+        : await ratingApi.rate(selectedProduct, parsedPayload, scopeArg, selectedEndpoint);
       setResult(res);
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || 'Rating request failed');
@@ -116,7 +196,61 @@ export function TestRating() {
         {/* Left — Input */}
         <div className="space-y-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Request</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Request</h2>
+              {/* Sample loader */}
+              <select
+                defaultValue=""
+                onChange={e => {
+                  const idx = parseInt(e.target.value, 10);
+                  if (isNaN(idx)) return;
+                  const s = SAMPLE_REQUESTS[idx];
+                  setApiStyle(s.apiStyle);
+                  setSelectedEndpoint(s.flowName);
+                  setState(s.state);
+                  setCoverage(s.coverage);
+                  setTransactionType(s.transactionType);
+                  setPayload(JSON.stringify(s.payload, null, 2));
+                  setResult(null); setError(null);
+                  e.target.value = '';
+                }}
+                className="text-xs px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Load sample…</option>
+                {SAMPLE_REQUESTS.map((s, i) => (
+                  <option key={i} value={i}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* API Style toggle */}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">API Endpoint</label>
+              <div className="flex rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden text-xs font-medium">
+                <button
+                  onClick={() => { setApiStyle('public'); setResult(null); }}
+                  className={cn(
+                    'flex-1 px-3 py-2 transition-colors',
+                    apiStyle === 'public'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600',
+                  )}
+                >
+                  Public &nbsp;<span className="font-mono opacity-80">POST /{'{'}productCode{'}'}/rate</span>
+                </button>
+                <button
+                  onClick={() => { setApiStyle('internal'); setResult(null); }}
+                  className={cn(
+                    'flex-1 px-3 py-2 border-l border-gray-200 dark:border-gray-600 transition-colors',
+                    apiStyle === 'internal'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600',
+                  )}
+                >
+                  Internal &nbsp;<span className="font-mono opacity-80">POST /rate/{'{'}productCode{'}'}</span>
+                </button>
+              </div>
+            </div>
 
             {/* Product selector */}
             <div>
@@ -210,6 +344,14 @@ export function TestRating() {
               />
             </div>
 
+            {selectedProduct && (
+              <p className="text-[10px] font-mono text-gray-400 dark:text-gray-500 -mt-1 truncate">
+                {apiStyle === 'public'
+                  ? `POST /${selectedProduct}/rate${selectedEndpoint !== 'rate' ? `/${selectedEndpoint}` : ''}`
+                  : `POST /rate/${selectedProduct}${selectedEndpoint !== 'rate' ? `/${selectedEndpoint}` : ''}`
+                }
+              </p>
+            )}
             <button
               onClick={handleRun}
               disabled={!selectedProduct || loading}
@@ -354,6 +496,32 @@ export function TestRating() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Raw JSON Response */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Raw Response</h2>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleCopy}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      {copied ? 'Copied!' : 'Copy'}
+                    </button>
+                    <button
+                      onClick={handleDownload}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Download
+                    </button>
+                  </div>
+                </div>
+                <pre className="text-xs font-mono text-gray-100 bg-gray-900 border border-gray-700 rounded-lg p-3 overflow-auto max-h-96">
+                  {JSON.stringify(result, null, 2)}
+                </pre>
               </div>
             </>
           )}
