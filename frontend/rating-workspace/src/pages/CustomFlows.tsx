@@ -35,7 +35,7 @@ export function CustomFlows() {
   };
 
   return (
-    <div className="p-6 w-full max-w-6xl">
+    <div className="p-6 w-full max-w-6xl mx-auto">
       <div className="flex items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
