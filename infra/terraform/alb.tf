@@ -277,7 +277,8 @@ resource "aws_lb_listener_rule" "rules" {
   }
 
   condition {
-    path_pattern { values = ["/api/v1/rules", "/api/v1/rules/*", "/api/v1/ai-prompts", "/api/v1/ai-prompts/*"] }
+    # script/generate is implemented by rules-service (Bedrock). ALB max 5 patterns per rule.
+    path_pattern { values = ["/api/v1/rules", "/api/v1/rules/*", "/api/v1/ai-prompts", "/api/v1/ai-prompts/*", "/api/v1/script*"] }
   }
 }
 
