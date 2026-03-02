@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InsuRateConnect — Use Cases</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8f6f2;
+      color: #1a1a2e;
+      padding: 48px 24px;
+    }
+
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .header .eyebrow {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: #fef3eb;
+      color: #c66a2b;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      max-width: 760px;
+      margin: 0 auto 14px;
+    }
+
+    .header p {
+      font-size: 17px;
+      color: #64748b;
+      max-width: 640px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .hl { color: #c66a2b; }
+
+    /* Use case cards */
+    .uc-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .uc-card {
+      background: #ffffff;
+      border: 1px solid #e2e0dc;
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .uc-card .uc-top {
+      display: flex;
+      align-items: start;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .uc-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .uc-card:nth-child(1) .uc-num { background: #eff6ff; color: #2563eb; }
+    .uc-card:nth-child(2) .uc-num { background: #fef3eb; color: #c66a2b; }
+    .uc-card:nth-child(3) .uc-num { background: #f0fdf4; color: #16a34a; }
+    .uc-card:nth-child(4) .uc-num { background: #f5f3ff; color: #7c3aed; }
+    .uc-card:nth-child(5) .uc-num { background: #fefce8; color: #a16207; }
+    .uc-card:nth-child(6) .uc-num { background: #fdf2f8; color: #be185d; }
+    .uc-card:nth-child(7) .uc-num { background: #ecfdf5; color: #059669; }
+    .uc-card:nth-child(8) .uc-num { background: #fff7ed; color: #c2410c; }
+
+    .uc-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .uc-card .scenario {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.6;
+      flex: 1;
+      margin-bottom: 14px;
+    }
+
+    .uc-flow {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .uc-flow .flow-node {
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .flow-node.source { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .flow-node.platform { background: #fef3eb; color: #9a3412; border: 1px solid #fed7aa; }
+    .flow-node.target { background: #f5f3ff; color: #5b21b6; border: 1px solid #c4b5fd; }
+    .flow-node.config { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .flow-node.external { background: #fefce8; color: #92400e; border: 1px solid #fde68a; }
+
+    .uc-flow .flow-arrow {
+      font-size: 12px;
+      color: #c66a2b;
+      font-weight: 700;
+    }
+
+    /* Bottom */
+    .bottom {
+      text-align: center;
+      padding: 24px;
+      background: #ffffff;
+      border: 1px solid #e2e0dc;
+      border-radius: 16px;
+    }
+
+    .bottom p {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .bottom .sub {
+      font-size: 14px;
+      font-weight: 400;
+      color: #64748b;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 800px) {
+      .uc-grid { grid-template-columns: 1fr; }
+      .header h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <div class="header">
+      <div class="eyebrow">Use Cases</div>
+      <h1>One platform. <span class="hl">Many scenarios.</span></h1>
+      <p>The same orchestration engine, configured differently, solves distinct integration challenges across carriers, product lines, and modernization stages.</p>
+    </div>
+
+    <div class="uc-grid">
+
+      <!-- UC 1 -->
+      <div class="uc-card">
+        <div class="uc-top">
+          <div class="uc-num">1</div>
+          <h3>New Product Line Onboarding</h3>
+        </div>
+        <p class="scenario">A carrier launches General Liability on Guidewire and needs to connect it to CGI Ratabase. The team configures the orchestration flow, maps 140+ fields, and defines state-specific rules — live in weeks, not a 6-month integration project.</p>
+        <div class="uc-flow">
+          <div class="flow-node source">Guidewire</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node platform">Configure flow + mappings + rules</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node target">CGI Ratabase</div>
+        </div>
+      </div>
+
+      <!-- UC 2 -->
+      <div class="uc-card">
+        <div class="uc-top">
+          <div class="uc-num">2</div>
+          <h3>Rating Engine Migration</h3>
+        </div>
+        <p class="scenario">A carrier moves from CGI Ratabase to Earnix for pricing optimization. The source system stays the same — only the target configuration, format transforms (XML to JSON), and response mappings change. No rebuild of the entire integration.</p>
+        <div class="uc-flow">
+          <div class="flow-node source">Same source</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node config">Reconfigure target + format</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node target">Earnix (new)</div>
+        </div>
+      </div>
+
+      <!-- UC 3 -->
+      <div class="uc-card">
+        <div class="uc-top">
+          <div class="uc-num">3</div>
+          <h3>Multi-State Expansion</h3>
+        </div>
+        <p class="scenario">A Workers' Comp product is live in 5 states and expanding to 15 more. Each state has different surcharge rules and filing requirements. Actuaries add state-specific rules using scopes — no duplication of the product configuration.</p>
+        <div class="uc-flow">
+          <div class="flow-node config">Same flow</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node config">Add scoped rules per state</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node target">Same engine</div>
+        </div>
+      </div>
+
+      <!-- UC 4 -->
+      <div class="uc-card">
+        <div class="uc-top">
+          <div class="uc-num">4</div>
+          <h3>Pre-Rating Data Enrichment</h3>
+        </div>
+        <p class="scenario">Before calling the rating engine, the flow enriches the submission with D&B firmographic data — credit score, annual revenue, employee count. The enrichment step is part of the orchestration, not a hardcoded custom service.</p>
+        <div class="uc-flow">
+          <div class="flow-node source">RQI request</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node external">D&B enrichment</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node platform">Apply rules</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node target">Rating engine</div>
+        </div>
+      </div>
+
+      <!-- UC 5 -->
+      <div class="uc-card">
+        <div class="uc-top">
+          <div class="uc-num">5</div>
+          <h3>RQI Platform Migration</h3>
+        </div>
+        <p class="scenario">A carrier moves from Duck Creek to Guidewire. The rating engine and business rules stay exactly the same — only the source system registration and field mappings need reconfiguration. All rating logic is preserved.</p>
+        <div class="uc-flow">
+          <div class="flow-node source">Guidewire (new)</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node config">Remap source fields</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node target">Same engine + rules</div>
+        </div>
+      </div>
+
+      <!-- UC 6 -->
+      <div class="uc-card">
+        <div class="uc-top">
+          <div class="uc-num">6</div>
+          <h3>Regulatory Rule Updates</h3>
+        </div>
+        <p class="scenario">A state regulator mandates a new wind/hail surcharge for coastal ZIP codes. The actuarial team adds the rule with scope tags — no JIRA ticket, no dev sprint, no deployment. Live in hours, not weeks.</p>
+        <div class="uc-flow">
+          <div class="flow-node config">Actuarial adds rule</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node config">Scope: FL + coastal ZIPs</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node config">Effective immediately</div>
+        </div>
+      </div>
+
+      <!-- UC 7 -->
+      <div class="uc-card">
+        <div class="uc-top">
+          <div class="uc-num">7</div>
+          <h3>Parallel Rating Comparison</h3>
+        </div>
+        <p class="scenario">A carrier wants to compare premiums from two engines for the same submission. Two orchestration flows are configured for the same product — same input, different targets — enabling side-by-side pricing comparison.</p>
+        <div class="uc-flow">
+          <div class="flow-node source">Same input</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node platform">Flow A</div>
+          <div class="flow-node target">Earnix</div>
+          <div class="flow-arrow">|</div>
+          <div class="flow-node platform">Flow B</div>
+          <div class="flow-node target">Homegrown</div>
+        </div>
+      </div>
+
+      <!-- UC 8 -->
+      <div class="uc-card">
+        <div class="uc-top">
+          <div class="uc-num">8</div>
+          <h3>Async Rating with Callback</h3>
+        </div>
+        <p class="scenario">A Guidewire implementation requires an async pattern — initiate rating, process offline, callback with result. The orchestration flow includes a callback step that notifies the source system when the rated response is ready.</p>
+        <div class="uc-flow">
+          <div class="flow-node source">GW initiates</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node platform">Rate async</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node target">Engine</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node source">Callback to GW</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="bottom">
+      <p>Every use case above is a configuration change — not a new project.</p>
+      <p class="sub">The platform handles the orchestration. The team handles the business logic.</p>
+    </div>
+
+  </div>
+</body>
+</html>

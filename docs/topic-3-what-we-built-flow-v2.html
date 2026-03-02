@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InsuRateConnect — What We Built</title>
+  <style>
+    :root {
+      --bg: #f8f6f2;
+      --paper: #ffffff;
+      --ink: #1a1a2e;
+      --muted: #64748b;
+      --border: #e2e0dc;
+      --accent: #c66a2b;
+      --accent-soft: #fef3eb;
+      --blue: #2563eb;
+      --blue-soft: #eff6ff;
+      --green: #16a34a;
+      --green-soft: #f0fdf4;
+      --purple: #7c3aed;
+      --purple-soft: #f5f3ff;
+    }
+
+    * { box-sizing: border-box; margin: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      padding: 40px 24px;
+    }
+
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .header h1 {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Column labels */
+    .col-labels {
+      display: grid;
+      grid-template-columns: 260px 60px 1fr;
+      gap: 0;
+      margin-bottom: 16px;
+      padding: 0 8px;
+    }
+
+    .col-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+
+    .col-label.right {
+      text-align: center;
+    }
+
+    /* Flow rows */
+    .flow-row {
+      display: grid;
+      grid-template-columns: 260px 60px 1fr;
+      gap: 0;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    /* Config card (left) */
+    .config-card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+
+    .config-card .actor-tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .tag-sa { background: #dbeafe; color: #1e40af; }
+    .tag-ba { background: #f3e8ff; color: #6b21a8; }
+    .tag-act { background: #fef3c7; color: #92400e; }
+    .tag-int { background: #d1fae5; color: #065f46; }
+    .tag-sa-int { background: #e0e7ff; color: #3730a3; }
+    .tag-ba-act { background: #fce7f3; color: #9d174d; }
+
+    .config-card h4 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .config-card p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    /* Connector arrow (middle) */
+    .connector-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .connector-arrow svg {
+      width: 48px;
+      height: 20px;
+    }
+
+    /* Execution step (right) */
+    .exec-step {
+      border-radius: 14px;
+      padding: 16px 20px;
+      border: 1px solid;
+    }
+
+    .exec-step .step-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .exec-step h4 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .exec-step p {
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    /* Step color variants */
+    .exec-step.system {
+      background: var(--blue-soft);
+      border-color: #bfdbfe;
+    }
+    .exec-step.system .step-label { color: var(--blue); }
+    .exec-step.system p { color: #3b82f6; }
+
+    .exec-step.orchestrate {
+      background: var(--accent-soft);
+      border-color: #fed7aa;
+    }
+    .exec-step.orchestrate .step-label { color: var(--accent); }
+    .exec-step.orchestrate p { color: #b45309; }
+
+    .exec-step.mapping {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+    .exec-step.mapping .step-label { color: var(--green); }
+    .exec-step.mapping p { color: #15803d; }
+
+    .exec-step.rules {
+      background: #fefce8;
+      border-color: #fde68a;
+    }
+    .exec-step.rules .step-label { color: #a16207; }
+    .exec-step.rules p { color: #92400e; }
+
+    .exec-step.scope {
+      background: #fdf2f8;
+      border-color: #fbcfe8;
+    }
+    .exec-step.scope .step-label { color: #be185d; }
+    .exec-step.scope p { color: #9d174d; }
+
+    .exec-step.validate {
+      background: var(--purple-soft);
+      border-color: #c4b5fd;
+    }
+    .exec-step.validate .step-label { color: var(--purple); }
+    .exec-step.validate p { color: #6d28d9; }
+
+    /* Wide exec row — for the pipeline */
+    .pipeline-row {
+      display: grid;
+      grid-template-columns: 260px 60px 1fr;
+      gap: 0;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .pipeline-spacer {
+      /* empty left column */
+    }
+
+    .pipeline-box {
+      background: var(--accent-soft);
+      border: 2px solid #fdba74;
+      border-radius: 18px;
+      padding: 20px 24px;
+    }
+
+    .pipeline-box .platform-label {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+
+    .step-chain {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .step-pill {
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: white;
+      border: 1px solid #fed7aa;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .step-pill.highlight-map { border-color: #86efac; background: #f0fdf4; }
+    .step-pill.highlight-rules { border-color: #fde68a; background: #fefce8; }
+    .step-pill.highlight-format { border-color: #c4b5fd; background: #f5f3ff; }
+    .step-pill.highlight-engine { border-color: #fdba74; background: #fff7ed; }
+
+    .pill-arrow {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 0 2px;
+    }
+
+    /* Systems row */
+    .systems-row {
+      display: grid;
+      grid-template-columns: 1fr 60px 1fr;
+      gap: 0;
+      align-items: center;
+      margin: 24px 0 14px;
+    }
+
+    .system-node {
+      padding: 18px 20px;
+      border-radius: 16px;
+      text-align: center;
+      border: 2px solid;
+    }
+
+    .system-node.source {
+      background: var(--blue-soft);
+      border-color: #93c5fd;
+    }
+
+    .system-node.target {
+      background: var(--purple-soft);
+      border-color: #c4b5fd;
+    }
+
+    .system-node .sys-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+    }
+
+    .source .sys-label { color: var(--blue); }
+    .target .sys-label { color: var(--purple); }
+
+    .system-node .sys-name {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .system-node .sys-examples {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .systems-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .systems-arrow .arrow-icon {
+      font-size: 22px;
+      color: var(--accent);
+    }
+
+    /* Divider */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 40px 0 24px;
+    }
+
+    .section-divider .line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .section-divider .label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* Runtime section */
+    .runtime-label {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .runtime-label h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .runtime-label p {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* Full-width pipeline */
+    .full-pipeline {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+    }
+
+    .runtime-flow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .runtime-arrow {
+      font-size: 24px;
+      color: var(--accent);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .engine-box {
+      background: var(--accent-soft);
+      border: 2px solid #fdba74;
+      border-radius: 18px;
+      padding: 16px 20px;
+      flex: 1;
+      max-width: 720px;
+    }
+
+    .engine-box .engine-title {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    /* Visibility bar */
+    .vis-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 32px;
+    }
+
+    .vis-item {
+      background: var(--green-soft);
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .vis-item h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .vis-item p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    /* Tagline */
+    .tagline {
+      text-align: center;
+      margin-top: 40px;
+      padding: 24px;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .tagline p {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .tagline .sub {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* Actors strip */
+    .actors-strip {
+      margin-bottom: 28px;
+    }
+
+    .actors-label, .config-strip-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .actors-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .actor-chip {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+
+    .actor-chip p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+      margin-top: 8px;
+    }
+
+    /* Config strip */
+    .config-strip {
+      margin-bottom: 8px;
+    }
+
+    .config-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+    }
+
+    .config-item {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 14px;
+    }
+
+    .config-item h4 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .config-item p {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    /* Target stack */
+    .target-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .target-stack .system-node {
+      min-width: 200px;
+    }
+
+    .system-node.external {
+      background: #fefce8;
+      border-color: #fde68a;
+    }
+
+    .system-node.external .sys-label {
+      color: #a16207;
+    }
+
+    .system-node.internal {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    .system-node.internal .sys-label {
+      color: var(--green);
+    }
+
+    /* Flow direction labels */
+    .flow-direction {
+      margin-bottom: 8px;
+    }
+
+    .dir-label {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .dir-request {
+      background: #fff7ed;
+      color: var(--accent);
+    }
+
+    .dir-response {
+      background: #eff6ff;
+      color: var(--blue);
+    }
+
+    .flow-divider {
+      height: 1px;
+      background: #fed7aa;
+      margin: 14px 0;
+    }
+
+    @media (max-width: 900px) {
+      .actors-row { grid-template-columns: repeat(2, 1fr); }
+      .config-row { grid-template-columns: repeat(2, 1fr); }
+      .runtime-flow { flex-direction: column; }
+      .runtime-arrow { transform: rotate(90deg); }
+      .vis-bar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- Header -->
+    <div class="header">
+      <h1>How InsuRateConnect Works</h1>
+      <p>Teams configure the platform. The platform executes every rating. Each configuration step directly powers a runtime capability.</p>
+    </div>
+
+    <!-- Actors strip -->
+    <div class="actors-strip">
+      <div class="actors-label">Who configures the platform</div>
+      <div class="actors-row">
+        <div class="actor-chip">
+          <div class="actor-tag tag-sa">Solution Architect</div>
+          <p>Registers systems, designs orchestration flows</p>
+        </div>
+        <div class="actor-chip">
+          <div class="actor-tag tag-ba">Business Analyst / PO</div>
+          <p>Creates product lines, defines scopes and business context</p>
+        </div>
+        <div class="actor-chip">
+          <div class="actor-tag tag-act">Actuarial Analyst</div>
+          <p>Defines rating rules — surcharges, discounts, state overrides</p>
+        </div>
+        <div class="actor-chip">
+          <div class="actor-tag tag-int">Integration Engineer</div>
+          <p>Configures field mappings, transforms, system connectivity</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- What they configure -->
+    <div class="config-strip">
+      <div class="config-strip-label">What they configure</div>
+      <div class="config-row">
+        <div class="config-item">
+          <h4>Register Systems</h4>
+          <p>Source RQI platform and target rating engine</p>
+        </div>
+        <div class="config-item">
+          <h4>Create Product Line</h4>
+          <p>Insurance product with source, target, business context</p>
+        </div>
+        <div class="config-item">
+          <h4>Orchestration Flow</h4>
+          <p>Step-by-step pipeline — order, failure modes, retry</p>
+        </div>
+        <div class="config-item">
+          <h4>Field Mappings</h4>
+          <p>140+ fields — transforms, defaults, lookups, AI-assisted</p>
+        </div>
+        <div class="config-item">
+          <h4>Rating Rules</h4>
+          <p>Surcharges, discounts, rejections — plain English via AI</p>
+        </div>
+        <div class="config-item">
+          <h4>Scopes</h4>
+          <p>State, coverage, transaction type filters</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="section-divider">
+      <div class="line"></div>
+      <div class="label">What executes at runtime</div>
+      <div class="line"></div>
+    </div>
+
+    <!-- Pipeline: 3 systems, bidirectional flow inside center box -->
+    <div class="full-pipeline">
+      <div class="runtime-flow">
+        <div class="system-node source">
+          <div class="sys-label">Source System</div>
+          <div class="sys-name">RQI Platform</div>
+          <div class="sys-examples">Guidewire, Duck Creek, Majesco</div>
+        </div>
+
+        <div class="runtime-arrow">&rarr;</div>
+
+        <div class="engine-box">
+          <div class="engine-title">InsuRateConnect &mdash; Orchestration Engine</div>
+
+          <!-- Request flow: left to right -->
+          <div class="flow-direction">
+            <span class="dir-label dir-request">Request &rarr;</span>
+          </div>
+          <div class="step-chain">
+            <div class="step-pill highlight-map">Translate Request</div>
+            <div class="pill-arrow">&rarr;</div>
+            <div class="step-pill highlight-rules">Pre-Rating Rules</div>
+            <div class="pill-arrow">&rarr;</div>
+            <div class="step-pill highlight-format">Transform Format</div>
+            <div class="pill-arrow">&rarr;</div>
+            <div class="step-pill highlight-engine">Call Rating Engine</div>
+          </div>
+
+          <!-- Visual separator -->
+          <div class="flow-divider"></div>
+
+          <!-- Response flow: right to left -->
+          <div class="flow-direction">
+            <span class="dir-label dir-response">&larr; Response</span>
+          </div>
+          <div class="step-chain">
+            <div class="step-pill highlight-rules">Post-Rating Rules</div>
+            <div class="pill-arrow">&larr;</div>
+            <div class="step-pill highlight-map">Translate Response</div>
+            <div class="pill-arrow">&larr;</div>
+            <div class="step-pill highlight-format">Transform Format</div>
+            <div class="pill-arrow">&larr;</div>
+            <div class="step-pill highlight-engine">Receive Premium</div>
+          </div>
+        </div>
+
+        <div class="runtime-arrow">&rarr;</div>
+
+        <div class="target-stack">
+          <div class="system-node target">
+            <div class="sys-label">Rating Engine</div>
+            <div class="sys-name">Rate & Price</div>
+            <div class="sys-examples">Earnix, CGI Ratabase, Homegrown</div>
+          </div>
+          <div class="system-node external">
+            <div class="sys-label">External Services</div>
+            <div class="sys-name">Enrich & Validate</div>
+            <div class="sys-examples">D&B, LexisNexis, Credit Bureaus</div>
+          </div>
+          <div class="system-node internal">
+            <div class="sys-label">Platform Callbacks</div>
+            <div class="sys-name">Initiate & Notify</div>
+            <div class="sys-examples">RQI callbacks, Event publishing</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visibility bar -->
+    <div class="vis-bar">
+      <div class="vis-item">
+        <h4>Step-by-Step Trace</h4>
+        <p>Every step logged with input, output, duration, status. Expand any transaction to see exactly what happened.</p>
+      </div>
+      <div class="vis-item">
+        <h4>Audit Trail</h4>
+        <p>Full history of every rating execution — who requested, what rules fired, what premium returned.</p>
+      </div>
+      <div class="vis-item">
+        <h4>Test & Validate</h4>
+        <p>Run test ratings before go-live. All actors verify the flow works end-to-end with real payloads.</p>
+      </div>
+    </div>
+
+    <!-- Tagline -->
+    <div class="tagline">
+      <p>What used to require a full dev team building custom services for months is now a configuration exercise on a reusable platform.</p>
+      <p class="sub">Configure once. Execute every rating. Full visibility always.</p>
+    </div>
+
+  </div>
+</body>
+</html>

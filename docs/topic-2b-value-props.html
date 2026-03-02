@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InsuRateConnect — Why This Platform</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8f6f2;
+      color: #1a1a2e;
+      padding: 48px 24px;
+    }
+
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .header .eyebrow {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: #fef3eb;
+      color: #c66a2b;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      max-width: 780px;
+      margin: 0 auto 14px;
+    }
+
+    .header p {
+      font-size: 17px;
+      color: #64748b;
+      max-width: 640px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .hl { color: #c66a2b; }
+
+    /* Comparison bar */
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 40px 1fr;
+      gap: 0;
+      margin-bottom: 52px;
+      align-items: center;
+    }
+
+    .compare-side {
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid;
+    }
+
+    .compare-side.old {
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    .compare-side.new {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    .compare-side .tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .old .tag { background: #fee2e2; color: #991b1b; }
+    .new .tag { background: #dcfce7; color: #166534; }
+
+    .compare-side h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .compare-side p {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    .compare-vs {
+      text-align: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+
+    /* Metrics row */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 52px;
+    }
+
+    .metric {
+      background: #ffffff;
+      border: 1px solid #e2e0dc;
+      border-radius: 16px;
+      padding: 24px 20px;
+      text-align: center;
+    }
+
+    .metric .number {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .metric .number.green { color: #16a34a; }
+    .metric .number.blue { color: #2563eb; }
+    .metric .number.accent { color: #c66a2b; }
+    .metric .number.purple { color: #7c3aed; }
+
+    .metric .label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+    }
+
+    .metric .desc {
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    /* Value props */
+    .props-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #94a3b8;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .props {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 48px;
+    }
+
+    .prop {
+      background: #ffffff;
+      border: 1px solid #e2e0dc;
+      border-radius: 14px;
+      padding: 22px 20px;
+    }
+
+    .prop .icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+
+    .prop .icon.i1 { background: #eff6ff; }
+    .prop .icon.i2 { background: #fef3eb; }
+    .prop .icon.i3 { background: #f0fdf4; }
+    .prop .icon.i4 { background: #f5f3ff; }
+    .prop .icon.i5 { background: #fefce8; }
+    .prop .icon.i6 { background: #fdf2f8; }
+
+    .prop h4 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .prop p {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    /* Who benefits */
+    .who-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #94a3b8;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .who-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 48px;
+    }
+
+    .who-card {
+      background: #ffffff;
+      border: 1px solid #e2e0dc;
+      border-radius: 14px;
+      padding: 20px 16px;
+      text-align: center;
+    }
+
+    .who-card .role {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .who-card .role.r-sa { color: #2563eb; }
+    .who-card .role.r-ba { color: #7c3aed; }
+    .who-card .role.r-act { color: #a16207; }
+    .who-card .role.r-int { color: #16a34a; }
+
+    .who-card .before {
+      font-size: 12px;
+      color: #dc2626;
+      margin-bottom: 4px;
+    }
+
+    .who-card .after {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+
+    /* Bottom */
+    .bottom {
+      text-align: center;
+      padding: 24px;
+      background: #ffffff;
+      border: 1px solid #e2e0dc;
+      border-radius: 16px;
+    }
+
+    .bottom p {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+
+    .bottom .sub {
+      font-size: 14px;
+      font-weight: 400;
+      color: #64748b;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 800px) {
+      .compare { grid-template-columns: 1fr; gap: 12px; }
+      .compare-vs { padding: 8px 0; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .props { grid-template-columns: 1fr; }
+      .who-grid { grid-template-columns: repeat(2, 1fr); }
+      .header h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <div class="header">
+      <div class="eyebrow">Why This Platform</div>
+      <h1>Stop building the same integration. <span class="hl">Start configuring it.</span></h1>
+      <p>Every custom integration project requires a team of developers for months. This platform puts that power in the hands of the people who understand the business.</p>
+    </div>
+
+    <!-- Custom Dev vs Platform -->
+    <div class="compare">
+      <div class="compare-side old">
+        <div class="tag">Custom Development</div>
+        <h3>6-8 developers, 4-6 months, per product line</h3>
+        <p>Custom services, custom mapping code, custom error handling, custom deployment pipeline. Maintained forever. Repeated for every new product, every new client.</p>
+      </div>
+      <div class="compare-vs">vs</div>
+      <div class="compare-side new">
+        <div class="tag">InsuRateConnect</div>
+        <h3>SA + BA + Actuarial + Integration Eng, configured in weeks</h3>
+        <p>No custom services to build. No code to deploy. The team that understands the business configures the platform directly. Reusable across products and clients.</p>
+      </div>
+    </div>
+
+    <!-- Impact statements -->
+    <div class="metrics">
+      <div class="metric">
+        <div class="number green">Configure</div>
+        <div class="label">Don't Code</div>
+        <div class="desc">SA and BA drive setup — developers aren't the bottleneck</div>
+      </div>
+      <div class="metric">
+        <div class="number blue">Reusable</div>
+        <div class="label">Across Clients</div>
+        <div class="desc">Same platform, different configuration per carrier and product</div>
+      </div>
+      <div class="metric">
+        <div class="number accent">Self-Serve</div>
+        <div class="label">Rule Changes</div>
+        <div class="desc">Actuaries update rules directly — no sprint, no release cycle</div>
+      </div>
+      <div class="metric">
+        <div class="number purple">Traceable</div>
+        <div class="label">Every Transaction</div>
+        <div class="desc">Step-by-step audit trail — no black box</div>
+      </div>
+    </div>
+
+    <!-- Value props -->
+    <div class="props-label">Business benefits</div>
+    <div class="props">
+      <div class="prop">
+        <div class="icon i1">&#9889;</div>
+        <h4>Speed to Market</h4>
+        <p>New product line configured and live in weeks. No integration project kickoff, no dev team ramp-up, no months of build-test-deploy.</p>
+      </div>
+      <div class="prop">
+        <div class="icon i2">&#9881;</div>
+        <h4>Engine Flexibility</h4>
+        <p>Carriers keep their existing rating engines — Earnix, CGI Ratabase, homegrown. The platform adapts to the engine. No forced migration.</p>
+      </div>
+      <div class="prop">
+        <div class="icon i3">&#128269;</div>
+        <h4>Full Auditability</h4>
+        <p>Every rating transaction traced step by step — what was mapped, which rules fired, what the engine returned. Audit-ready from day one.</p>
+      </div>
+      <div class="prop">
+        <div class="icon i4">&#129302;</div>
+        <h4>AI-Assisted Configuration</h4>
+        <p>Field mappings suggested from plain text or CSV. Rules generated from natural language descriptions. Reduces configuration time and human error.</p>
+      </div>
+      <div class="prop">
+        <div class="icon i5">&#128200;</div>
+        <h4>Reusable Across Engagements</h4>
+        <p>One platform serves multiple carriers. Different configurations per client — same orchestration engine, same UI, same deployment. Scales the practice, not the headcount.</p>
+      </div>
+      <div class="prop">
+        <div class="icon i6">&#128101;</div>
+        <h4>Empowers the Right People</h4>
+        <p>SAs design flows. BAs define products. Actuaries own rules. Integration engineers map fields. No developer bottleneck for business logic changes.</p>
+      </div>
+    </div>
+
+    <!-- Who benefits -->
+    <div class="who-label">Who this unblocks</div>
+    <div class="who-grid">
+      <div class="who-card">
+        <div class="role r-sa">Solution Architect</div>
+        <div class="before">Before: Documents flows, hands off to dev team</div>
+        <div class="after">Now: Designs and configures orchestration directly</div>
+      </div>
+      <div class="who-card">
+        <div class="role r-ba">Business Analyst</div>
+        <div class="before">Before: Writes requirements, waits for implementation</div>
+        <div class="after">Now: Creates products, sets scopes, validates end-to-end</div>
+      </div>
+      <div class="who-card">
+        <div class="role r-act">Actuarial Analyst</div>
+        <div class="before">Before: Sends rule changes via email, waits weeks</div>
+        <div class="after">Now: Defines rules directly — live in hours, not sprints</div>
+      </div>
+      <div class="who-card">
+        <div class="role r-int">Integration Engineer</div>
+        <div class="before">Before: Writes custom mapping code per product</div>
+        <div class="after">Now: Configures field mappings visually with AI assist</div>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <p>This isn't a tool for developers. It's a platform for the team that delivers the solution.</p>
+      <p class="sub">The next section shows exactly how it works — what gets configured and what executes at runtime.</p>
+    </div>
+
+  </div>
+</body>
+</html>

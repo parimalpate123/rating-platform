@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InsuRateConnect Investor Story</title>
+  <style>
+    :root {
+      --bg: #f5f1ea;
+      --paper: #fffdfa;
+      --ink: #1f2937;
+      --muted: #5f6b7a;
+      --line: #dfd4c5;
+      --accent: #c66a2b;
+      --accent-deep: #7f3f14;
+      --accent-soft: #f2d7c3;
+      --olive: #526348;
+      --blue: #315c8f;
+      --shadow: 0 20px 60px rgba(77, 55, 31, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(circle at top left, rgba(198, 106, 43, 0.12), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(49, 92, 143, 0.12), transparent 24%),
+        linear-gradient(180deg, #f8f3ec 0%, #f2ece3 100%);
+      color: var(--ink);
+    }
+
+    .deck {
+      width: min(1280px, calc(100vw - 48px));
+      margin: 32px auto 48px;
+      display: grid;
+      gap: 28px;
+    }
+
+    .slide {
+      position: relative;
+      min-height: 720px;
+      background: var(--paper);
+      border: 1px solid rgba(127, 63, 20, 0.12);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      padding: 52px 56px;
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(198, 106, 43, 0.06), transparent 26%),
+        linear-gradient(315deg, rgba(82, 99, 72, 0.06), transparent 22%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      position: relative;
+      z-index: 1;
+      display: inline-block;
+      margin-bottom: 18px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(198, 106, 43, 0.1);
+      color: var(--accent-deep);
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+      font-family: Arial, sans-serif;
+    }
+
+    h1, h2, h3, p {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 52px;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      max-width: 900px;
+    }
+
+    .subtitle {
+      margin-top: 18px;
+      max-width: 860px;
+      font-size: 24px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .two-up {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 34px;
+    }
+
+    .analogy-card {
+      border-radius: 24px;
+      padding: 28px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, #fffdf9 0%, #fbf5ee 100%);
+    }
+
+    .analogy-card.good {
+      background: linear-gradient(180deg, #f7fbf4 0%, #eef6e8 100%);
+      border-color: rgba(82, 99, 72, 0.25);
+    }
+
+    .card-label {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font: 700 12px/1 Arial, sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: white;
+      background: var(--accent-deep);
+      margin-bottom: 18px;
+    }
+
+    .good .card-label {
+      background: var(--olive);
+    }
+
+    .analogy-card h3 {
+      font-size: 30px;
+      line-height: 1.2;
+      margin-bottom: 14px;
+    }
+
+    .analogy-card p {
+      font-size: 20px;
+      line-height: 1.55;
+      color: #374151;
+    }
+
+    .analogy-card ul {
+      margin: 18px 0 0;
+      padding-left: 22px;
+      position: relative;
+      z-index: 1;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    .platform-strip {
+      position: relative;
+      z-index: 1;
+      margin-top: 28px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .node {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 24px 20px;
+      background: #fffefb;
+      min-height: 132px;
+    }
+
+    .node h3 {
+      font-size: 17px;
+      font-family: Arial, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .node p {
+      font-size: 26px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .node.center {
+      background: linear-gradient(135deg, #fff3e7 0%, #ffe8d5 100%);
+      border-color: rgba(198, 106, 43, 0.25);
+    }
+
+    .arrow {
+      font-size: 38px;
+      color: var(--accent);
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .footer-note {
+      position: relative;
+      z-index: 1;
+      margin-top: 26px;
+      max-width: 980px;
+      font-size: 18px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .flow-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 30px;
+      margin-top: 32px;
+    }
+
+    .flow-panel {
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, #fffefb 0%, #f9f4ed 100%);
+      padding: 28px;
+    }
+
+    .flow-panel h3 {
+      font-size: 16px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-family: Arial, sans-serif;
+      color: var(--accent-deep);
+      margin-bottom: 16px;
+    }
+
+    .flow-panel p {
+      font-size: 28px;
+      line-height: 1.25;
+      margin-bottom: 16px;
+    }
+
+    .flow-panel .small {
+      font-size: 18px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    .steps {
+      display: grid;
+      gap: 14px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 16px;
+      align-items: start;
+      padding: 18px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(49, 92, 143, 0.15);
+      background: rgba(49, 92, 143, 0.04);
+    }
+
+    .step:nth-child(odd) {
+      background: rgba(198, 106, 43, 0.05);
+      border-color: rgba(198, 106, 43, 0.14);
+    }
+
+    .step-num {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: white;
+      border: 1px solid rgba(31, 41, 55, 0.08);
+      font: 700 18px/1 Arial, sans-serif;
+      color: var(--accent-deep);
+    }
+
+    .step h4 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .step p {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .takeaway {
+      position: relative;
+      z-index: 1;
+      margin-top: 26px;
+      padding: 18px 22px;
+      border-left: 5px solid var(--blue);
+      background: rgba(49, 92, 143, 0.06);
+      border-radius: 0 18px 18px 0;
+      font-size: 21px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1100px) {
+      .slide {
+        min-height: auto;
+        padding: 36px 28px;
+      }
+
+      .two-up,
+      .flow-grid,
+      .platform-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .arrow {
+        transform: rotate(90deg);
+      }
+
+      h1 {
+        font-size: 40px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck">
+    <section class="slide">
+      <div class="eyebrow">Slide 1 · Business Context</div>
+      <h1>Insurance rating breaks down when systems cannot speak the same language.</h1>
+      <p class="subtitle">
+        InsuRateConnect exists because insurers still rely on fragile, point-to-point integrations between policy systems and rating engines. The result is delay, confusion, and expensive operational friction.
+      </p>
+
+      <div class="two-up">
+        <article class="analogy-card">
+          <div class="card-label">Without Integration Layer</div>
+          <h3>An American tourist ordering food in a Chinese restaurant in Beijing.</h3>
+          <p>
+            The tourist points at pictures, guesses at the menu, and hopes the order is right. The restaurant tries to interpret what was meant. The order is wrong, everyone is frustrated, and the experience breaks down.
+          </p>
+          <ul>
+            <li>Misunderstood inputs</li>
+            <li>Manual guesswork</li>
+            <li>Wrong outcomes</li>
+            <li>Slow and frustrating process</li>
+          </ul>
+        </article>
+
+        <article class="analogy-card good">
+          <div class="card-label">With Integration Layer</div>
+          <h3>The same tourist and restaurant, but now with a translator.</h3>
+          <p>
+            The translator speaks both English and Mandarin, understands American preferences and Chinese menu items, and makes sure the order is placed correctly. The customer gets the right meal. The restaurant serves with confidence.
+          </p>
+          <ul>
+            <li>Clear translation between both sides</li>
+            <li>Context-aware interpretation</li>
+            <li>Correct order, first time</li>
+            <li>Happy customer, happy restaurant</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="platform-strip">
+        <div class="node">
+          <h3>Source Systems</h3>
+          <p>Guidewire, Duck Creek, Salesforce</p>
+        </div>
+        <div class="arrow">→</div>
+        <div class="node center">
+          <h3>InsuRateConnect</h3>
+          <p>Translator, orchestrator, and control layer for every rating transaction</p>
+        </div>
+        <div class="arrow">→</div>
+        <div class="node">
+          <h3>Rating Engines</h3>
+          <p>Earnix, CGI Ratabase, custom engines</p>
+        </div>
+      </div>
+
+      <p class="footer-note">
+        Without this translation layer, every new product, state, or engine becomes a custom integration problem. With it, insurers move from brittle one-off connections to a standardized, governable rating platform.
+      </p>
+    </section>
+
+    <section class="slide">
+      <div class="eyebrow">Slide 2 · User Flow</div>
+      <h1>Users move from setup to live rating execution in one governed workflow.</h1>
+      <p class="subtitle">
+        The platform is designed for product, actuarial, and integration teams to configure rating logic without rebuilding integrations every time a product changes.
+      </p>
+
+      <div class="flow-grid">
+        <aside class="flow-panel">
+          <h3>User Outcome</h3>
+          <p>Launch and manage an insurance rating product without a new custom integration project.</p>
+          <p class="small">
+            The user journey starts with system setup, moves through product configuration, and ends with test execution, operational visibility, and audit-ready transaction history.
+          </p>
+        </aside>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div>
+              <h4>Register systems</h4>
+              <p>Connect the source system and target rating engine that need to exchange rating data.</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">2</div>
+            <div>
+              <h4>Create a product line</h4>
+              <p>Define the insurance product and assign its business context, source, and destination systems.</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">3</div>
+            <div>
+              <h4>Configure orchestration flow</h4>
+              <p>Set the execution path for validation, mapping, rules, rating engine calls, response handling, and event publication.</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">4</div>
+            <div>
+              <h4>Define mappings and rules</h4>
+              <p>Translate fields between systems and apply product, state, or transaction-specific rating logic.</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">5</div>
+            <div>
+              <h4>Run a test rating</h4>
+              <p>Submit a sample payload and execute the configured flow through the platform.</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">6</div>
+            <div>
+              <h4>Review trace and operate</h4>
+              <p>Inspect step-by-step execution, troubleshoot outcomes, and monitor transaction history for audit and performance visibility.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        InsuRateConnect changes the user experience from “build another custom integration” to “configure, test, and operate a rating product on a reusable platform.”
+      </div>
+    </section>
+  </main>
+</body>
+</html>

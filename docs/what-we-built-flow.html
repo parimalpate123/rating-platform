@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InsuRateConnect — What We Built</title>
+  <style>
+    :root {
+      --bg: #f8f6f2;
+      --paper: #ffffff;
+      --ink: #1a1a2e;
+      --muted: #64748b;
+      --border: #e2e0dc;
+      --accent: #c66a2b;
+      --accent-soft: #fef3eb;
+      --blue: #2563eb;
+      --blue-soft: #eff6ff;
+      --green: #16a34a;
+      --green-soft: #f0fdf4;
+      --purple: #7c3aed;
+      --purple-soft: #f5f3ff;
+      --red-soft: #fef2f2;
+      --red: #dc2626;
+    }
+
+    * { box-sizing: border-box; margin: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      padding: 40px 24px;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* --- Header --- */
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .header h1 {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .header p {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 760px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* --- Contrast banner --- */
+    .contrast {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0;
+      margin-bottom: 56px;
+      align-items: stretch;
+    }
+
+    .contrast-box {
+      padding: 28px 32px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .contrast-box.today {
+      background: var(--red-soft);
+      border-color: #fecaca;
+    }
+
+    .contrast-box.platform {
+      background: var(--green-soft);
+      border-color: #bbf7d0;
+    }
+
+    .contrast-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 24px;
+      font-size: 28px;
+      color: var(--muted);
+    }
+
+    .contrast-box .label {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .today .label { background: #fee2e2; color: #991b1b; }
+    .platform .label { background: #dcfce7; color: #166534; }
+
+    .contrast-box h3 {
+      font-size: 20px;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .contrast-box p {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* --- Layer sections --- */
+    .layer {
+      margin-bottom: 48px;
+    }
+
+    .layer-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .layer-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .layer-badge.configure { background: var(--blue); }
+    .layer-badge.execute { background: var(--accent); }
+    .layer-badge.visibility { background: var(--green); }
+
+    .layer-title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .layer-subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* --- Configure grid --- */
+    .config-grid {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 16px;
+    }
+
+    .actor-card {
+      background: var(--blue-soft);
+      border: 1px solid #bfdbfe;
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .actor-card .role {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--blue);
+      margin-bottom: 4px;
+    }
+
+    .actor-card .name {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .activities {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .activity-card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 16px;
+    }
+
+    .activity-card h4 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .activity-card p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .activity-card .actor-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .tag-sa { background: #dbeafe; color: #1e40af; }
+    .tag-ba { background: #f3e8ff; color: #6b21a8; }
+    .tag-act { background: #fef3c7; color: #92400e; }
+    .tag-int { background: #d1fae5; color: #065f46; }
+    .tag-all { background: #f1f5f9; color: #475569; }
+
+    /* --- Connector --- */
+    .connector {
+      display: flex;
+      justify-content: center;
+      padding: 16px 0;
+    }
+
+    .connector-line {
+      width: 2px;
+      height: 40px;
+      background: linear-gradient(180deg, var(--border), var(--accent));
+      border-radius: 2px;
+    }
+
+    /* --- Execution flow --- */
+    .exec-flow {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      padding: 8px 0;
+    }
+
+    .system-node {
+      flex-shrink: 0;
+      width: 180px;
+      padding: 20px 16px;
+      border-radius: 16px;
+      text-align: center;
+      border: 2px solid;
+    }
+
+    .system-node.source {
+      background: var(--blue-soft);
+      border-color: #93c5fd;
+    }
+
+    .system-node.target {
+      background: var(--purple-soft);
+      border-color: #c4b5fd;
+    }
+
+    .system-node .sys-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+
+    .source .sys-label { color: var(--blue); }
+    .target .sys-label { color: var(--purple); }
+
+    .system-node .sys-name {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .system-node .sys-examples {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .exec-arrow {
+      flex-shrink: 0;
+      padding: 0 8px;
+      font-size: 20px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .platform-steps {
+      flex: 1;
+      min-width: 500px;
+      background: var(--accent-soft);
+      border: 2px solid #fdba74;
+      border-radius: 20px;
+      padding: 20px;
+    }
+
+    .platform-steps .platform-label {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+
+    .step-chain {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .step-pill {
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: white;
+      border: 1px solid #fed7aa;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .step-arrow {
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    /* --- Visibility row --- */
+    .visibility-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .vis-card {
+      background: var(--green-soft);
+      border: 1px solid #bbf7d0;
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .vis-card .vis-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .vis-card h4 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .vis-card p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* --- Bottom tagline --- */
+    .tagline {
+      text-align: center;
+      margin-top: 48px;
+      padding: 24px;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .tagline p {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    .tagline .sub {
+      font-size: 15px;
+      font-weight: 400;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    @media (max-width: 900px) {
+      .contrast { grid-template-columns: 1fr; }
+      .contrast-divider { padding: 12px 0; transform: rotate(90deg); }
+      .config-grid { grid-template-columns: 1fr; }
+      .exec-flow { flex-direction: column; }
+      .platform-steps { min-width: auto; }
+      .exec-arrow { transform: rotate(90deg); }
+      .visibility-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- Header -->
+    <div class="header">
+      <h1>How InsuRateConnect Works</h1>
+      <p>Configure once. Execute every rating. Full visibility always.</p>
+    </div>
+
+    <!-- Contrast: Today vs Platform -->
+    <div class="contrast">
+      <div class="contrast-box today">
+        <div class="label">Without InsuRateConnect</div>
+        <h3>A full dev team. Multiple custom services. Months of build time.</h3>
+        <p>Every connection between a policy platform and a rating engine is a bespoke integration project — custom code, custom mapping, custom error handling. Built from scratch, maintained forever.</p>
+      </div>
+      <div class="contrast-divider">vs</div>
+      <div class="contrast-box platform">
+        <div class="label">With InsuRateConnect</div>
+        <h3>Four people. One platform. Configured in weeks.</h3>
+        <p>Solution architects, business analysts, actuaries, and integration engineers configure the platform through a visual workspace. No custom services to build. No code to deploy for each new product.</p>
+      </div>
+    </div>
+
+    <!-- Layer 1: Configure -->
+    <div class="layer">
+      <div class="layer-header">
+        <div class="layer-badge configure">1</div>
+        <div>
+          <div class="layer-title">Configure</div>
+          <div class="layer-subtitle">One-time setup per product line — done by the team, not by code</div>
+        </div>
+      </div>
+
+      <div class="activities">
+        <div class="activity-card">
+          <div class="actor-tag tag-sa">Solution Architect</div>
+          <h4>Register Systems</h4>
+          <p>Define the source RQI platform and target rating engine — endpoints, formats, credentials</p>
+        </div>
+        <div class="activity-card">
+          <div class="actor-tag tag-ba">Business Analyst / PO</div>
+          <h4>Create Product Line</h4>
+          <p>Define the insurance product, assign source and target systems, set business context</p>
+        </div>
+        <div class="activity-card">
+          <div class="actor-tag tag-sa">SA + Integration Eng</div>
+          <h4>Design Orchestration Flow</h4>
+          <p>Build the step-by-step execution pipeline — what runs, in what order, what happens on failure</p>
+        </div>
+        <div class="activity-card">
+          <div class="actor-tag tag-int">Integration Engineer</div>
+          <h4>Configure Field Mappings</h4>
+          <p>Map fields between source and target formats — transforms, defaults, lookups. AI-assisted.</p>
+        </div>
+        <div class="activity-card">
+          <div class="actor-tag tag-act">Actuarial Analyst</div>
+          <h4>Define Rating Rules</h4>
+          <p>Surcharges, discounts, rejections, state-specific overrides — plain English via AI or manual entry</p>
+        </div>
+        <div class="activity-card">
+          <div class="actor-tag tag-ba">BA/PO + Actuarial</div>
+          <h4>Set Scopes</h4>
+          <p>Tag rules and mappings to specific states, coverages, and transaction types</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div></div>
+
+    <!-- Layer 2: Execute -->
+    <div class="layer">
+      <div class="layer-header">
+        <div class="layer-badge execute">2</div>
+        <div>
+          <div class="layer-title">Execute</div>
+          <div class="layer-subtitle">Every rating request — automated, orchestrated, traced</div>
+        </div>
+      </div>
+
+      <div class="exec-flow">
+        <div class="system-node source">
+          <div class="sys-label">Source System</div>
+          <div class="sys-name">RQI Platform</div>
+          <div class="sys-examples">Guidewire, Duck Creek, Majesco</div>
+        </div>
+
+        <div class="exec-arrow">&rarr;</div>
+
+        <div class="platform-steps">
+          <div class="platform-label">InsuRateConnect — Orchestration Engine</div>
+          <div class="step-chain">
+            <div class="step-pill">Translate Request Fields</div>
+            <div class="step-arrow">&rarr;</div>
+            <div class="step-pill">Apply Pre-Rating Rules</div>
+            <div class="step-arrow">&rarr;</div>
+            <div class="step-pill">Transform Format</div>
+            <div class="step-arrow">&rarr;</div>
+            <div class="step-pill">Call Rating Engine</div>
+            <div class="step-arrow">&rarr;</div>
+            <div class="step-pill">Translate Response</div>
+            <div class="step-arrow">&rarr;</div>
+            <div class="step-pill">Apply Post-Rating Rules</div>
+          </div>
+        </div>
+
+        <div class="exec-arrow">&rarr;</div>
+
+        <div class="system-node target">
+          <div class="sys-label">Target System</div>
+          <div class="sys-name">Rating Engine</div>
+          <div class="sys-examples">Earnix, CGI Ratabase, Homegrown</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div></div>
+
+    <!-- Layer 3: Visibility -->
+    <div class="layer">
+      <div class="layer-header">
+        <div class="layer-badge visibility">3</div>
+        <div>
+          <div class="layer-title">Visibility</div>
+          <div class="layer-subtitle">Full transparency into every rating transaction — always on</div>
+        </div>
+      </div>
+
+      <div class="visibility-grid">
+        <div class="vis-card">
+          <div class="vis-icon">&#x1f50d;</div>
+          <h4>Step-by-Step Trace</h4>
+          <p>Every step logged with input, output, duration, and status. Expand any transaction to see exactly what happened.</p>
+        </div>
+        <div class="vis-card">
+          <div class="vis-icon">&#x1f4cb;</div>
+          <h4>Audit Trail</h4>
+          <p>Full history of every rating execution — who requested it, what rules fired, what premium was returned.</p>
+        </div>
+        <div class="vis-card">
+          <div class="vis-icon">&#x26a1;</div>
+          <h4>Test & Validate</h4>
+          <p>Run test ratings before go-live. All actors can verify the flow works end-to-end with real payloads.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tagline -->
+    <div class="tagline">
+      <p>Configure once. Execute every rating. Full visibility always.</p>
+      <p class="sub">What used to take a full team months of custom development is now a configuration exercise on a reusable platform.</p>
+    </div>
+
+  </div>
+</body>
+</html>

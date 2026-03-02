@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InsuRateConnect — What's Built & Roadmap</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8f6f2;
+      color: #1a1a2e;
+      padding: 48px 24px;
+    }
+
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .header .eyebrow {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: #fef3eb;
+      color: #c66a2b;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      max-width: 700px;
+      margin: 0 auto 14px;
+    }
+
+    .header p {
+      font-size: 17px;
+      color: #64748b;
+      max-width: 640px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .hl { color: #c66a2b; }
+
+    /* Status banner */
+    .status-banner {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 20px;
+      align-items: center;
+      background: #ffffff;
+      border: 1px solid #e2e0dc;
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 40px;
+    }
+
+    .status-badge {
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: #fef3eb;
+      color: #c66a2b;
+      white-space: nowrap;
+    }
+
+    .status-text h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .status-text p {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    /* Section labels */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #94a3b8;
+      margin-bottom: 16px;
+    }
+
+    /* What's built grid */
+    .built-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 44px;
+    }
+
+    .built-card {
+      background: #ffffff;
+      border: 1px solid #e2e0dc;
+      border-radius: 14px;
+      padding: 18px 16px;
+    }
+
+    .built-card .card-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .card-status.done { background: #dcfce7; color: #166534; }
+    .card-status.partial { background: #fef3c7; color: #92400e; }
+
+    .built-card h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .built-card p {
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.45;
+    }
+
+    /* Architecture strip */
+    .arch-strip {
+      background: #ffffff;
+      border: 1px solid #e2e0dc;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 44px;
+    }
+
+    .arch-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      margin-bottom: 14px;
+    }
+
+    .arch-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .arch-chip {
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid;
+    }
+
+    .arch-chip.svc { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+    .arch-chip.fe { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+    .arch-chip.infra { background: #f5f3ff; border-color: #c4b5fd; color: #5b21b6; }
+    .arch-chip.db { background: #fefce8; border-color: #fde68a; color: #92400e; }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 44px 0 32px;
+    }
+
+    .divider .line {
+      flex: 1;
+      height: 1px;
+      background: #e2e0dc;
+    }
+
+    .divider .label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+
+    /* Roadmap timeline */
+    .roadmap {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 44px;
+    }
+
+    .phase {
+      border-radius: 16px;
+      padding: 24px 20px;
+      border: 2px solid;
+      position: relative;
+    }
+
+    .phase.current {
+      background: #fef3eb;
+      border-color: #c66a2b;
+    }
+
+    .phase.next {
+      background: #eff6ff;
+      border-color: #93c5fd;
+    }
+
+    .phase.future {
+      background: #f5f3ff;
+      border-color: #c4b5fd;
+    }
+
+    .phase .phase-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .current .phase-tag { background: #ffedd5; color: #9a3412; }
+    .next .phase-tag { background: #dbeafe; color: #1e40af; }
+    .future .phase-tag { background: #ede9fe; color: #5b21b6; }
+
+    .phase h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .phase .timeline {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+
+    .phase ul {
+      padding-left: 18px;
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.7;
+    }
+
+    /* Honest gaps */
+    .gaps-section {
+      background: #ffffff;
+      border: 1px solid #e2e0dc;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 44px;
+    }
+
+    .gaps-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      margin-bottom: 14px;
+    }
+
+    .gaps-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .gap-item {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #fefce8;
+      border: 1px solid #fde68a;
+    }
+
+    .gap-item .gap-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: #fef3c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .gap-item p {
+      font-size: 13px;
+      color: #92400e;
+      line-height: 1.4;
+    }
+
+    /* Bottom */
+    .bottom {
+      text-align: center;
+      padding: 24px;
+      background: #ffffff;
+      border: 1px solid #e2e0dc;
+      border-radius: 16px;
+    }
+
+    .bottom p {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .bottom .sub {
+      font-size: 14px;
+      font-weight: 400;
+      color: #64748b;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 800px) {
+      .built-grid { grid-template-columns: 1fr; }
+      .roadmap { grid-template-columns: 1fr; }
+      .gaps-grid { grid-template-columns: 1fr; }
+      .header h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <div class="header">
+      <div class="eyebrow">Current State</div>
+      <h1>This is a <span class="hl">working prototype</span> — not a slide deck.</h1>
+      <p>The platform is built, deployed, and demonstrable. Here's an honest look at what works today and what's on the roadmap.</p>
+    </div>
+
+    <!-- Status -->
+    <div class="status-banner">
+      <div class="status-badge">Prototype Complete</div>
+      <div class="status-text">
+        <h3>End-to-end rating flow working — from request to premium to transaction trace</h3>
+        <p>7 microservices deployed on AWS. Visual configuration UI. AI-assisted mapping and rules. Mock and real engine calls. Full step-by-step transaction logging.</p>
+      </div>
+    </div>
+
+    <!-- What's built -->
+    <div class="section-label">What's built and working</div>
+    <div class="built-grid">
+      <div class="built-card">
+        <div class="card-status done">Complete</div>
+        <h4>Product Configuration</h4>
+        <p>Full CRUD for product lines, system registration, source/target assignment. 5 systems pre-seeded.</p>
+      </div>
+      <div class="built-card">
+        <div class="card-status done">Complete</div>
+        <h4>Orchestration Engine</h4>
+        <p>Step-based execution with 10 handler types. Auto-generate flows. Retry, circuit breaker, conditional steps, failure modes.</p>
+      </div>
+      <div class="built-card">
+        <div class="card-status done">Complete</div>
+        <h4>Field Mapping</h4>
+        <p>17 transformation types. AI-assisted suggestions via AWS Bedrock. CSV import. Mirror mapping. Inline editing.</p>
+      </div>
+      <div class="built-card">
+        <div class="card-status done">Complete</div>
+        <h4>Rules Engine</h4>
+        <p>14 condition operators, 9 action types. Priority-based evaluation. Scope filtering (state/coverage/transaction). AI rule generation from plain English.</p>
+      </div>
+      <div class="built-card">
+        <div class="card-status done">Complete</div>
+        <h4>Format Transformation</h4>
+        <p>JSON to XML, XML to JSON, JSON to SOAP, SOAP to JSON. Configurable root tags and namespaces.</p>
+      </div>
+      <div class="built-card">
+        <div class="card-status done">Complete</div>
+        <h4>Rating Engine Integration</h4>
+        <p>4 mock engines (Earnix, CGI, Duck Creek, GW). Real engine calls with dynamic URL and format. Premium extraction.</p>
+      </div>
+      <div class="built-card">
+        <div class="card-status done">Complete</div>
+        <h4>Transaction Monitoring</h4>
+        <p>Transaction creation, status tracking, per-step execution logs. UI with list view, detail view, and step trace.</p>
+      </div>
+      <div class="built-card">
+        <div class="card-status done">Complete</div>
+        <h4>Configuration UI</h4>
+        <p>React workspace with product management, orchestrator flow builder, mappings, rules, scopes tabs. Dark mode. Global search.</p>
+      </div>
+      <div class="built-card">
+        <div class="card-status done">Complete</div>
+        <h4>AWS Deployment</h4>
+        <p>ECS Fargate, RDS PostgreSQL, ALB with path routing, ECR repositories, TLS, service discovery. One-command deploy script.</p>
+      </div>
+    </div>
+
+    <!-- Architecture strip -->
+    <div class="arch-strip">
+      <div class="arch-label">Architecture at a glance</div>
+      <div class="arch-row">
+        <div class="arch-chip svc">core-rating :4000</div>
+        <div class="arch-chip svc">line-rating :4001</div>
+        <div class="arch-chip svc">product-config :4010</div>
+        <div class="arch-chip svc">transform :4011</div>
+        <div class="arch-chip svc">rules :4012</div>
+        <div class="arch-chip svc">status :4013</div>
+        <div class="arch-chip fe">React UI :4200</div>
+        <div class="arch-chip db">PostgreSQL 16</div>
+        <div class="arch-chip infra">ECS Fargate</div>
+        <div class="arch-chip infra">RDS</div>
+        <div class="arch-chip infra">ALB</div>
+        <div class="arch-chip infra">ECR</div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="divider">
+      <div class="line"></div>
+      <div class="label">Roadmap</div>
+      <div class="line"></div>
+    </div>
+
+    <!-- Honest gaps -->
+    <div class="gaps-section">
+      <div class="gaps-label">Known gaps in the prototype — addressed in the roadmap</div>
+      <div class="gaps-grid">
+        <div class="gap-item">
+          <div class="gap-icon">&#9888;</div>
+          <p>No API authentication — endpoints are open. MVP adds API key auth with per-product scoping.</p>
+        </div>
+        <div class="gap-item">
+          <div class="gap-icon">&#9888;</div>
+          <p>Transform execution incomplete — field copies work, but mathematical transforms (multiply, round, date) are not yet wired at runtime.</p>
+        </div>
+        <div class="gap-item">
+          <div class="gap-icon">&#9888;</div>
+          <p>No rate limiting or payload size guards — production hardening needed before real traffic.</p>
+        </div>
+        <div class="gap-item">
+          <div class="gap-icon">&#9888;</div>
+          <p>No configuration audit trail — who changed what, when. Required for compliance-ready deployments.</p>
+        </div>
+        <div class="gap-item">
+          <div class="gap-icon">&#9888;</div>
+          <p>No auto-scaling — static task count on ECS. Needs target-tracking scaling for core-rating and rules-service.</p>
+        </div>
+        <div class="gap-item">
+          <div class="gap-icon">&#9888;</div>
+          <p>Redis running but not integrated — flow definitions, mappings, and rules hit the database on every request.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Roadmap phases -->
+    <div class="roadmap">
+      <div class="phase current">
+        <div class="phase-tag">Now — Prototype</div>
+        <h3>Prove It Works</h3>
+        <div class="timeline">Completed</div>
+        <ul>
+          <li>All 7 services built and deployed</li>
+          <li>End-to-end rating execution</li>
+          <li>Visual configuration UI</li>
+          <li>AI-assisted rules and mappings</li>
+          <li>AWS deployment pipeline</li>
+          <li>Demo-ready for stakeholders</li>
+        </ul>
+      </div>
+      <div class="phase next">
+        <div class="phase-tag">Next — MVP</div>
+        <h3>Make It Production-Safe</h3>
+        <div class="timeline">Target: 4–6 weeks with 2 developers</div>
+        <ul>
+          <li>API authentication (key-based)</li>
+          <li>Rate limiting and payload guards</li>
+          <li>Full transform execution at runtime</li>
+          <li>Redis caching for performance</li>
+          <li>Auto-scaling on critical services</li>
+          <li>Configuration audit trail</li>
+          <li>Standardized error handling</li>
+        </ul>
+      </div>
+      <div class="phase future">
+        <div class="phase-tag">Future — Scale</div>
+        <h3>Expand the Platform</h3>
+        <div class="timeline">Post-MVP</div>
+        <ul>
+          <li>Multi-tenancy (org isolation)</li>
+          <li>Kafka event publishing</li>
+          <li>D&B and third-party enrichment</li>
+          <li>Decision and lookup tables</li>
+          <li>Async rating with callbacks</li>
+          <li>Monitoring dashboard and alerting</li>
+          <li>Config export/import across envs</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Bottom -->
+    <div class="bottom">
+      <p>The foundation is built. The path to production is clear and scoped.</p>
+      <p class="sub">This is not a concept — it's a working system that needs hardening, not a rewrite.</p>
+    </div>
+
+  </div>
+</body>
+</html>
