@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InsuRateConnect — Before &amp; After</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f3ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .page { max-width: 1100px; width: 100%; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 32px; }
+    .header h1 {
+      font-size: 34px;
+      font-weight: 800;
+      color: #0f0a1e;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+    .header .sub {
+      font-size: 15px;
+      color: #7c3aed;
+      font-weight: 500;
+    }
+    .header .sub span { margin: 0 8px; opacity: 0.4; }
+
+    /* State toggle */
+    .toggle-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .toggle-btn {
+      padding: 8px 22px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1.5px solid;
+      cursor: pointer;
+      transition: all 0.25s;
+      background: white;
+    }
+    .toggle-btn.before {
+      border-color: #fca5a5;
+      color: #dc2626;
+    }
+    .toggle-btn.before.active {
+      background: #fef2f2;
+      border-color: #dc2626;
+    }
+    .toggle-btn.after {
+      border-color: #a7f3d0;
+      color: #059669;
+    }
+    .toggle-btn.after.active {
+      background: #f0fdf4;
+      border-color: #059669;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      width: 220px;
+      height: 4px;
+      background: #ede9fe;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #8b5cf6, #6d28d9);
+      border-radius: 99px;
+      width: 0%;
+      transition: none;
+    }
+
+    /* Diagram card */
+    .diagram-card {
+      background: white;
+      border: 1px solid #ede9fe;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 32px rgba(124, 58, 237, 0.08);
+    }
+    svg.diagram { width: 100%; display: block; }
+
+    /* Info panel */
+    .info-panel {
+      padding: 18px 28px;
+      border-top: 1px solid #ede9fe;
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .state-badge {
+      padding: 5px 14px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      flex-shrink: 0;
+    }
+    .state-badge.before { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .state-badge.after  { background: #f0fdf4; color: #059669; border: 1px solid #bbf7d0; }
+    .info-text h3 { font-size: 14px; font-weight: 700; color: #0f0a1e; margin-bottom: 3px; }
+    .info-text p  { font-size: 12px; color: #64748b; line-height: 1.5; }
+
+    /* Bottom strip */
+    .bottom-strip {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+    .strip-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: #6d28d9; font-weight: 600;
+    }
+    .strip-diamond { font-size: 8px; color: #7c3aed; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <h1>Before &amp; After InsuRateConnect</h1>
+      <p class="sub">
+        Custom services <span>·</span>
+        Months of work <span>·</span>
+        vs. configured in weeks
+      </p>
+    </div>
+
+    <!-- Controls -->
+    <div class="toggle-bar">
+      <button class="toggle-btn before active" id="btn-before" onclick="switchState('before')">Before</button>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <button class="toggle-btn after" id="btn-after" onclick="switchState('after')">After</button>
+    </div>
+
+    <div class="diagram-card">
+      <svg class="diagram" id="main-svg" viewBox="0 0 1060 460" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Dot grid -->
+          <pattern id="grid2" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="1.2" fill="#c4b5fd" opacity="0.35"/>
+          </pattern>
+          <!-- Hub gradient -->
+          <radialGradient id="hubG2" cx="38%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#8b5cf6"/>
+            <stop offset="100%" stop-color="#4c1d95"/>
+          </radialGradient>
+          <!-- Hub glow -->
+          <radialGradient id="hubGlow2" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Arrows -->
+          <marker id="arrB2" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
+            <polygon points="0 0, 8 3.5, 0 7" fill="#2563eb"/>
+          </marker>
+          <marker id="arrP2" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
+            <polygon points="0 0, 8 3.5, 0 7" fill="#7c3aed"/>
+          </marker>
+          <marker id="arrR2" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
+            <polygon points="0 0, 8 3.5, 0 7" fill="#dc2626"/>
+          </marker>
+        </defs>
+
+        <!-- Background -->
+        <rect width="1060" height="460" fill="#fafafe"/>
+        <rect width="1060" height="460" fill="url(#grid2)"/>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!--              BEFORE STATE                   -->
+        <!-- ═══════════════════════════════════════════ -->
+        <g id="state-before">
+
+          <!-- Column labels -->
+          <text x="30" y="28" font-family="system-ui" font-size="10" font-weight="700" fill="#64748b" letter-spacing="2" opacity="0.7">▶ SOURCE</text>
+          <text x="530" y="28" font-family="system-ui" font-size="10" font-weight="700" fill="#dc2626" letter-spacing="2" opacity="0.8" text-anchor="middle">▶ CUSTOM SERVICES (BUILT FROM SCRATCH)</text>
+          <text x="920" y="28" font-family="system-ui" font-size="10" font-weight="700" fill="#64748b" letter-spacing="2" opacity="0.7" text-anchor="middle">▶ TARGET</text>
+
+          <!-- Source card -->
+          <rect x="20" y="100" width="210" height="260" rx="14" fill="white" stroke="#e8e4f5" stroke-width="1.5"/>
+          <rect x="20" y="100" width="4" height="260" rx="2" fill="#2563eb"/>
+          <rect x="36" y="120" width="32" height="32" rx="9" fill="#eff6ff"/>
+          <text x="52" y="141" font-family="system-ui" font-size="16" text-anchor="middle">🖥</text>
+          <text x="40" y="172" font-family="system-ui" font-size="15" font-weight="700" fill="#0f0a1e">RQI Platform</text>
+          <text x="40" y="191" font-family="system-ui" font-size="12" fill="#64748b">Sends rating request.</text>
+          <text x="40" y="208" font-family="system-ui" font-size="12" fill="#64748b">Receives premium.</text>
+          <rect x="40" y="225" width="76" height="22" rx="11" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1"/>
+          <text x="78" y="240" font-family="system-ui" font-size="10" font-weight="700" fill="#1d4ed8" text-anchor="middle" letter-spacing="0.8">SOURCE</text>
+          <text x="40" y="276" font-family="system-ui" font-size="11" fill="#94a3b8">Guidewire</text>
+          <text x="40" y="293" font-family="system-ui" font-size="11" fill="#94a3b8">Duck Creek · Majesco</text>
+          <text x="40" y="340" font-family="system-ui" font-size="10" fill="#c4b5fd" font-style="italic">or any RQI platform</text>
+
+          <!-- Target card -->
+          <rect x="830" y="100" width="210" height="260" rx="14" fill="white" stroke="#e8e4f5" stroke-width="1.5"/>
+          <rect x="830" y="100" width="4" height="260" rx="2" fill="#7c3aed"/>
+          <rect x="846" y="120" width="32" height="32" rx="9" fill="#f5f3ff"/>
+          <text x="862" y="141" font-family="system-ui" font-size="16" text-anchor="middle">⚙</text>
+          <text x="850" y="172" font-family="system-ui" font-size="15" font-weight="700" fill="#0f0a1e">Rating Engine</text>
+          <text x="850" y="191" font-family="system-ui" font-size="12" fill="#64748b">Returns premium</text>
+          <text x="850" y="208" font-family="system-ui" font-size="12" fill="#64748b">calculation.</text>
+          <rect x="850" y="225" width="70" height="22" rx="11" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1"/>
+          <text x="885" y="240" font-family="system-ui" font-size="10" font-weight="700" fill="#6d28d9" text-anchor="middle" letter-spacing="0.8">TARGET</text>
+          <text x="850" y="276" font-family="system-ui" font-size="11" fill="#94a3b8">CGI Ratabase</text>
+          <text x="850" y="293" font-family="system-ui" font-size="11" fill="#94a3b8">Earnix · Homegrown</text>
+          <text x="850" y="340" font-family="system-ui" font-size="10" fill="#c4b5fd" font-style="italic">or any rating engine</text>
+
+          <!-- Custom service boxes (chaos in the middle) -->
+          <!-- Svc 1: Custom Field Mapper -->
+          <rect x="288" y="72" width="148" height="54" rx="10" fill="#fff5f5" stroke="#fca5a5" stroke-width="1.5"/>
+          <text x="362" y="96" font-family="system-ui" font-size="11" font-weight="700" fill="#dc2626" text-anchor="middle">Custom Field Mapper</text>
+          <text x="362" y="112" font-family="system-ui" font-size="10" fill="#ef4444" text-anchor="middle">140+ hardcoded rules</text>
+
+          <!-- Svc 2: Custom Rules Engine -->
+          <rect x="460" y="148" width="148" height="54" rx="10" fill="#fff5f5" stroke="#fca5a5" stroke-width="1.5"/>
+          <text x="534" y="172" font-family="system-ui" font-size="11" font-weight="700" fill="#dc2626" text-anchor="middle">Custom Rules Engine</text>
+          <text x="534" y="188" font-family="system-ui" font-size="10" fill="#ef4444" text-anchor="middle">state logic per product</text>
+
+          <!-- Svc 3: Format Transformer -->
+          <rect x="292" y="205" width="148" height="54" rx="10" fill="#fff5f5" stroke="#fca5a5" stroke-width="1.5"/>
+          <text x="366" y="229" font-family="system-ui" font-size="11" font-weight="700" fill="#dc2626" text-anchor="middle">Format Transformer</text>
+          <text x="366" y="245" font-family="system-ui" font-size="10" fill="#ef4444" text-anchor="middle">JSON ↔ XML ↔ SOAP</text>
+
+          <!-- Svc 4: Engine Connector -->
+          <rect x="456" y="280" width="148" height="54" rx="10" fill="#fff5f5" stroke="#fca5a5" stroke-width="1.5"/>
+          <text x="530" y="304" font-family="system-ui" font-size="11" font-weight="700" fill="#dc2626" text-anchor="middle">Engine Connector</text>
+          <text x="530" y="320" font-family="system-ui" font-size="10" fill="#ef4444" text-anchor="middle">auth + retry + timeout</text>
+
+          <!-- Svc 5: Error Handler -->
+          <rect x="296" y="340" width="148" height="54" rx="10" fill="#fff5f5" stroke="#fca5a5" stroke-width="1.5"/>
+          <text x="370" y="364" font-family="system-ui" font-size="11" font-weight="700" fill="#dc2626" text-anchor="middle">Error Handler</text>
+          <text x="370" y="380" font-family="system-ui" font-size="10" fill="#ef4444" text-anchor="middle">custom error codes</text>
+
+          <!-- Svc 6: Response Mapper -->
+          <rect x="624" y="200" width="148" height="54" rx="10" fill="#fff5f5" stroke="#fca5a5" stroke-width="1.5"/>
+          <text x="698" y="224" font-family="system-ui" font-size="11" font-weight="700" fill="#dc2626" text-anchor="middle">Response Mapper</text>
+          <text x="698" y="240" font-family="system-ui" font-size="10" fill="#ef4444" text-anchor="middle">reverse field mapping</text>
+
+          <!-- Tangled red connector lines -->
+          <!-- Source → Field Mapper -->
+          <path d="M 232 190 C 270 190, 270 99, 288 99"
+                fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.6"/>
+          <!-- Source → Format Transformer -->
+          <path d="M 232 220 C 260 220, 260 232, 292 232"
+                fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.6"/>
+          <!-- Field Mapper → Rules Engine (crosses) -->
+          <path d="M 436 99 C 450 99, 452 175, 460 175"
+                fill="none" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.55"/>
+          <!-- Format Transformer → Engine Connector (zigzag) -->
+          <path d="M 440 232 C 445 232, 458 307, 456 307"
+                fill="none" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.55"/>
+          <!-- Field Mapper → Format Transformer (cross) -->
+          <path d="M 362 126 C 362 165, 366 200, 366 205"
+                fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.5"/>
+          <!-- Rules Engine → Engine Connector -->
+          <path d="M 534 202 C 534 240, 530 278, 530 280"
+                fill="none" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.55"/>
+          <!-- Engine Connector → Response Mapper -->
+          <path d="M 604 307 C 620 307, 630 230, 624 227"
+                fill="none" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.55"/>
+          <!-- Error Handler → Response Mapper (long cross) -->
+          <path d="M 444 367 C 560 367, 560 240, 624 227"
+                fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.4"/>
+          <!-- Response Mapper → Target -->
+          <path d="M 772 227 C 800 227, 808 230, 830 230"
+                fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.6"
+                marker-end="url(#arrR2)"/>
+          <!-- Error Handler → Source (feedback) -->
+          <path d="M 296 380 C 240 380, 236 300, 232 280"
+                fill="none" stroke="#fca5a5" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.5"
+                marker-end="url(#arrR2)"/>
+
+          <!-- "Maintained forever" annotation -->
+          <rect x="450" y="38" width="160" height="22" rx="11" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
+          <text x="530" y="53" font-family="system-ui" font-size="10" fill="#dc2626" text-anchor="middle" font-weight="600">built from scratch · per product</text>
+
+          <!-- Footer label -->
+          <text x="530" y="448" font-family="system-ui" font-size="11" fill="#dc2626" text-anchor="middle" font-weight="700">
+            Custom services · built from scratch · maintained forever · months of work
+          </text>
+        </g>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!--               AFTER STATE                   -->
+        <!-- ═══════════════════════════════════════════ -->
+        <g id="state-after" opacity="0" pointer-events="none">
+
+          <!-- Column labels -->
+          <text x="30" y="28" font-family="system-ui" font-size="10" font-weight="700" fill="#7c3aed" letter-spacing="2" opacity="0.65">▶ SOURCE</text>
+          <text x="530" y="28" font-family="system-ui" font-size="10" font-weight="700" fill="#7c3aed" letter-spacing="2" opacity="0.65" text-anchor="middle">▶ INSURATECONNECT</text>
+          <text x="920" y="28" font-family="system-ui" font-size="10" font-weight="700" fill="#7c3aed" letter-spacing="2" opacity="0.65" text-anchor="middle">▶ TARGET</text>
+
+          <!-- Source card (same) -->
+          <rect x="20" y="100" width="210" height="260" rx="14" fill="white" stroke="#e8e4f5" stroke-width="1.5"/>
+          <rect x="20" y="100" width="4" height="260" rx="2" fill="#2563eb"/>
+          <rect x="36" y="120" width="32" height="32" rx="9" fill="#eff6ff"/>
+          <text x="52" y="141" font-family="system-ui" font-size="16" text-anchor="middle">🖥</text>
+          <text x="40" y="172" font-family="system-ui" font-size="15" font-weight="700" fill="#0f0a1e">RQI Platform</text>
+          <text x="40" y="191" font-family="system-ui" font-size="12" fill="#64748b">Sends rating request.</text>
+          <text x="40" y="208" font-family="system-ui" font-size="12" fill="#64748b">Receives premium.</text>
+          <rect x="40" y="225" width="76" height="22" rx="11" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1"/>
+          <text x="78" y="240" font-family="system-ui" font-size="10" font-weight="700" fill="#1d4ed8" text-anchor="middle" letter-spacing="0.8">SOURCE</text>
+          <text x="40" y="276" font-family="system-ui" font-size="11" fill="#94a3b8">Guidewire</text>
+          <text x="40" y="293" font-family="system-ui" font-size="11" fill="#94a3b8">Duck Creek · Majesco</text>
+          <text x="40" y="340" font-family="system-ui" font-size="10" fill="#c4b5fd" font-style="italic">or any RQI platform</text>
+
+          <!-- Target card (same) -->
+          <rect x="830" y="100" width="210" height="260" rx="14" fill="white" stroke="#e8e4f5" stroke-width="1.5"/>
+          <rect x="830" y="100" width="4" height="260" rx="2" fill="#7c3aed"/>
+          <rect x="846" y="120" width="32" height="32" rx="9" fill="#f5f3ff"/>
+          <text x="862" y="141" font-family="system-ui" font-size="16" text-anchor="middle">⚙</text>
+          <text x="850" y="172" font-family="system-ui" font-size="15" font-weight="700" fill="#0f0a1e">Rating Engine</text>
+          <text x="850" y="191" font-family="system-ui" font-size="12" fill="#64748b">Returns premium</text>
+          <text x="850" y="208" font-family="system-ui" font-size="12" fill="#64748b">calculation.</text>
+          <rect x="850" y="225" width="70" height="22" rx="11" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1"/>
+          <text x="885" y="240" font-family="system-ui" font-size="10" font-weight="700" fill="#6d28d9" text-anchor="middle" letter-spacing="0.8">TARGET</text>
+          <text x="850" y="276" font-family="system-ui" font-size="11" fill="#94a3b8">CGI Ratabase</text>
+          <text x="850" y="293" font-family="system-ui" font-size="11" fill="#94a3b8">Earnix · Homegrown</text>
+          <text x="850" y="340" font-family="system-ui" font-size="10" fill="#c4b5fd" font-style="italic">or any rating engine</text>
+
+          <!-- Hub glow + rings -->
+          <circle cx="530" cy="230" r="170" fill="url(#hubGlow2)"/>
+          <circle cx="530" cy="230" r="140" fill="none" stroke="#7c3aed" stroke-width="0.6" opacity="0.12"/>
+          <circle cx="530" cy="230" r="115" fill="none" stroke="#7c3aed" stroke-width="0.8" opacity="0.18"/>
+          <!-- Hub circle -->
+          <circle cx="530" cy="230" r="95" fill="url(#hubG2)"/>
+          <!-- Hub text -->
+          <text x="530" y="216" font-family="system-ui" font-size="17" font-weight="800" fill="white" text-anchor="middle">InsuRate</text>
+          <text x="530" y="237" font-family="system-ui" font-size="17" font-weight="800" fill="white" text-anchor="middle">Connect</text>
+          <text x="530" y="257" font-family="system-ui" font-size="9.5" fill="rgba(255,255,255,0.65)" text-anchor="middle" letter-spacing="0.8">Orchestration Engine</text>
+
+          <!-- What replaced the chaos (step chips) -->
+          <!-- Top chip: Mapping + Rules -->
+          <rect x="448" y="338" width="164" height="22" rx="11" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+          <text x="530" y="353" font-family="system-ui" font-size="9.5" fill="rgba(255,255,255,0.85)" text-anchor="middle">Map · Rules · Transform · Connect</text>
+
+          <!-- Clean paths: Source ↔ Hub ↔ Target -->
+          <!-- Source → Hub: request -->
+          <path id="after-path-req"
+                d="M 232 218 C 340 218, 360 215, 435 215"
+                fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="6 4" opacity="0.6"
+                marker-end="url(#arrB2)"/>
+          <!-- Hub → Source: response -->
+          <path id="after-path-res"
+                d="M 435 245 C 360 245, 340 245, 232 245"
+                fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" opacity="0.6"
+                marker-end="url(#arrP2)"/>
+          <!-- Hub → Target: request -->
+          <path id="after-path-out"
+                d="M 625 215 C 720 215, 730 218, 828 218"
+                fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="6 4" opacity="0.6"
+                marker-end="url(#arrB2)"/>
+          <!-- Target → Hub: response -->
+          <path id="after-path-back"
+                d="M 828 245 C 730 245, 720 245, 625 245"
+                fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" opacity="0.6"
+                marker-end="url(#arrP2)"/>
+
+          <!-- Connector pill labels -->
+          <rect x="286" y="196" width="116" height="22" rx="11" fill="white" stroke="#ede9fe" stroke-width="1"/>
+          <text x="344" y="211" font-family="system-ui" font-size="9.5" fill="#6d28d9" text-anchor="middle" font-weight="500">translate · map fields</text>
+
+          <rect x="292" y="249" width="112" height="22" rx="11" fill="white" stroke="#ede9fe" stroke-width="1"/>
+          <text x="348" y="264" font-family="system-ui" font-size="9.5" fill="#7c3aed" text-anchor="middle" font-weight="500">post rules · respond</text>
+
+          <rect x="660" y="196" width="110" height="22" rx="11" fill="white" stroke="#bfdbfe" stroke-width="1"/>
+          <text x="715" y="211" font-family="system-ui" font-size="9.5" fill="#1d4ed8" text-anchor="middle" font-weight="500">format · call engine</text>
+
+          <rect x="665" y="249" width="106" height="22" rx="11" fill="white" stroke="#ede9fe" stroke-width="1"/>
+          <text x="718" y="264" font-family="system-ui" font-size="9.5" fill="#6d28d9" text-anchor="middle" font-weight="500">premium response</text>
+
+          <!-- "Configured in weeks" annotation -->
+          <rect x="440" y="38" width="180" height="22" rx="11" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1"/>
+          <text x="530" y="53" font-family="system-ui" font-size="10" fill="#059669" text-anchor="middle" font-weight="600">configured in weeks · reusable per product</text>
+
+          <!-- Animated particles -->
+          <circle id="pa-req"  r="5.5" fill="#2563eb" opacity="0"/>
+          <circle id="pa-out"  r="5.5" fill="#2563eb" opacity="0"/>
+          <circle id="pa-back" r="5.5" fill="#7c3aed" opacity="0"/>
+          <circle id="pa-res"  r="5.5" fill="#7c3aed" opacity="0"/>
+
+          <!-- Footer label -->
+          <text x="530" y="448" font-family="system-ui" font-size="11" fill="#059669" text-anchor="middle" font-weight="700">
+            1 platform · configured in weeks · same platform reused for every product line
+          </text>
+        </g>
+      </svg>
+
+      <!-- Info panel -->
+      <div class="info-panel">
+        <span class="state-badge before" id="state-badge">Before</span>
+        <div class="info-text">
+          <h3 id="info-title">Custom services built from scratch — for every product, every time</h3>
+          <p id="info-desc">Each integration requires custom mapping code, format transformers, rules engines, and error handlers. Every product line is a new project. Every change requires a dev sprint.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom strip -->
+    <div class="bottom-strip" style="margin-top: 22px;">
+      <div class="strip-item"><span class="strip-diamond">◆</span> No Custom Code</div>
+      <div class="strip-item"><span class="strip-diamond">◆</span> Reusable Configuration</div>
+      <div class="strip-item"><span class="strip-diamond">◆</span> Self-Serve Rule Changes</div>
+      <div class="strip-item"><span class="strip-diamond">◆</span> Full Audit Trail</div>
+      <div class="strip-item"><span class="strip-diamond">◆</span> Engine-Agnostic</div>
+    </div>
+  </div>
+
+  <script>
+    let currentState = 'before';
+    let autoTimer = null;
+    let progressInterval = null;
+    const AUTO_DURATION = 6000;
+
+    const stateContent = {
+      before: {
+        badge: 'Before',
+        badgeClass: 'before',
+        title: 'Custom services built from scratch — for every product, every time',
+        desc: 'Each integration requires custom mapping code, format transformers, rules engines, and error handlers. Every product line is a new project. Every change requires a dev sprint.'
+      },
+      after: {
+        badge: 'After',
+        badgeClass: 'after',
+        title: 'InsuRateConnect replaces all the custom services — configure once, reuse everywhere',
+        desc: 'Same orchestration platform, different configuration. No custom code to build. No dev team required for each new product. Actuaries and BAs configure directly. Reusable across carriers.'
+      }
+    };
+
+    let particleRAF = null;
+    let particleSequence = null;
+
+    function animParticle(particleId, pathId, duration, cb) {
+      const p = document.getElementById(particleId);
+      const path = document.getElementById(pathId);
+      if (!p || !path) { if (cb) cb(); return; }
+      const len = path.getTotalLength();
+      const t0 = performance.now();
+      p.setAttribute('opacity', '1');
+      function frame(now) {
+        const pct = Math.min((now - t0) / duration, 1);
+        const pt = path.getPointAtLength(pct * len);
+        p.setAttribute('cx', pt.x);
+        p.setAttribute('cy', pt.y);
+        if (pct < 1) {
+          particleRAF = requestAnimationFrame(frame);
+        } else {
+          p.setAttribute('opacity', '0');
+          if (cb) cb();
+        }
+      }
+      particleRAF = requestAnimationFrame(frame);
+    }
+
+    function runAfterParticles() {
+      if (currentState !== 'after') return;
+      animParticle('pa-req', 'after-path-req', 900, () => {
+        animParticle('pa-out', 'after-path-out', 900, () => {
+          animParticle('pa-back', 'after-path-back', 900, () => {
+            animParticle('pa-res', 'after-path-res', 900, () => {
+              setTimeout(() => {
+                if (currentState === 'after') runAfterParticles();
+              }, 600);
+            });
+          });
+        });
+      });
+    }
+
+    function stopParticles() {
+      if (particleRAF) cancelAnimationFrame(particleRAF);
+      ['pa-req','pa-out','pa-back','pa-res'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('opacity', '0');
+      });
+    }
+
+    function switchState(state) {
+      if (state === currentState) return;
+      currentState = state;
+
+      const beforeEl = document.getElementById('state-before');
+      const afterEl  = document.getElementById('state-after');
+      const badge    = document.getElementById('state-badge');
+      const content  = stateContent[state];
+
+      // Toggle visibility
+      if (state === 'after') {
+        beforeEl.setAttribute('opacity', '0');
+        beforeEl.setAttribute('pointer-events', 'none');
+        afterEl.setAttribute('opacity', '1');
+        afterEl.setAttribute('pointer-events', 'all');
+        stopParticles();
+        setTimeout(runAfterParticles, 400);
+      } else {
+        afterEl.setAttribute('opacity', '0');
+        afterEl.setAttribute('pointer-events', 'none');
+        beforeEl.setAttribute('opacity', '1');
+        beforeEl.setAttribute('pointer-events', 'all');
+        stopParticles();
+      }
+
+      // Update buttons
+      document.getElementById('btn-before').classList.toggle('active', state === 'before');
+      document.getElementById('btn-after').classList.toggle('active', state === 'after');
+
+      // Update badge and text
+      badge.textContent = content.badge;
+      badge.className = 'state-badge ' + content.badgeClass;
+      document.getElementById('info-title').textContent = content.title;
+      document.getElementById('info-desc').textContent = content.desc;
+
+      // Restart auto-cycle
+      startAutoCycle();
+    }
+
+    function startAutoCycle() {
+      clearTimeout(autoTimer);
+      clearInterval(progressInterval);
+
+      const fill = document.getElementById('progress-fill');
+      fill.style.transition = 'none';
+      fill.style.width = '0%';
+
+      let elapsed = 0;
+      const interval = 50;
+      progressInterval = setInterval(() => {
+        elapsed += interval;
+        const pct = Math.min((elapsed / AUTO_DURATION) * 100, 100);
+        fill.style.width = pct + '%';
+        if (elapsed >= AUTO_DURATION) {
+          clearInterval(progressInterval);
+        }
+      }, interval);
+
+      autoTimer = setTimeout(() => {
+        switchState(currentState === 'before' ? 'after' : 'before');
+      }, AUTO_DURATION);
+    }
+
+    // Start
+    startAutoCycle();
+  </script>
+</body>
+</html>

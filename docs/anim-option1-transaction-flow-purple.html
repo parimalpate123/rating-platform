@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InsuRateConnect — How It Works</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f3ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .page { max-width: 1100px; width: 100%; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 36px; }
+    .header h1 {
+      font-size: 34px;
+      font-weight: 800;
+      color: #0f0a1e;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+    .header .sub {
+      font-size: 15px;
+      color: #7c3aed;
+      font-weight: 500;
+    }
+    .header .sub span { margin: 0 8px; opacity: 0.4; }
+
+    /* Diagram card */
+    .diagram-card {
+      background: white;
+      border: 1px solid #ede9fe;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 32px rgba(124, 58, 237, 0.08);
+    }
+    svg.diagram { width: 100%; display: block; }
+
+    /* Step info panel */
+    .step-panel {
+      padding: 18px 28px;
+      border-top: 1px solid #ede9fe;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      min-height: 72px;
+    }
+    .step-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: #f5f3ff;
+      border: 1.5px solid #ddd6fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 800;
+      color: #7c3aed;
+      flex-shrink: 0;
+    }
+    .step-text h3 { font-size: 14px; font-weight: 700; color: #0f0a1e; margin-bottom: 3px; }
+    .step-text p { font-size: 12px; color: #64748b; line-height: 1.5; }
+
+    /* Dots */
+    .dots {
+      display: flex;
+      justify-content: center;
+      gap: 7px;
+      padding: 12px 0 16px;
+      border-top: 1px solid #f5f3ff;
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #ddd6fe;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .dot.active { background: #7c3aed; transform: scale(1.4); }
+
+    /* Bottom strip */
+    .bottom-strip {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+    .strip-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: #6d28d9; font-weight: 600;
+    }
+    .strip-diamond { color: #7c3aed; font-size: 8px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <h1>How InsuRateConnect Works</h1>
+      <p class="sub">
+        Translate request <span>·</span>
+        Execute rules <span>·</span>
+        Call engine <span>·</span>
+        Return response
+      </p>
+    </div>
+
+    <div class="diagram-card">
+      <svg class="diagram" viewBox="0 0 1060 490" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Dot grid -->
+          <pattern id="grid" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="1.2" fill="#c4b5fd" opacity="0.35"/>
+          </pattern>
+          <!-- Hub gradient -->
+          <radialGradient id="hubG" cx="38%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#8b5cf6"/>
+            <stop offset="100%" stop-color="#4c1d95"/>
+          </radialGradient>
+          <!-- Hub glow -->
+          <radialGradient id="hubGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Hub active pulse -->
+          <radialGradient id="hubActive" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Arrow markers -->
+          <marker id="arrB" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
+            <polygon points="0 0, 8 3.5, 0 7" fill="#2563eb"/>
+          </marker>
+          <marker id="arrP" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
+            <polygon points="0 0, 8 3.5, 0 7" fill="#7c3aed"/>
+          </marker>
+          <marker id="arrO" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
+            <polygon points="0 0, 8 3.5, 0 7" fill="#d97706"/>
+          </marker>
+          <marker id="arrG" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
+            <polygon points="0 0, 8 3.5, 0 7" fill="#059669"/>
+          </marker>
+          <!-- Card highlight filter -->
+          <filter id="glow-blue">
+            <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#3b82f6" flood-opacity="0.5"/>
+          </filter>
+          <filter id="glow-purple">
+            <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#8b5cf6" flood-opacity="0.5"/>
+          </filter>
+          <filter id="glow-orange">
+            <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#f59e0b" flood-opacity="0.4"/>
+          </filter>
+        </defs>
+
+        <!-- Background -->
+        <rect width="1060" height="490" fill="#fafafe"/>
+        <rect width="1060" height="490" fill="url(#grid)"/>
+
+        <!-- Column dividers -->
+        <line x1="270" y1="40" x2="270" y2="460" stroke="#ede9fe" stroke-width="1" stroke-dasharray="5 5"/>
+        <line x1="790" y1="40" x2="790" y2="460" stroke="#ede9fe" stroke-width="1" stroke-dasharray="5 5"/>
+
+        <!-- Column labels -->
+        <text x="30" y="32" font-family="system-ui" font-size="10" font-weight="700" fill="#7c3aed" letter-spacing="2" opacity="0.65">▶ SOURCE</text>
+        <text x="530" y="32" font-family="system-ui" font-size="10" font-weight="700" fill="#7c3aed" letter-spacing="2" opacity="0.65" text-anchor="middle">▶ ORCHESTRATION ENGINE</text>
+        <text x="920" y="32" font-family="system-ui" font-size="10" font-weight="700" fill="#7c3aed" letter-spacing="2" opacity="0.65" text-anchor="middle">▶ TARGETS</text>
+
+        <!-- ═══ SOURCE CARD ═══ -->
+        <rect id="card-src" x="20" y="110" width="210" height="270" rx="14" fill="white" stroke="#e8e4f5" stroke-width="1.5"/>
+        <rect x="20" y="110" width="4" height="270" rx="2" fill="#2563eb"/>
+        <!-- Icon -->
+        <rect x="36" y="130" width="34" height="34" rx="9" fill="#eff6ff"/>
+        <text x="53" y="153" font-family="system-ui" font-size="17" text-anchor="middle">🖥</text>
+        <!-- Title -->
+        <text x="40" y="183" font-family="system-ui" font-size="15" font-weight="700" fill="#0f0a1e">RQI Platform</text>
+        <text x="40" y="202" font-family="system-ui" font-size="12" fill="#64748b">Sends the rating request.</text>
+        <text x="40" y="219" font-family="system-ui" font-size="12" fill="#64748b">Receives the rated</text>
+        <text x="40" y="236" font-family="system-ui" font-size="12" fill="#64748b">premium response.</text>
+        <!-- Badge -->
+        <rect x="40" y="252" width="76" height="22" rx="11" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1"/>
+        <text x="78" y="267" font-family="system-ui" font-size="10" font-weight="700" fill="#1d4ed8" text-anchor="middle" letter-spacing="0.8">SOURCE</text>
+        <!-- Platform list -->
+        <text x="40" y="296" font-family="system-ui" font-size="11" fill="#94a3b8">Guidewire</text>
+        <text x="40" y="313" font-family="system-ui" font-size="11" fill="#94a3b8">Duck Creek</text>
+        <text x="40" y="330" font-family="system-ui" font-size="11" fill="#94a3b8">Majesco · Socotra</text>
+        <text x="40" y="360" font-family="system-ui" font-size="10" fill="#c4b5fd" font-style="italic">or any RQI platform</text>
+
+        <!-- ═══ HUB ═══ -->
+        <!-- Outer glow -->
+        <circle cx="530" cy="245" r="170" fill="url(#hubGlow)"/>
+        <!-- Concentric rings -->
+        <circle cx="530" cy="245" r="140" fill="none" stroke="#7c3aed" stroke-width="0.6" opacity="0.12"/>
+        <circle cx="530" cy="245" r="115" fill="none" stroke="#7c3aed" stroke-width="0.8" opacity="0.18"/>
+        <!-- Active pulse ring (animated by JS) -->
+        <circle id="hub-pulse" cx="530" cy="245" r="95" fill="none" stroke="#8b5cf6" stroke-width="0" opacity="0"/>
+        <!-- Hub circle -->
+        <circle id="hubCircle" cx="530" cy="245" r="92" fill="url(#hubG)"/>
+        <!-- Hub text -->
+        <text x="530" y="232" font-family="system-ui" font-size="17" font-weight="800" fill="white" text-anchor="middle">InsuRate</text>
+        <text x="530" y="253" font-family="system-ui" font-size="17" font-weight="800" fill="white" text-anchor="middle">Connect</text>
+        <text x="530" y="273" font-family="system-ui" font-size="9.5" fill="rgba(255,255,255,0.65)" text-anchor="middle" letter-spacing="0.8">Orchestration Engine</text>
+        <!-- Active step label inside hub -->
+        <text id="hub-step-label" x="530" y="295" font-family="system-ui" font-size="8.5" fill="rgba(255,255,255,0)" text-anchor="middle" letter-spacing="0.5"></text>
+
+        <!-- ═══ TARGET CARDS ═══ -->
+
+        <!-- Rating Engine -->
+        <rect id="card-eng" x="800" y="55" width="230" height="120" rx="13" fill="white" stroke="#e8e4f5" stroke-width="1.5"/>
+        <rect x="800" y="55" width="4" height="120" rx="2" fill="#2563eb"/>
+        <rect x="818" y="70" width="28" height="28" rx="8" fill="#eff6ff"/>
+        <text x="832" y="89" font-family="system-ui" font-size="14" text-anchor="middle">⚙</text>
+        <text x="818" y="111" font-family="system-ui" font-size="13" font-weight="700" fill="#0f0a1e">Rating Engine</text>
+        <text x="818" y="128" font-family="system-ui" font-size="11" fill="#64748b">Earnix · CGI Ratabase</text>
+        <text x="818" y="143" font-family="system-ui" font-size="11" fill="#64748b">or homegrown engine</text>
+        <rect x="818" y="155" width="58" height="18" rx="9" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1"/>
+        <text x="847" y="168" font-family="system-ui" font-size="9" font-weight="700" fill="#1d4ed8" text-anchor="middle" letter-spacing="0.5">TARGET</text>
+
+        <!-- External Services -->
+        <rect id="card-ext" x="800" y="200" width="230" height="120" rx="13" fill="white" stroke="#e8e4f5" stroke-width="1.5"/>
+        <rect x="800" y="200" width="4" height="120" rx="2" fill="#d97706"/>
+        <rect x="818" y="215" width="28" height="28" rx="8" fill="#fff7ed"/>
+        <text x="832" y="234" font-family="system-ui" font-size="14" text-anchor="middle">🔍</text>
+        <text x="818" y="256" font-family="system-ui" font-size="13" font-weight="700" fill="#0f0a1e">External Services</text>
+        <text x="818" y="274" font-family="system-ui" font-size="11" fill="#64748b">D&amp;B · LexisNexis</text>
+        <text x="818" y="289" font-family="system-ui" font-size="11" fill="#64748b">ISO data enrichment</text>
+        <rect x="818" y="300" width="68" height="18" rx="9" fill="#fff7ed" stroke="#fed7aa" stroke-width="1"/>
+        <text x="852" y="313" font-family="system-ui" font-size="9" font-weight="700" fill="#c2410c" text-anchor="middle" letter-spacing="0.5">EXTERNAL</text>
+
+        <!-- Callbacks -->
+        <rect id="card-cb" x="800" y="345" width="230" height="120" rx="13" fill="white" stroke="#e8e4f5" stroke-width="1.5"/>
+        <rect x="800" y="345" width="4" height="120" rx="2" fill="#059669"/>
+        <rect x="818" y="360" width="28" height="28" rx="8" fill="#f0fdf4"/>
+        <text x="832" y="379" font-family="system-ui" font-size="14" text-anchor="middle">📡</text>
+        <text x="818" y="401" font-family="system-ui" font-size="13" font-weight="700" fill="#0f0a1e">Callbacks &amp; Events</text>
+        <text x="818" y="419" font-family="system-ui" font-size="11" fill="#64748b">Async notifications</text>
+        <text x="818" y="434" font-family="system-ui" font-size="11" fill="#64748b">Kafka events · RQI callbacks</text>
+        <rect x="818" y="446" width="70" height="18" rx="9" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1"/>
+        <text x="853" y="459" font-family="system-ui" font-size="9" font-weight="700" fill="#166534" text-anchor="middle" letter-spacing="0.5">CALLBACK</text>
+
+        <!-- ═══ PATHS ═══ -->
+
+        <!-- Source → Hub: request (blue, dashed) -->
+        <path id="path-src-hub"
+              d="M 232 232 C 340 232, 360 230, 438 230"
+              fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="6 4" opacity="0.5"
+              marker-end="url(#arrB)"/>
+
+        <!-- Hub → Source: response (purple, dashed) -->
+        <path id="path-hub-src"
+              d="M 438 260 C 360 260, 340 260, 232 260"
+              fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" opacity="0.5"
+              marker-end="url(#arrP)"/>
+
+        <!-- Hub → Rating Engine (blue) -->
+        <path id="path-hub-eng"
+              d="M 618 212 C 710 212, 720 115, 798 115"
+              fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="6 4" opacity="0.5"
+              marker-end="url(#arrB)"/>
+
+        <!-- Rating Engine → Hub: response (purple) -->
+        <path id="path-eng-hub"
+              d="M 798 145 C 720 145, 710 255, 622 255"
+              fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" opacity="0.4"
+              marker-end="url(#arrP)"/>
+
+        <!-- Hub → External Services (orange) -->
+        <path id="path-hub-ext"
+              d="M 622 248 C 710 248, 718 260, 798 260"
+              fill="none" stroke="#d97706" stroke-width="2" stroke-dasharray="6 4" opacity="0.5"
+              marker-end="url(#arrO)"/>
+
+        <!-- Hub → Callbacks (green) -->
+        <path id="path-hub-cb"
+              d="M 618 275 C 710 275, 718 405, 798 405"
+              fill="none" stroke="#059669" stroke-width="2" stroke-dasharray="6 4" opacity="0.5"
+              marker-end="url(#arrG)"/>
+
+        <!-- ═══ CONNECTOR PILL LABELS ═══ -->
+
+        <!-- asks · translate (src→hub) -->
+        <rect x="282" y="210" width="136" height="22" rx="11" fill="white" stroke="#ede9fe" stroke-width="1"/>
+        <text x="350" y="225" font-family="system-ui" font-size="10" fill="#6d28d9" text-anchor="middle" font-weight="500">translate · map fields</text>
+
+        <!-- response (hub→src) -->
+        <rect x="288" y="264" width="128" height="22" rx="11" fill="white" stroke="#ede9fe" stroke-width="1"/>
+        <text x="352" y="279" font-family="system-ui" font-size="10" fill="#7c3aed" text-anchor="middle" font-weight="500">post rules · respond</text>
+
+        <!-- format · call engine -->
+        <rect x="668" y="148" width="106" height="22" rx="11" fill="white" stroke="#bfdbfe" stroke-width="1"/>
+        <text x="721" y="163" font-family="system-ui" font-size="9.5" fill="#1d4ed8" text-anchor="middle" font-weight="500">format · call engine</text>
+
+        <!-- premium response -->
+        <rect x="668" y="198" width="102" height="22" rx="11" fill="white" stroke="#ede9fe" stroke-width="1"/>
+        <text x="719" y="213" font-family="system-ui" font-size="9.5" fill="#6d28d9" text-anchor="middle" font-weight="500">premium response</text>
+
+        <!-- enrichment -->
+        <rect x="678" y="238" width="88" height="22" rx="11" fill="white" stroke="#fed7aa" stroke-width="1"/>
+        <text x="722" y="253" font-family="system-ui" font-size="9.5" fill="#c2410c" text-anchor="middle" font-weight="500">enrichment call</text>
+
+        <!-- async callback -->
+        <rect x="680" y="368" width="94" height="22" rx="11" fill="white" stroke="#bbf7d0" stroke-width="1"/>
+        <text x="727" y="383" font-family="system-ui" font-size="9.5" fill="#166534" text-anchor="middle" font-weight="500">async callback</text>
+
+        <!-- ═══ ANIMATED PARTICLES ═══ -->
+        <circle id="p-src-hub" r="5.5" fill="#2563eb" opacity="0"/>
+        <circle id="p-hub-src" r="5.5" fill="#7c3aed" opacity="0"/>
+        <circle id="p-hub-eng" r="5.5" fill="#2563eb" opacity="0"/>
+        <circle id="p-eng-hub" r="5.5" fill="#7c3aed" opacity="0"/>
+        <circle id="p-hub-ext" r="5.5" fill="#d97706" opacity="0"/>
+        <circle id="p-hub-cb"  r="5.5" fill="#059669" opacity="0"/>
+      </svg>
+
+      <!-- Step panel -->
+      <div class="step-panel">
+        <div class="step-badge" id="step-num">1</div>
+        <div class="step-text">
+          <h3 id="step-name">Starting...</h3>
+          <p id="step-desc">InsuRateConnect executes each step in sequence, logging every transformation.</p>
+        </div>
+      </div>
+
+      <!-- Dots -->
+      <div class="dots" id="dots"></div>
+    </div>
+
+    <!-- Bottom strip -->
+    <div class="bottom-strip" style="margin-top: 22px;">
+      <div class="strip-item"><span class="strip-diamond">◆</span> Field Mapping</div>
+      <div class="strip-item"><span class="strip-diamond">◆</span> Pre-Rating Rules</div>
+      <div class="strip-item"><span class="strip-diamond">◆</span> Format Transform</div>
+      <div class="strip-item"><span class="strip-diamond">◆</span> Engine Call</div>
+      <div class="strip-item"><span class="strip-diamond">◆</span> Post-Rating Rules</div>
+      <div class="strip-item"><span class="strip-diamond">◆</span> Transaction Audit</div>
+    </div>
+  </div>
+
+  <script>
+    const steps = [
+      {
+        num: 1,
+        name: 'Translate Request',
+        desc: 'The RQI platform submits a rating request. InsuRateConnect translates it from the source format — Guidewire, Duck Creek, or Majesco — into the internal canonical model.',
+        particleId: 'p-src-hub',
+        pathId: 'path-src-hub',
+        highlight: 'source',
+        highlightCard: 'card-src',
+        particleColor: '#2563eb'
+      },
+      {
+        num: 2,
+        name: 'Pre-Rating Rules',
+        desc: 'Business rules fire before the engine call. State-specific surcharges, eligibility checks, and modification factors are evaluated based on configured scope.',
+        particleId: null,
+        pathId: null,
+        highlight: 'hub',
+        particleColor: '#7c3aed'
+      },
+      {
+        num: 3,
+        name: 'Format Transform (Request)',
+        desc: 'The canonical request is transformed into the target engine\'s required format — JSON to XML, SOAP envelope wrapping, or custom schema mapping.',
+        particleId: null,
+        pathId: null,
+        highlight: 'hub',
+        particleColor: '#7c3aed'
+      },
+      {
+        num: 4,
+        name: 'Call Rating Engine',
+        desc: 'The formatted request is dispatched to the rating engine. InsuRateConnect manages authentication, retry logic, timeout handling, and correlation tracking.',
+        particleId: 'p-hub-eng',
+        pathId: 'path-hub-eng',
+        highlight: 'engine',
+        highlightCard: 'card-eng',
+        particleColor: '#2563eb'
+      },
+      {
+        num: 5,
+        name: 'Receive Premium Response',
+        desc: 'The rating engine returns the calculated premium. InsuRateConnect captures the raw response and begins the return transformation pipeline.',
+        particleId: 'p-eng-hub',
+        pathId: 'path-eng-hub',
+        highlight: 'engine',
+        highlightCard: 'card-eng',
+        particleColor: '#7c3aed'
+      },
+      {
+        num: 6,
+        name: 'Format Transform (Response)',
+        desc: 'The engine\'s response is transformed back into the canonical model — XML to JSON, field normalization, nested structure flattening, and error code mapping.',
+        particleId: null,
+        pathId: null,
+        highlight: 'hub',
+        particleColor: '#7c3aed'
+      },
+      {
+        num: 7,
+        name: 'Post-Rating Rules',
+        desc: 'Final adjustments applied after receiving the premium — rounding rules, minimum premium enforcement, carrier-specific overrides, and audit event emission.',
+        particleId: null,
+        pathId: null,
+        highlight: 'hub',
+        particleColor: '#7c3aed'
+      },
+      {
+        num: 8,
+        name: 'Translate Response',
+        desc: 'The final rated response is translated into the RQI platform\'s expected schema and returned. Every step — inputs, outputs, rules fired — is logged in the audit trail.',
+        particleId: 'p-hub-src',
+        pathId: 'path-hub-src',
+        highlight: 'source',
+        highlightCard: 'card-src',
+        particleColor: '#7c3aed'
+      }
+    ];
+
+    let current = 0;
+    let raf = null;
+
+    // Build dots
+    const dotsEl = document.getElementById('dots');
+    steps.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      d.id = 'dot-' + i;
+      dotsEl.appendChild(d);
+    });
+
+    function animateParticle(particleId, pathId, duration, cb) {
+      if (!particleId || !pathId) { setTimeout(cb, 500); return; }
+      const particle = document.getElementById(particleId);
+      const path = document.getElementById(pathId);
+      if (!particle || !path) { cb(); return; }
+      const len = path.getTotalLength();
+      const t0 = performance.now();
+      particle.setAttribute('opacity', '1');
+      function frame(now) {
+        const pct = Math.min((now - t0) / duration, 1);
+        const pt = path.getPointAtLength(pct * len);
+        particle.setAttribute('cx', pt.x);
+        particle.setAttribute('cy', pt.y);
+        if (pct < 1) {
+          raf = requestAnimationFrame(frame);
+        } else {
+          particle.setAttribute('opacity', '0');
+          cb();
+        }
+      }
+      raf = requestAnimationFrame(frame);
+    }
+
+    function resetCards() {
+      ['card-src', 'card-eng', 'card-ext', 'card-cb'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('filter', '');
+      });
+      const hub = document.getElementById('hubCircle');
+      hub.style.filter = '';
+      // Reset pulse ring
+      const pulse = document.getElementById('hub-pulse');
+      pulse.setAttribute('stroke-width', '0');
+      pulse.setAttribute('opacity', '0');
+    }
+
+    function showStep(idx) {
+      const step = steps[idx];
+      resetCards();
+
+      // Update text
+      document.getElementById('step-num').textContent = step.num;
+      document.getElementById('step-name').textContent = 'Step ' + step.num + ' — ' + step.name;
+      document.getElementById('step-desc').textContent = step.desc;
+
+      // Update dots
+      document.querySelectorAll('.dot').forEach((d, i) => {
+        d.classList.toggle('active', i === idx);
+      });
+
+      // Highlight
+      if (step.highlight === 'hub') {
+        document.getElementById('hubCircle').style.filter = 'brightness(1.25)';
+        const pulse = document.getElementById('hub-pulse');
+        pulse.setAttribute('stroke-width', '2');
+        pulse.setAttribute('opacity', '0.5');
+      } else if (step.highlightCard) {
+        const card = document.getElementById(step.highlightCard);
+        if (card) {
+          if (step.particleColor === '#2563eb') card.setAttribute('filter', 'url(#glow-blue)');
+          else card.setAttribute('filter', 'url(#glow-purple)');
+        }
+      }
+
+      // Animate particle
+      animateParticle(step.particleId, step.pathId, 1100, () => {
+        setTimeout(() => {
+          current = (current + 1) % steps.length;
+          showStep(current);
+        }, 900);
+      });
+    }
+
+    setTimeout(() => showStep(0), 600);
+  </script>
+</body>
+</html>

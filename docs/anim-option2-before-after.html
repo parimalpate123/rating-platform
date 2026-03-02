@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InsuRateConnect — Before vs After</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    /* State label */
+    .state-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .state-pill {
+      padding: 6px 20px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      transition: all 0.5s ease;
+    }
+
+    .state-pill.active-before { background: #450a0a; color: #f87171; border: 1px solid #dc2626; }
+    .state-pill.inactive { background: #1e293b; color: #475569; border: 1px solid #334155; }
+    .state-pill.active-after { background: #052e16; color: #4ade80; border: 1px solid #16a34a; }
+
+    .state-divider { color: #334155; font-size: 16px; }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      transition: all 0.5s ease;
+    }
+
+    .header p {
+      font-size: 15px;
+      color: #64748b;
+      max-width: 560px;
+      line-height: 1.6;
+      transition: all 0.5s ease;
+    }
+
+    /* Diagram container */
+    .diagram-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      height: 480px;
+    }
+
+    .diagram-state {
+      position: absolute;
+      inset: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    .diagram-state.hidden { opacity: 0; pointer-events: none; }
+    .diagram-state.visible { opacity: 1; }
+
+    /* SVG diagrams */
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* System boxes on the SVG */
+    .sys-box {
+      rx: 12;
+      ry: 12;
+    }
+
+    /* Bottom description */
+    .description {
+      width: 100%;
+      max-width: 900px;
+      margin-top: 24px;
+      background: #141921;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 20px 28px;
+      text-align: center;
+      transition: all 0.5s ease;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .description h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .description p {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    .desc-before h3 { color: #f87171; }
+    .desc-after h3 { color: #4ade80; }
+
+    /* Toggle button */
+    .toggle-btn {
+      margin-top: 28px;
+      padding: 12px 28px;
+      border-radius: 999px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #94a3b8;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .toggle-btn:hover {
+      background: #334155;
+      color: #f1f5f9;
+    }
+
+    /* Auto-progress bar */
+    .progress-bar-wrap {
+      width: 100%;
+      max-width: 900px;
+      margin-top: 16px;
+      height: 3px;
+      background: #1e293b;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: #f97316;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="state-label">
+      <div class="state-pill active-before" id="pill-before">Without InsuRateConnect</div>
+      <div class="state-divider">→</div>
+      <div class="state-pill inactive" id="pill-after">With InsuRateConnect</div>
+    </div>
+    <h1 id="main-title">One source. One engine. Still months of custom work.</h1>
+    <p id="main-desc">Connecting a single RQI platform to a single rating engine requires custom services, a full dev team, and months of work — every time, for every product.</p>
+  </div>
+
+  <div class="diagram-wrapper">
+
+    <!-- BEFORE state -->
+    <div class="diagram-state visible" id="state-before">
+      <svg viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg">
+
+        <!-- Source: ONE RQI platform -->
+        <rect x="20" y="188" width="160" height="104" rx="14" fill="#1a0a0a" stroke="#7f1d1d" stroke-width="1.5"/>
+        <text x="100" y="218" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="system-ui" font-weight="700" letter-spacing="1">RQI PLATFORM</text>
+        <text x="100" y="242" text-anchor="middle" fill="#f1f5f9" font-size="16" font-family="system-ui" font-weight="700">Guidewire</text>
+        <text x="100" y="262" text-anchor="middle" fill="#475569" font-size="10" font-family="system-ui">PolicyCenter</text>
+        <text x="100" y="280" text-anchor="middle" fill="#374151" font-size="9" font-family="system-ui" font-style="italic">or Duck Creek / Majesco</text>
+
+        <!-- Target: ONE rating engine -->
+        <rect x="720" y="188" width="160" height="104" rx="14" fill="#0d0a1a" stroke="#4c1d95" stroke-width="1.5"/>
+        <text x="800" y="218" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="system-ui" font-weight="700" letter-spacing="1">RATING ENGINE</text>
+        <text x="800" y="242" text-anchor="middle" fill="#f1f5f9" font-size="16" font-family="system-ui" font-weight="700">CGI Ratabase</text>
+        <text x="800" y="262" text-anchor="middle" fill="#475569" font-size="10" font-family="system-ui">XML/SOAP</text>
+        <text x="800" y="280" text-anchor="middle" fill="#374151" font-size="9" font-family="system-ui" font-style="italic">or Earnix / Homegrown</text>
+
+        <!-- Custom services mess in center -->
+        <!-- Custom Field Mapper -->
+        <rect x="270" y="80" width="160" height="52" rx="10" fill="#1a0808" stroke="#7f1d1d" stroke-width="1"/>
+        <text x="350" y="102" text-anchor="middle" fill="#f87171" font-size="11" font-family="system-ui" font-weight="600">Custom Field Mapper</text>
+        <text x="350" y="120" text-anchor="middle" fill="#64748b" font-size="10" font-family="system-ui">Bespoke dev — 6 weeks</text>
+
+        <!-- Custom Rules -->
+        <rect x="470" y="80" width="160" height="52" rx="10" fill="#1a0808" stroke="#7f1d1d" stroke-width="1"/>
+        <text x="550" y="102" text-anchor="middle" fill="#f87171" font-size="11" font-family="system-ui" font-weight="600">Custom Rules Engine</text>
+        <text x="550" y="120" text-anchor="middle" fill="#64748b" font-size="10" font-family="system-ui">Hardcoded logic — 4 weeks</text>
+
+        <!-- Format Transformer -->
+        <rect x="270" y="214" width="160" height="52" rx="10" fill="#1a0808" stroke="#7f1d1d" stroke-width="1"/>
+        <text x="350" y="236" text-anchor="middle" fill="#f87171" font-size="11" font-family="system-ui" font-weight="600">Format Transformer</text>
+        <text x="350" y="254" text-anchor="middle" fill="#64748b" font-size="10" font-family="system-ui">JSON↔XML — 3 weeks</text>
+
+        <!-- Engine Connector -->
+        <rect x="470" y="214" width="160" height="52" rx="10" fill="#1a0808" stroke="#7f1d1d" stroke-width="1"/>
+        <text x="550" y="236" text-anchor="middle" fill="#f87171" font-size="11" font-family="system-ui" font-weight="600">Engine Connector</text>
+        <text x="550" y="254" text-anchor="middle" fill="#64748b" font-size="10" font-family="system-ui">API wiring — 4 weeks</text>
+
+        <!-- Error Handler -->
+        <rect x="270" y="348" width="160" height="52" rx="10" fill="#1a0808" stroke="#7f1d1d" stroke-width="1"/>
+        <text x="350" y="370" text-anchor="middle" fill="#f87171" font-size="11" font-family="system-ui" font-weight="600">Error Handler</text>
+        <text x="350" y="388" text-anchor="middle" fill="#64748b" font-size="10" font-family="system-ui">Retry logic — 2 weeks</text>
+
+        <!-- Response Mapper -->
+        <rect x="470" y="348" width="160" height="52" rx="10" fill="#1a0808" stroke="#7f1d1d" stroke-width="1"/>
+        <text x="550" y="370" text-anchor="middle" fill="#f87171" font-size="11" font-family="system-ui" font-weight="600">Response Mapper</text>
+        <text x="550" y="388" text-anchor="middle" fill="#64748b" font-size="10" font-family="system-ui">Output parse — 3 weeks</text>
+
+        <!-- Tangled lines connecting everything -->
+        <!-- Source → Field Mapper -->
+        <line x1="180" y1="220" x2="270" y2="106" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.7">
+          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1.1s" repeatCount="indefinite"/>
+        </line>
+        <!-- Source → Format Transformer -->
+        <line x1="180" y1="240" x2="270" y2="240" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.7">
+          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="0.9s" repeatCount="indefinite"/>
+        </line>
+        <!-- Source → Error Handler -->
+        <line x1="180" y1="262" x2="270" y2="374" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.6">
+          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1.3s" repeatCount="indefinite"/>
+        </line>
+
+        <!-- Field Mapper → Rules -->
+        <line x1="430" y1="106" x2="470" y2="106" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.65">
+          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1.0s" repeatCount="indefinite"/>
+        </line>
+        <!-- Field Mapper → Format -->
+        <line x1="350" y1="132" x2="350" y2="214" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.6">
+          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1.4s" repeatCount="indefinite"/>
+        </line>
+        <!-- Field Mapper → Engine Connector (crossing) -->
+        <line x1="430" y1="118" x2="470" y2="230" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.5">
+          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1.6s" repeatCount="indefinite"/>
+        </line>
+
+        <!-- Format → Engine Connector -->
+        <line x1="430" y1="240" x2="470" y2="240" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.7">
+          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="0.85s" repeatCount="indefinite"/>
+        </line>
+        <!-- Rules → Engine Connector -->
+        <line x1="550" y1="132" x2="550" y2="214" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.65">
+          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1.2s" repeatCount="indefinite"/>
+        </line>
+        <!-- Error → Response (crossing) -->
+        <line x1="430" y1="374" x2="470" y2="374" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.65">
+          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1.0s" repeatCount="indefinite"/>
+        </line>
+        <!-- Engine Connector → Response Mapper (crossing) -->
+        <line x1="550" y1="266" x2="550" y2="348" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.6">
+          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1.3s" repeatCount="indefinite"/>
+        </line>
+
+        <!-- Right side → Target -->
+        <line x1="630" y1="106" x2="720" y2="220" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.6">
+          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1.1s" repeatCount="indefinite"/>
+        </line>
+        <line x1="630" y1="240" x2="720" y2="240" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.7">
+          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="0.9s" repeatCount="indefinite"/>
+        </line>
+        <line x1="630" y1="374" x2="720" y2="264" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.55">
+          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1.5s" repeatCount="indefinite"/>
+        </line>
+
+        <!-- Total label -->
+        <text x="450" y="455" text-anchor="middle" fill="#dc2626" font-size="12" font-family="system-ui" font-weight="700">Custom services · built from scratch · maintained forever · months of work</text>
+      </svg>
+    </div>
+
+    <!-- AFTER state -->
+    <div class="diagram-state hidden" id="state-after">
+      <svg viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg">
+
+        <!-- Source: ONE RQI platform -->
+        <rect x="20" y="188" width="160" height="104" rx="14" fill="#0d1e35" stroke="#1e3a5f" stroke-width="1.5"/>
+        <text x="100" y="218" text-anchor="middle" fill="#3b82f6" font-size="9" font-family="system-ui" font-weight="700" letter-spacing="1">RQI PLATFORM</text>
+        <text x="100" y="242" text-anchor="middle" fill="#f1f5f9" font-size="16" font-family="system-ui" font-weight="700">Guidewire</text>
+        <text x="100" y="262" text-anchor="middle" fill="#475569" font-size="10" font-family="system-ui">PolicyCenter</text>
+        <text x="100" y="280" text-anchor="middle" fill="#334155" font-size="9" font-family="system-ui" font-style="italic">or Duck Creek / Majesco</text>
+
+        <!-- Target: ONE rating engine -->
+        <rect x="720" y="188" width="160" height="104" rx="14" fill="#1a0d35" stroke="#3b1f6e" stroke-width="1.5"/>
+        <text x="800" y="218" text-anchor="middle" fill="#a78bfa" font-size="9" font-family="system-ui" font-weight="700" letter-spacing="1">RATING ENGINE</text>
+        <text x="800" y="242" text-anchor="middle" fill="#f1f5f9" font-size="16" font-family="system-ui" font-weight="700">CGI Ratabase</text>
+        <text x="800" y="262" text-anchor="middle" fill="#475569" font-size="10" font-family="system-ui">XML/SOAP</text>
+        <text x="800" y="280" text-anchor="middle" fill="#334155" font-size="9" font-family="system-ui" font-style="italic">or Earnix / Homegrown</text>
+
+        <!-- InsuRateConnect hub -->
+        <circle cx="450" cy="240" r="110" fill="#1a1200" stroke="#f97316" stroke-width="2"/>
+        <circle cx="450" cy="240" r="110" fill="none" stroke="#f97316" stroke-width="1.5" opacity="0.25">
+          <animate attributeName="r" values="110;122;110" dur="3s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.25;0;0.25" dur="3s" repeatCount="indefinite"/>
+        </circle>
+
+        <text x="450" y="220" text-anchor="middle" fill="#f97316" font-size="16" font-family="system-ui" font-weight="800">InsuRateConnect</text>
+        <text x="450" y="242" text-anchor="middle" fill="#94a3b8" font-size="11" font-family="system-ui">Translate · Orchestrate · Govern</text>
+        <text x="450" y="264" text-anchor="middle" fill="#64748b" font-size="10" font-family="system-ui">Field Mapping · Rules Engine</text>
+        <text x="450" y="280" text-anchor="middle" fill="#64748b" font-size="10" font-family="system-ui">Format Transform · Audit Trail</text>
+
+        <!-- Source → InsuRateConnect (request) -->
+        <line x1="180" y1="232" x2="340" y2="232" stroke="#22c55e" stroke-width="2.5" opacity="0.9"/>
+        <polygon points="336,225 348,232 336,239" fill="#22c55e"/>
+        <text x="260" y="222" text-anchor="middle" fill="#22c55e" font-size="10" font-family="system-ui" font-weight="600">request</text>
+        <circle r="5" fill="#22c55e" opacity="0.9">
+          <animateMotion dur="1.6s" repeatCount="indefinite">
+            <mpath href="#req-path"/>
+          </animateMotion>
+        </circle>
+        <path id="req-path" d="M180,232 L340,232" fill="none"/>
+
+        <!-- InsuRateConnect → Source (response) -->
+        <line x1="340" y1="252" x2="180" y2="252" stroke="#3b82f6" stroke-width="2" opacity="0.7" stroke-dasharray="6 3"/>
+        <polygon points="184,245 172,252 184,259" fill="#3b82f6" opacity="0.7"/>
+        <text x="260" y="270" text-anchor="middle" fill="#3b82f6" font-size="10" font-family="system-ui" font-weight="600">response</text>
+        <circle r="4" fill="#3b82f6" opacity="0.8">
+          <animateMotion dur="1.6s" repeatCount="indefinite" begin="0.8s">
+            <mpath href="#resp-path"/>
+          </animateMotion>
+        </circle>
+        <path id="resp-path" d="M340,252 L180,252" fill="none"/>
+
+        <!-- InsuRateConnect → Target (request) -->
+        <line x1="562" y1="232" x2="720" y2="232" stroke="#f97316" stroke-width="2.5" opacity="0.9"/>
+        <polygon points="716,225 728,232 716,239" fill="#f97316"/>
+        <text x="641" y="222" text-anchor="middle" fill="#f97316" font-size="10" font-family="system-ui" font-weight="600">request</text>
+        <circle r="5" fill="#f97316" opacity="0.9">
+          <animateMotion dur="1.6s" repeatCount="indefinite">
+            <mpath href="#eng-req-path"/>
+          </animateMotion>
+        </circle>
+        <path id="eng-req-path" d="M562,232 L720,232" fill="none"/>
+
+        <!-- Target → InsuRateConnect (response) -->
+        <line x1="720" y1="252" x2="562" y2="252" stroke="#a78bfa" stroke-width="2" opacity="0.7" stroke-dasharray="6 3"/>
+        <polygon points="566,245 554,252 566,259" fill="#a78bfa" opacity="0.7"/>
+        <text x="641" y="270" text-anchor="middle" fill="#a78bfa" font-size="10" font-family="system-ui" font-weight="600">response</text>
+        <circle r="4" fill="#a78bfa" opacity="0.8">
+          <animateMotion dur="1.6s" repeatCount="indefinite" begin="0.8s">
+            <mpath href="#eng-resp-path"/>
+          </animateMotion>
+        </circle>
+        <path id="eng-resp-path" d="M720,252 L562,252" fill="none"/>
+
+        <!-- Footer label -->
+        <text x="450" y="445" text-anchor="middle" fill="#22c55e" font-size="12" font-family="system-ui" font-weight="700">1 platform · configured in weeks · same platform reused for every product line</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+
+  <div class="description desc-before" id="description">
+    <h3 id="desc-title">Point-to-point chaos</h3>
+    <p id="desc-text">9 custom integrations — each built by a different team, each maintained separately, each a unique failure point. Every new product or platform adds more.</p>
+  </div>
+
+  <button class="toggle-btn" id="toggle-btn" onclick="toggleState()">See With InsuRateConnect →</button>
+
+  <script>
+    let isAfter = false;
+    let autoTimer;
+    const DURATION = 6000;
+
+    const descriptions = {
+      before: {
+        title: 'Custom services. One connection. Built from scratch.',
+        text: 'Field mapper, rules engine, format transformer, connector, error handler, response mapper — all custom built for this one pairing. Change the source or engine? Rebuild everything.',
+        descClass: 'desc-before',
+        titleColor: '#f87171'
+      },
+      after: {
+        title: 'Same connection. Zero custom services.',
+        text: 'InsuRateConnect replaces all the custom services. Configure the source, the target, the mappings, and the rules — the platform handles everything between. Works for any RQI platform and any rating engine.',
+        descClass: 'desc-after',
+        titleColor: '#4ade80'
+      }
+    };
+
+    function showBefore() {
+      isAfter = false;
+      document.getElementById('state-before').className = 'diagram-state visible';
+      document.getElementById('state-after').className = 'diagram-state hidden';
+      document.getElementById('pill-before').className = 'state-pill active-before';
+      document.getElementById('pill-after').className = 'state-pill inactive';
+      document.getElementById('main-title').textContent = 'Every connection is a custom project.';
+      document.getElementById('main-desc').textContent = 'Each source-to-engine integration is hand-built from scratch. Multiply by every product line, every carrier.';
+      document.getElementById('description').className = 'description desc-before';
+      document.getElementById('desc-title').textContent = descriptions.before.title;
+      document.getElementById('desc-title').style.color = descriptions.before.titleColor;
+      document.getElementById('desc-text').textContent = descriptions.before.text;
+      document.getElementById('toggle-btn').textContent = 'See With InsuRateConnect →';
+    }
+
+    function showAfter() {
+      isAfter = true;
+      document.getElementById('state-before').className = 'diagram-state hidden';
+      document.getElementById('state-after').className = 'diagram-state visible';
+      document.getElementById('pill-before').className = 'state-pill inactive';
+      document.getElementById('pill-after').className = 'state-pill active-after';
+      document.getElementById('main-title').textContent = 'Same connection. InsuRateConnect replaces all custom services.';
+      document.getElementById('main-desc').textContent = 'The same Guidewire → CGI Ratabase connection, but now InsuRateConnect sits in between. No custom services. Configured in weeks. Works with any source or engine.';
+      document.getElementById('description').className = 'description desc-after';
+      document.getElementById('desc-title').textContent = descriptions.after.title;
+      document.getElementById('desc-title').style.color = descriptions.after.titleColor;
+      document.getElementById('desc-text').textContent = descriptions.after.text;
+      document.getElementById('toggle-btn').textContent = '← See Without InsuRateConnect';
+    }
+
+    function toggleState() {
+      clearInterval(autoTimer);
+      if (isAfter) showBefore(); else showAfter();
+      startAutoProgress();
+    }
+
+    // Auto progress bar + auto toggle
+    function startAutoProgress() {
+      const fill = document.getElementById('progress-fill');
+      fill.style.transition = 'none';
+      fill.style.width = '0%';
+      setTimeout(() => {
+        fill.style.transition = `width ${DURATION}ms linear`;
+        fill.style.width = '100%';
+      }, 50);
+
+      autoTimer = setTimeout(() => {
+        if (isAfter) showBefore(); else showAfter();
+        startAutoProgress();
+      }, DURATION);
+    }
+
+    // Start on before state, auto-transition to after
+    showBefore();
+    startAutoProgress();
+  </script>
+
+</body>
+</html>

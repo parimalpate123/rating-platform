@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InsuRateConnect — Live Transaction Flow</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .header h1 {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 15px;
+      color: #64748b;
+    }
+
+    .hl { color: #f97316; }
+
+    /* Pipeline wrapper */
+    .pipeline {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+      max-width: 1100px;
+      margin-bottom: 28px;
+    }
+
+    /* System nodes */
+    .system-node {
+      flex-shrink: 0;
+      width: 148px;
+      border-radius: 16px;
+      padding: 20px 14px;
+      text-align: center;
+      border: 2px solid;
+      transition: box-shadow 0.4s ease, border-color 0.4s ease;
+    }
+
+    .system-node.source {
+      background: #0d1e35;
+      border-color: #1e3a5f;
+    }
+
+    .system-node.target {
+      background: #1a0d35;
+      border-color: #3b1f6e;
+    }
+
+    .system-node.pulse-source {
+      border-color: #3b82f6;
+      box-shadow: 0 0 24px rgba(59,130,246,0.4);
+    }
+
+    .system-node.pulse-target {
+      border-color: #a855f7;
+      box-shadow: 0 0 24px rgba(168,85,247,0.5);
+    }
+
+    .sys-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    .sys-name {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .sys-sub {
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.4;
+    }
+
+    /* Outer arrows */
+    .outer-arrow {
+      flex-shrink: 0;
+      width: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #334155;
+    }
+
+    /* Orchestration center */
+    .orchestration {
+      flex: 1;
+      background: #141921;
+      border: 1px solid #1e293b;
+      border-radius: 20px;
+      padding: 18px 20px;
+    }
+
+    .platform-title {
+      text-align: center;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #f97316;
+      margin-bottom: 14px;
+    }
+
+    /* Tracks */
+    .track {
+      margin-bottom: 10px;
+    }
+
+    .track:last-child {
+      margin-bottom: 0;
+    }
+
+    .track-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #334155;
+      margin-bottom: 8px;
+    }
+
+    .steps-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Step pills */
+    .step {
+      flex: 1;
+      padding: 10px 8px;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid;
+      background: #1e293b;
+      border-color: #2d3748;
+      color: #64748b;
+      transition: all 0.35s ease;
+      cursor: default;
+      white-space: nowrap;
+    }
+
+    .step-icon {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    /* Active step variants */
+    .step.active-map {
+      background: #052e16;
+      border-color: #16a34a;
+      color: #4ade80;
+      box-shadow: 0 0 18px rgba(22,163,74,0.35);
+    }
+
+    .step.active-rules {
+      background: #1c1400;
+      border-color: #ca8a04;
+      color: #facc15;
+      box-shadow: 0 0 18px rgba(202,138,4,0.35);
+    }
+
+    .step.active-format {
+      background: #1e0d3a;
+      border-color: #7c3aed;
+      color: #a78bfa;
+      box-shadow: 0 0 18px rgba(124,58,237,0.35);
+    }
+
+    .step.active-engine {
+      background: #1c0d00;
+      border-color: #f97316;
+      color: #fb923c;
+      box-shadow: 0 0 18px rgba(249,115,22,0.4);
+    }
+
+    /* Done step */
+    .step.done {
+      background: #0d1a0d;
+      border-color: #166534;
+      color: #22c55e;
+      opacity: 0.7;
+    }
+
+    /* Track arrows */
+    .step-arrow {
+      flex-shrink: 0;
+      font-size: 14px;
+      color: #334155;
+      font-weight: 700;
+    }
+
+    /* Separator */
+    .track-sep {
+      height: 1px;
+      background: #1e293b;
+      margin: 10px 0;
+    }
+
+    /* Preview card */
+    .preview-card {
+      width: 100%;
+      max-width: 1100px;
+      background: #141921;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 18px 24px;
+      min-height: 96px;
+      transition: all 0.3s ease;
+    }
+
+    .preview-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .preview-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .badge-map { background: #052e16; color: #4ade80; border: 1px solid #16a34a; }
+    .badge-rules { background: #1c1400; color: #facc15; border: 1px solid #ca8a04; }
+    .badge-format { background: #1e0d3a; color: #a78bfa; border: 1px solid #7c3aed; }
+    .badge-engine { background: #1c0d00; color: #fb923c; border: 1px solid #f97316; }
+
+    .preview-step-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+
+    .preview-code {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.6;
+      white-space: pre;
+    }
+
+    .preview-code .hl-green { color: #4ade80; }
+    .preview-code .hl-yellow { color: #facc15; }
+    .preview-code .hl-purple { color: #a78bfa; }
+    .preview-code .hl-orange { color: #fb923c; }
+
+    /* Progress dots */
+    .progress-dots {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #1e293b;
+      transition: all 0.3s ease;
+    }
+
+    .dot.active { background: #f97316; width: 20px; }
+    .dot.done { background: #22c55e; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Live <span class="hl">Rating Transaction</span></h1>
+    <p>A rating request flowing through the InsuRateConnect orchestration engine — step by step.</p>
+  </div>
+
+  <div class="pipeline">
+    <div class="system-node source" id="rqi-node">
+      <div class="sys-label">Source System</div>
+      <div class="sys-name">RQI Platform</div>
+      <div class="sys-sub">Guidewire PolicyCenter</div>
+    </div>
+
+    <div class="outer-arrow" id="arrow-in">→</div>
+
+    <div class="orchestration">
+      <div class="platform-title">InsuRateConnect — Orchestration Engine</div>
+
+      <!-- Request track -->
+      <div class="track">
+        <div class="track-label">▶ Request flow</div>
+        <div class="steps-row">
+          <div class="step" id="step-0"><span class="step-icon">⇄</span>Translate Request</div>
+          <div class="step-arrow">→</div>
+          <div class="step" id="step-1"><span class="step-icon">⚡</span>Pre-Rating Rules</div>
+          <div class="step-arrow">→</div>
+          <div class="step" id="step-2"><span class="step-icon">⟷</span>Transform Format</div>
+          <div class="step-arrow">→</div>
+          <div class="step" id="step-3"><span class="step-icon">↗</span>Call Engine</div>
+        </div>
+      </div>
+
+      <div class="track-sep"></div>
+
+      <!-- Response track -->
+      <div class="track">
+        <div class="track-label">◀ Response flow</div>
+        <div class="steps-row">
+          <div class="step" id="step-7"><span class="step-icon">⚡</span>Post-Rating Rules</div>
+          <div class="step-arrow">←</div>
+          <div class="step" id="step-6"><span class="step-icon">⇄</span>Translate Response</div>
+          <div class="step-arrow">←</div>
+          <div class="step" id="step-5"><span class="step-icon">⟷</span>Transform Response</div>
+          <div class="step-arrow">←</div>
+          <div class="step" id="step-4"><span class="step-icon">↙</span>Receive Premium</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="outer-arrow" id="arrow-out">→</div>
+
+    <div class="system-node target" id="engine-node">
+      <div class="sys-label">Target System</div>
+      <div class="sys-name">Rating Engine</div>
+      <div class="sys-sub">Earnix / CGI Ratabase</div>
+    </div>
+  </div>
+
+  <div class="preview-card" id="preview-card">
+    <div class="preview-top">
+      <div class="preview-badge badge-map" id="preview-badge">Field Mapping</div>
+      <div class="preview-step-name" id="preview-step">Translate Request</div>
+    </div>
+    <div class="preview-code" id="preview-code"></div>
+  </div>
+
+  <div class="progress-dots" id="progress-dots"></div>
+
+  <script>
+    const STEPS = [
+      {
+        id: 'step-0', type: 'map',
+        badge: 'Field Mapping', badgeClass: 'badge-map', stepClass: 'active-map',
+        name: 'Translate Request',
+        code: `  coverageAmount    →   CoverageLimit       500,000\n  buildingAge       →   RiskAge             12\n  annualRevenue     →   InsuredRevenue      4,200,000\n  state             →   StateCode           "FL"`,
+        rqi: true, engine: false
+      },
+      {
+        id: 'step-1', type: 'rules',
+        badge: 'Rules Engine', badgeClass: 'badge-rules', stepClass: 'active-rules',
+        name: 'Pre-Rating Rules',
+        code: `  Rule fired: State = FL AND nearCoast = true\n  → Apply coastal surcharge: +12%\n\n  Base premium:  $2,187.00\n  After rule:    $2,449.00`,
+        rqi: false, engine: false
+      },
+      {
+        id: 'step-2', type: 'format',
+        badge: 'Format Transform', badgeClass: 'badge-format', stepClass: 'active-format',
+        name: 'Transform Format  JSON → XML',
+        code: `  { "CoverageLimit": 500000 }  →  <CoverageLimit>500000</CoverageLimit>\n  { "RiskAge": 12 }            →  <RiskAge>12</RiskAge>\n  { "StateCode": "FL" }        →  <StateCode>FL</StateCode>`,
+        rqi: false, engine: false
+      },
+      {
+        id: 'step-3', type: 'engine',
+        badge: 'Engine Call', badgeClass: 'badge-engine', stepClass: 'active-engine',
+        name: 'Call Rating Engine',
+        code: `  POST https://earnix.acme.com/api/rate\n  Content-Type: application/xml\n  X-Correlation-ID: txn-9f3a2c\n\n  Sending payload → awaiting response...`,
+        rqi: false, engine: true
+      },
+      {
+        id: 'step-4', type: 'engine',
+        badge: 'Engine Response', badgeClass: 'badge-engine', stepClass: 'active-engine',
+        name: 'Receive Premium',
+        code: `  HTTP 200 OK  (142ms)\n\n  <RateResponse>\n    <Premium>2449.00</Premium>\n    <Status>RATED</Status>\n    <RatingDate>2026-03-01</RatingDate>\n  </RateResponse>`,
+        rqi: false, engine: true
+      },
+      {
+        id: 'step-5', type: 'format',
+        badge: 'Format Transform', badgeClass: 'badge-format', stepClass: 'active-format',
+        name: 'Transform Response  XML → JSON',
+        code: `  <Premium>2449.00</Premium>    →  { "totalPremium": 2449.00 }\n  <Status>RATED</Status>        →  { "ratingStatus": "RATED" }\n  <RatingDate>2026-03-01</...>  →  { "ratedAt": "2026-03-01" }`,
+        rqi: false, engine: false
+      },
+      {
+        id: 'step-6', type: 'map',
+        badge: 'Field Mapping', badgeClass: 'badge-map', stepClass: 'active-map',
+        name: 'Translate Response',
+        code: `  totalPremium    →   premium.amount      $2,449.00\n  ratingStatus    →   status              "COMPLETED"\n  ratedAt         →   rating.timestamp    "2026-03-01"`,
+        rqi: false, engine: false
+      },
+      {
+        id: 'step-7', type: 'rules',
+        badge: 'Rules Engine', badgeClass: 'badge-rules', stepClass: 'active-rules',
+        name: 'Post-Rating Rules',
+        code: `  Rule: Apply min premium floor if below $500  →  not triggered\n  Rule: Round premium to nearest dollar         →  $2,449.00\n\n  Final premium:  $2,449.00   Status: COMPLETED ✓`,
+        rqi: true, engine: false
+      },
+    ];
+
+    let current = 0;
+    const INTERVAL = 2200;
+
+    // Build progress dots
+    const dotsEl = document.getElementById('progress-dots');
+    STEPS.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      d.id = `dot-${i}`;
+      dotsEl.appendChild(d);
+    });
+
+    function clearAll() {
+      STEPS.forEach(s => {
+        const el = document.getElementById(s.id);
+        el.className = 'step';
+      });
+      document.getElementById('rqi-node').className = 'system-node source';
+      document.getElementById('engine-node').className = 'system-node target';
+      document.querySelectorAll('.dot').forEach((d, i) => {
+        d.className = i < current ? 'dot done' : 'dot';
+      });
+    }
+
+    function activate(index) {
+      clearAll();
+      const s = STEPS[index];
+      const el = document.getElementById(s.id);
+      el.className = `step ${s.stepClass}`;
+
+      if (s.rqi) document.getElementById('rqi-node').className = 'system-node source pulse-source';
+      if (s.engine) document.getElementById('engine-node').className = 'system-node target pulse-target';
+
+      // Preview
+      document.getElementById('preview-badge').className = `preview-badge ${s.badgeClass}`;
+      document.getElementById('preview-badge').textContent = s.badge;
+      document.getElementById('preview-step').textContent = s.name;
+      document.getElementById('preview-code').textContent = s.code;
+
+      // Progress dots
+      document.querySelectorAll('.dot').forEach((d, i) => {
+        if (i < index) d.className = 'dot done';
+        else if (i === index) d.className = 'dot active';
+        else d.className = 'dot';
+      });
+    }
+
+    // Start
+    activate(0);
+    setInterval(() => {
+      current = (current + 1) % STEPS.length;
+      activate(current);
+    }, INTERVAL);
+  </script>
+
+</body>
+</html>
