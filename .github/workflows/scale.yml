@@ -1,10 +1,11 @@
-# ── Scale ECS Services Up/Down ────────────────────────────────────────────────
+# ── Scale ECS Services + RDS Up/Down ──────────────────────────────────────────
 #
 # Use this to save costs when not demoing. Trigger from GitHub Actions UI.
-#   Scale Down → sets all services to 0 tasks (~$0/day Fargate)
-#   Scale Up   → sets all services to desired count for demos
+#   Scale Down → ECS to 0 tasks + stop RDS (~$0/day)
+#   Scale Up   → start RDS + ECS to desired count for demos
 #
-# Does NOT touch RDS, ALB, or other infra — only ECS task counts.
+# Note: RDS auto-restarts after 7 days of being stopped (AWS limitation).
+#       If you demo less than weekly, you may want to re-run scale-down periodically.
 
 name: Scale Services
 
@@ -26,6 +27,11 @@ on:
         options:
           - "1"
           - "2"
+      include_rds:
+        description: "Also stop/start RDS database?"
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -33,12 +39,13 @@ permissions:
 env:
   AWS_REGION: us-east-1
   ECS_CLUSTER: sre-poc-mcp-cluster
+  RDS_INSTANCE: rating-platform-dev
 
 jobs:
   scale:
     name: "Scale ${{ inputs.action }}"
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -47,7 +54,36 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Scale services
+      # ── Scale UP: start RDS first (services need the DB) ─────────────────
+      - name: Start RDS
+        if: inputs.action == 'up' && inputs.include_rds
+        run: |
+          STATUS=$(aws rds describe-db-instances \
+            --db-instance-identifier "${{ env.RDS_INSTANCE }}" \
+            --query 'DBInstances[0].DBInstanceStatus' \
+            --output text --region "${{ env.AWS_REGION }}" 2>/dev/null || echo "not-found")
+
+          echo "RDS status: $STATUS"
+
+          if [ "$STATUS" = "stopped" ]; then
+            echo "Starting RDS instance..."
+            aws rds start-db-instance \
+              --db-instance-identifier "${{ env.RDS_INSTANCE }}" \
+              --region "${{ env.AWS_REGION }}" \
+              --no-cli-pager > /dev/null
+            echo "Waiting for RDS to become available (this takes 3-5 minutes)..."
+            aws rds wait db-instance-available \
+              --db-instance-identifier "${{ env.RDS_INSTANCE }}" \
+              --region "${{ env.AWS_REGION }}"
+            echo "✓ RDS is available"
+          elif [ "$STATUS" = "available" ]; then
+            echo "✓ RDS already running"
+          else
+            echo "⚠ RDS in state '$STATUS' — skipping (may need manual intervention)"
+          fi
+
+      # ── Scale ECS services ───────────────────────────────────────────────
+      - name: Scale ECS services
         run: |
           SERVICES=(
             core-rating
@@ -83,12 +119,67 @@ jobs:
 
           echo ""
           if [ "$COUNT" = "0" ]; then
-            echo "All services scaled to 0. You're saving ~\$6.50/day in Fargate costs."
+            echo "All services scaled to 0."
           else
             echo "All services scaling to $COUNT. Tasks should be running within ~60 seconds."
           fi
 
-      - name: Verify service status
+      # ── Scale DOWN: stop RDS after ECS is drained ────────────────────────
+      - name: Stop RDS
+        if: inputs.action == 'down' && inputs.include_rds
+        run: |
+          STATUS=$(aws rds describe-db-instances \
+            --db-instance-identifier "${{ env.RDS_INSTANCE }}" \
+            --query 'DBInstances[0].DBInstanceStatus' \
+            --output text --region "${{ env.AWS_REGION }}" 2>/dev/null || echo "not-found")
+
+          echo "RDS status: $STATUS"
+
+          if [ "$STATUS" = "available" ]; then
+            echo "Stopping RDS instance..."
+            aws rds stop-db-instance \
+              --db-instance-identifier "${{ env.RDS_INSTANCE }}" \
+              --region "${{ env.AWS_REGION }}" \
+              --no-cli-pager > /dev/null
+            echo "✓ RDS stop initiated (takes ~1 minute to fully stop)"
+          elif [ "$STATUS" = "stopped" ]; then
+            echo "✓ RDS already stopped"
+          else
+            echo "⚠ RDS in state '$STATUS' — skipping"
+          fi
+
+      # ── Summary ──────────────────────────────────────────────────────────
+      - name: Summary
+        run: |
+          echo ""
+          echo "══════════════════════════════════════════════"
+          if [ "${{ inputs.action }}" = "down" ]; then
+            echo "  SCALED DOWN"
+            echo "  • ECS: all services → 0 tasks"
+            if [ "${{ inputs.include_rds }}" = "true" ]; then
+              echo "  • RDS: stop initiated"
+              echo ""
+              echo "  Estimated savings: ~\$7.50/day"
+              echo "  (Fargate ~\$6.50 + RDS ~\$0.45 + CloudWatch reduced)"
+              echo ""
+              echo "  ⚠ RDS auto-restarts after 7 days if still stopped."
+            else
+              echo "  • RDS: unchanged"
+              echo ""
+              echo "  Estimated savings: ~\$6.50/day (Fargate only)"
+            fi
+          else
+            echo "  SCALED UP"
+            echo "  • ECS: all services → ${{ inputs.desired_count }} task(s)"
+            if [ "${{ inputs.include_rds }}" = "true" ]; then
+              echo "  • RDS: available"
+            fi
+            echo ""
+            echo "  Remember to scale down when done!"
+          fi
+          echo "══════════════════════════════════════════════"
+
+      - name: Verify ECS status
         run: |
           echo ""
           echo "── Current ECS Service Status ──"
