@@ -1,0 +1,103 @@
+# ── Scale ECS Services Up/Down ────────────────────────────────────────────────
+#
+# Use this to save costs when not demoing. Trigger from GitHub Actions UI.
+#   Scale Down → sets all services to 0 tasks (~$0/day Fargate)
+#   Scale Up   → sets all services to desired count for demos
+#
+# Does NOT touch RDS, ALB, or other infra — only ECS task counts.
+
+name: Scale Services
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Scale direction"
+        required: true
+        type: choice
+        options:
+          - down
+          - up
+      desired_count:
+        description: "Task count per service (only used for 'up'). 1 is fine for POC demos."
+        required: false
+        default: "1"
+        type: choice
+        options:
+          - "1"
+          - "2"
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  ECS_CLUSTER: sre-poc-mcp-cluster
+
+jobs:
+  scale:
+    name: "Scale ${{ inputs.action }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Scale services
+        run: |
+          SERVICES=(
+            core-rating
+            line-rating
+            product-config
+            transform-service
+            rules-service
+            status-service
+            adapter-kafka
+            adapter-dnb
+            adapter-gw
+            rating-workspace
+          )
+
+          if [ "${{ inputs.action }}" = "down" ]; then
+            COUNT=0
+          else
+            COUNT=${{ inputs.desired_count }}
+          fi
+
+          echo "=== Scaling all services to $COUNT task(s) ==="
+          echo ""
+
+          for svc in "${SERVICES[@]}"; do
+            echo -n "  $svc → $COUNT ... "
+            aws ecs update-service \
+              --cluster "${{ env.ECS_CLUSTER }}" \
+              --service "$svc" \
+              --desired-count "$COUNT" \
+              --region "${{ env.AWS_REGION }}" \
+              --no-cli-pager > /dev/null 2>&1 && echo "✓" || echo "⚠ failed"
+          done
+
+          echo ""
+          if [ "$COUNT" = "0" ]; then
+            echo "All services scaled to 0. You're saving ~\$6.50/day in Fargate costs."
+          else
+            echo "All services scaling to $COUNT. Tasks should be running within ~60 seconds."
+          fi
+
+      - name: Verify service status
+        run: |
+          echo ""
+          echo "── Current ECS Service Status ──"
+          aws ecs describe-services \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --services \
+              core-rating line-rating product-config \
+              transform-service rules-service status-service \
+              rating-workspace adapter-kafka adapter-dnb adapter-gw \
+            --region "${{ env.AWS_REGION }}" \
+            --query 'services[].{Name:serviceName,Running:runningCount,Desired:desiredCount}' \
+            --output table --no-cli-pager
