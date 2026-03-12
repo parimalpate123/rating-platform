@@ -3,6 +3,7 @@
 # Use this to save costs when not demoing. Trigger from GitHub Actions UI.
 #   Scale Down → ECS to 0 tasks + stop RDS (~$0/day)
 #   Scale Up   → start RDS + ECS to desired count for demos
+#   Status     → check current state of all services + RDS (no changes)
 #
 # Note: RDS auto-restarts after 7 days of being stopped (AWS limitation).
 #       If you demo less than weekly, you may want to re-run scale-down periodically.
@@ -17,6 +18,7 @@ on:
         required: true
         type: choice
         options:
+          - status
           - down
           - up
       desired_count:
@@ -28,7 +30,7 @@ on:
           - "1"
           - "2"
       include_rds:
-        description: "Also stop/start RDS database?"
+        description: "Also stop/start RDS database? (ignored for status)"
         required: false
         default: true
         type: boolean
@@ -82,8 +84,9 @@ jobs:
             echo "⚠ RDS in state '$STATUS' — skipping (may need manual intervention)"
           fi
 
-      # ── Scale ECS services ───────────────────────────────────────────────
+      # ── Scale ECS services (skip for status) ────────────────────────────
       - name: Scale ECS services
+        if: ${{ inputs.action != 'status' }}
         run: |
           SERVICES=(
             core-rating
@@ -150,6 +153,7 @@ jobs:
 
       # ── Summary ──────────────────────────────────────────────────────────
       - name: Summary
+        if: ${{ inputs.action != 'status' }}
         run: |
           echo ""
           echo "══════════════════════════════════════════════"
@@ -179,10 +183,19 @@ jobs:
           fi
           echo "══════════════════════════════════════════════"
 
-      - name: Verify ECS status
+      # ── Status (always runs) ─────────────────────────────────────────────
+      - name: RDS status
+        run: |
+          echo "── RDS Status ──"
+          aws rds describe-db-instances \
+            --db-instance-identifier "${{ env.RDS_INSTANCE }}" \
+            --query 'DBInstances[0].{Identifier:DBInstanceIdentifier,Status:DBInstanceStatus,Class:DBInstanceClass,Engine:Engine}' \
+            --output table --region "${{ env.AWS_REGION }}" --no-cli-pager 2>/dev/null || echo "RDS instance not found"
+
+      - name: ECS status
         run: |
           echo ""
-          echo "── Current ECS Service Status ──"
+          echo "── ECS Service Status ──"
           aws ecs describe-services \
             --cluster "${{ env.ECS_CLUSTER }}" \
             --services \
@@ -190,5 +203,5 @@ jobs:
               transform-service rules-service status-service \
               rating-workspace adapter-kafka adapter-dnb adapter-gw \
             --region "${{ env.AWS_REGION }}" \
-            --query 'services[].{Name:serviceName,Running:runningCount,Desired:desiredCount}' \
+            --query 'services[].{Name:serviceName,Desired:desiredCount,Running:runningCount,Pending:pendingCount}' \
             --output table --no-cli-pager
