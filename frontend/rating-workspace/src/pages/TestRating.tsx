@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
-import { Play, Loader2, CheckCircle, XCircle, ChevronDown, ChevronRight, Zap, Copy, Download } from 'lucide-react';
+import { Play, Loader2, CheckCircle, XCircle, ChevronDown, ChevronRight, Zap, Copy, Download, GitBranch } from 'lucide-react';
 import { ratingApi, orchestratorApi, type RateResponse, type ProductOrchestrator } from '../api/orchestrator';
 import { type ProductLine } from '../api/products';
 import { cn, statusColor } from '../lib/utils';
@@ -407,7 +407,14 @@ export function TestRating() {
                   </div>
                   <div>
                     <dt className="text-xs text-gray-500 dark:text-gray-400">Steps</dt>
-                    <dd className="text-gray-700 dark:text-gray-300">{result.stepResults.length} executed</dd>
+                    <dd className="text-gray-700 dark:text-gray-300">
+                      {result.stepResults.length} executed
+                      {result.stepResults.some(s => s.branchDecision) && (
+                        <span className="ml-1 text-rose-600 dark:text-rose-400 text-[10px]">
+                          ({result.stepResults.filter(s => s.branchDecision).length} branch{result.stepResults.filter(s => s.branchDecision).length !== 1 ? 'es' : ''})
+                        </span>
+                      )}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-xs text-gray-500 dark:text-gray-400">Correlation ID</dt>
@@ -452,6 +459,7 @@ export function TestRating() {
                     durationMs: s.durationMs,
                     error: s.error,
                     output: s.output,
+                    branchDecision: s.branchDecision,
                   }))}
                   onStepClick={(step, res) => setSelectedStep({ step, result: res })}
                   selectedStepId={selectedStep?.step.id}
@@ -485,6 +493,13 @@ export function TestRating() {
                       {expandedSteps.has(i) && (
                         <div className="px-3 pb-3 pt-1 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700">
                           <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Type: <span className="font-mono">{step.stepType}</span></p>
+                          {step.branchDecision && (
+                            <div className="flex items-center gap-2 mb-1 text-xs">
+                              <GitBranch className="w-3 h-3 text-rose-500" />
+                              <span className="text-rose-700 dark:text-rose-300 font-medium">Took: {step.branchDecision.branchLabel}</span>
+                              <span className="text-gray-400 dark:text-gray-500 font-mono text-[10px]">{step.branchDecision.conditionEvaluated}</span>
+                            </div>
+                          )}
                           {step.error && <p className="text-xs text-red-600 dark:text-red-400">Error: {step.error}</p>}
                           {step.output && (
                             <pre className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded p-2 mt-1 overflow-auto max-h-32 text-gray-800 dark:text-gray-200">

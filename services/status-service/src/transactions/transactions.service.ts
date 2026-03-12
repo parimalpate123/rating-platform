@@ -33,6 +33,7 @@ export interface UpdateTransactionDto {
   errorMessage?: string;
   durationMs?: number;
   completedSteps?: number;
+  executionPath?: string[];
 }
 
 export interface CreateStepLogDto {
@@ -47,6 +48,7 @@ export interface CreateStepLogDto {
   durationMs?: number;
   startedAt?: string;
   completedAt?: string;
+  branchDecision?: Record<string, any>;
 }
 
 @Injectable()
@@ -199,6 +201,7 @@ export class TransactionsService {
       durationMs: data.durationMs || null,
       startedAt: data.startedAt ? new Date(data.startedAt) : new Date(),
       completedAt: data.completedAt ? new Date(data.completedAt) : null,
+      branchDecision: data.branchDecision || null,
     });
     return this.stepRepo.save(log);
   }

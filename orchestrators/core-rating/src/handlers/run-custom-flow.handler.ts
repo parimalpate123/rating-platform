@@ -50,7 +50,19 @@ export class RunCustomFlowHandler {
 
     const steps = (flow.steps ?? []).filter((s: any) => s.isActive !== false).sort((a: any, b: any) => a.stepOrder - b.stepOrder);
 
-    for (const step of steps) {
+    // Graph-based traversal (same logic as main execution loop)
+    const stepMap = new Map(steps.map((s: any) => [s.id, s]));
+    const stepByOrder = [...steps];
+    let currentStepId: string | null = stepByOrder[0]?.id ?? null;
+    const MAX_ITERATIONS = 100;
+    let iterations = 0;
+    let stepsExecuted = 0;
+
+    while (currentStepId && iterations < MAX_ITERATIONS) {
+      iterations++;
+      const step = stepMap.get(currentStepId) as any;
+      if (!step) break;
+
       const handler = this.registry.get(step.stepType);
       if (!handler) {
         this.logger.error(
@@ -63,12 +75,16 @@ export class RunCustomFlowHandler {
         };
       }
 
+      let handlerNextStepId: string | null = null;
       try {
         this.logger.log(
           `run_custom_flow: executing step ${step.stepOrder}: ${step.name} (${step.stepType})`,
           context.correlationId,
         );
         const result = await handler.execute(context, step.config ?? {});
+        handlerNextStepId = result?.nextStepId ?? null;
+        stepsExecuted++;
+
         if (result?.status === 'failed') {
           return {
             status: 'failed',
@@ -86,15 +102,25 @@ export class RunCustomFlowHandler {
           output: { error: errorMsg, stepName: step.name, customFlowId: flow.id },
         };
       }
+
+      // Determine next step
+      if (handlerNextStepId) {
+        currentStepId = handlerNextStepId;
+      } else if (step.defaultNextStepId) {
+        currentStepId = step.defaultNextStepId;
+      } else {
+        const currentIdx = stepByOrder.findIndex((s: any) => s.id === step.id);
+        currentStepId = stepByOrder[currentIdx + 1]?.id ?? null;
+      }
     }
 
     this.logger.log(
-      `run_custom_flow: completed ${flow.name} (${steps.length} steps)`,
+      `run_custom_flow: completed ${flow.name} (${stepsExecuted} steps)`,
       context.correlationId,
     );
     return {
       status: 'completed',
-      output: { customFlowId: flow.id, flowName: flow.name, stepsExecuted: steps.length },
+      output: { customFlowId: flow.id, flowName: flow.name, stepsExecuted },
     };
   }
 

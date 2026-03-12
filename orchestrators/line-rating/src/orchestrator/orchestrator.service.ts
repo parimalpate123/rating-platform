@@ -4,6 +4,13 @@ import { Repository } from 'typeorm';
 import { ProductOrchestratorEntity } from '../entities/product-orchestrator.entity';
 import { OrchestratorStepEntity } from '../entities/orchestrator-step.entity';
 
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 const XML_TARGET_STEPS = [
   { order: 1, type: 'validate_request', name: 'Validate request', config: {} },
   { order: 2, type: 'field_mapping', name: 'Map Request Fields', config: { direction: 'request' } },
@@ -83,6 +90,7 @@ export class OrchestratorService {
       name,
       endpointPath,
       status: 'draft',
+      configKey: `rating:orchestrator:${generateSlug(name)}`,
     });
     return this.orchRepo.save(orch);
   }
@@ -110,13 +118,15 @@ export class OrchestratorService {
       config: data.config || {},
       stepOrder: data.stepOrder ?? 0,
       isActive: true,
+      configKey: `rating:step:${generateSlug(data.name)}`,
+      defaultNextStepId: (data as any).defaultNextStepId ?? null,
     });
     return this.stepRepo.save(step);
   }
 
   async updateStep(
     stepId: string,
-    data: Partial<Pick<OrchestratorStepEntity, 'name' | 'config' | 'isActive' | 'stepOrder' | 'stepType'>>,
+    data: Partial<Pick<OrchestratorStepEntity, 'name' | 'config' | 'isActive' | 'stepOrder' | 'stepType' | 'defaultNextStepId' | 'configKey'>>,
   ): Promise<OrchestratorStepEntity> {
     const step = await this.stepRepo.findOne({ where: { id: stepId } });
     if (!step) {
@@ -168,6 +178,77 @@ export class OrchestratorService {
     for (let i = 0; i < stepIds.length; i++) {
       await this.stepRepo.update({ id: stepIds[i] }, { stepOrder: i });
     }
+  }
+
+  buildFlowGraph(steps: OrchestratorStepEntity[]): {
+    nodes: Array<{ id: string; name: string; stepType: string; stepOrder: number; config: Record<string, unknown> }>;
+    edges: Array<{ from: string; to: string; label: string; condition?: string }>;
+  } {
+    const activeSteps = steps
+      .filter((s) => s.isActive)
+      .sort((a, b) => a.stepOrder - b.stepOrder);
+
+    const nodes = activeSteps.map((s) => ({
+      id: s.id,
+      name: s.name,
+      stepType: s.stepType,
+      stepOrder: s.stepOrder,
+      config: s.config ?? {},
+    }));
+
+    const edges: Array<{ from: string; to: string; label: string; condition?: string }> = [];
+
+    for (let i = 0; i < activeSteps.length; i++) {
+      const step = activeSteps[i];
+
+      if (step.stepType === 'branch' && step.config) {
+        const branches = (step.config as any).branches as Array<{
+          label: string;
+          conditionExpression: string;
+          targetStepId: string;
+        }> | undefined;
+
+        if (branches) {
+          for (const branch of branches) {
+            edges.push({
+              from: step.id,
+              to: branch.targetStepId,
+              label: branch.label,
+              condition: branch.conditionExpression,
+            });
+          }
+        }
+
+        const defaultTarget = (step.config as any).defaultTargetStepId;
+        if (defaultTarget) {
+          edges.push({
+            from: step.id,
+            to: defaultTarget,
+            label: 'default',
+          });
+        } else if (!branches?.length && i < activeSteps.length - 1) {
+          edges.push({
+            from: step.id,
+            to: activeSteps[i + 1].id,
+            label: 'default',
+          });
+        }
+      } else if (step.defaultNextStepId) {
+        edges.push({
+          from: step.id,
+          to: step.defaultNextStepId,
+          label: 'next',
+        });
+      } else if (i < activeSteps.length - 1) {
+        edges.push({
+          from: step.id,
+          to: activeSteps[i + 1].id,
+          label: 'default',
+        });
+      }
+    }
+
+    return { nodes, edges };
   }
 
   async autoGenerate(

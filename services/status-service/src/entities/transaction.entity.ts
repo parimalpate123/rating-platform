@@ -50,6 +50,9 @@ export class TransactionEntity {
   @Column({ type: 'int', default: 0, name: 'completed_steps' })
   completedSteps!: number;
 
+  @Column({ type: 'text', array: true, nullable: true, name: 'execution_path' })
+  executionPath!: string[] | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

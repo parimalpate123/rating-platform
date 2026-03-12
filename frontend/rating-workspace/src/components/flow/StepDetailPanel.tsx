@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { X, CheckCircle, XCircle, Circle, MinusCircle } from 'lucide-react'
+import { X, CheckCircle, XCircle, Circle, MinusCircle, GitBranch } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { getServiceLabel, getEndpointLabel, type DiagramStep, type DiagramResult } from './ExecutionFlowDiagram'
 
@@ -16,6 +16,7 @@ const STEP_BADGE_STYLES: Record<string, string> = {
   call_orchestrator: 'bg-teal-100 text-teal-700',
   publish_event: 'bg-pink-100 text-pink-700',
   enrich: 'bg-yellow-100 text-yellow-700',
+  branch: 'bg-rose-100 text-rose-700',
 }
 
 // ── Status icon + label ───────────────────────────────────────────────────────
@@ -213,6 +214,41 @@ export function StepDetailPanel({ step, result, onClose, width = 320, onResizeSt
               <SectionLabel label="Error" />
               <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2.5">
                 <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed">{result.error}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Branch decision */}
+          {(result as any)?.branchDecision && (
+            <div>
+              <SectionLabel label="Branch Decision" />
+              <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg px-3 py-2.5 space-y-2">
+                <div className="flex items-center gap-2">
+                  <GitBranch className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0" />
+                  <span className="text-xs font-semibold text-rose-700 dark:text-rose-300">
+                    Took: {(result as any).branchDecision.branchLabel}
+                  </span>
+                </div>
+                <dl className="space-y-1.5">
+                  <div className="flex items-start gap-2">
+                    <dt className="text-[11px] font-medium text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">Condition</dt>
+                    <dd className="text-[11px] text-gray-800 dark:text-gray-200 font-mono break-all">
+                      {(result as any).branchDecision.conditionEvaluated}
+                    </dd>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <dt className="text-[11px] font-medium text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">Result</dt>
+                    <dd className="text-[11px] text-gray-800 dark:text-gray-200">
+                      {(result as any).branchDecision.result ? 'true (matched)' : 'false'}
+                    </dd>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <dt className="text-[11px] font-medium text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">Target</dt>
+                    <dd className="text-[11px] text-gray-800 dark:text-gray-200">
+                      {(result as any).branchDecision.targetStepName}
+                    </dd>
+                  </div>
+                </dl>
               </div>
             </div>
           )}

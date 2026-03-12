@@ -19,6 +19,8 @@ export interface OrchestratorStep {
   name: string;
   config: Record<string, unknown>;
   isActive: boolean;
+  defaultNextStepId?: string | null;
+  configKey?: string | null;
   createdAt: string;
 }
 
@@ -47,7 +49,14 @@ export interface RateResponse {
     durationMs: number;
     error?: string;
     output?: Record<string, unknown>;
+    branchDecision?: {
+      conditionEvaluated: string;
+      result: boolean;
+      branchLabel: string;
+      targetStepName: string;
+    } | null;
   }>;
+  executionPath?: string[];
   totalDurationMs: number;
 }
 

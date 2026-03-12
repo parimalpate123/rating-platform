@@ -4,6 +4,13 @@ import { Repository } from 'typeorm';
 import { CustomFlowEntity } from '../entities/custom-flow.entity';
 import { CustomFlowStepEntity } from '../entities/custom-flow-step.entity';
 
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 const ALLOWED_CUSTOM_FLOW_STEP_TYPES = [
   'validate_request',
   'generate_value',
@@ -11,6 +18,7 @@ const ALLOWED_CUSTOM_FLOW_STEP_TYPES = [
   'enrich',
   'publish_event',
   'run_script',
+  'branch',
 ];
 
 @Injectable()
@@ -78,6 +86,7 @@ export class CustomFlowsService {
       description: data.description ?? null,
       scope: data.scope,
       productLineCode: data.productLineCode ?? null,
+      configKey: `rating:custom-flow:${generateSlug(data.name)}`,
     });
     return this.flowRepo.save(flow);
   }
@@ -144,13 +153,15 @@ export class CustomFlowsService {
       config: data.config ?? {},
       stepOrder: data.stepOrder ?? (maxOrder?.max ?? 0) + 1,
       isActive: true,
+      configKey: `rating:custom-flow-step:${generateSlug(data.name)}`,
+      defaultNextStepId: (data as any).defaultNextStepId ?? null,
     });
     return this.stepRepo.save(step);
   }
 
   async updateStep(
     stepId: string,
-    data: Partial<Pick<CustomFlowStepEntity, 'name' | 'config' | 'isActive' | 'stepOrder' | 'stepType'>>,
+    data: Partial<Pick<CustomFlowStepEntity, 'name' | 'config' | 'isActive' | 'stepOrder' | 'stepType' | 'defaultNextStepId' | 'configKey'>>,
   ): Promise<CustomFlowStepEntity> {
     const step = await this.stepRepo.findOne({ where: { id: stepId } });
     if (!step) {

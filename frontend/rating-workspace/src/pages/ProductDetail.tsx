@@ -36,6 +36,7 @@ import { ExecutionFlowDiagram, type DiagramStep, type DiagramResult } from '../c
 import { StepDetailPanel } from '../components/flow/StepDetailPanel'
 import { ScriptEditor } from '../components/ScriptEditor'
 import { TestingFlowCircles } from '../components/flow/TestingFlowCircles'
+import { BranchConfigForm } from '../components/flow/BranchConfigForm'
 import { ActivityFeed } from '../components/ActivityFeed'
 
 // --------------- Edit Modal ---------------
@@ -587,6 +588,7 @@ const STEP_TYPES = [
   { value: 'format_transform', label: 'Format Transform' },
   { value: 'call_external_api', label: 'Call External API' },
   { value: 'publish_event', label: 'Publish Event' },
+  { value: 'branch', label: 'Conditional Branch' },
 ]
 
 interface ConfigField {
@@ -625,6 +627,7 @@ const STEP_CONFIG_FIELDS: Record<string, ConfigField[]> = {
   ],
   run_custom_flow: [], // custom-flow dropdown rendered below when productCode is set
   run_script: [], // script source + timeout rendered in custom block below
+  branch: [], // branch config rendered in custom BranchConfigForm below
 }
 
 function StepConfigForm({
@@ -936,6 +939,9 @@ const [sampleRequestJson, setSampleRequestJson] = useState('{}')
             <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">Save the step after selecting a product context to see flows for this product.</p>
           )}
         </div>
+      )}
+      {stepType === 'branch' && (
+        <BranchConfigForm config={config} onChange={onChange} />
       )}
       {fields.length > 0 && (
       <div className="grid grid-cols-2 gap-3">

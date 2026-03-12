@@ -23,6 +23,12 @@ export class CustomFlowStepEntity {
   @Column({ type: 'boolean', default: true, name: 'is_active' })
   isActive!: boolean;
 
+  @Column({ type: 'text', nullable: true, unique: true, name: 'config_key' })
+  configKey!: string | null;
+
+  @Column({ type: 'uuid', nullable: true, name: 'default_next_step_id' })
+  defaultNextStepId!: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 }

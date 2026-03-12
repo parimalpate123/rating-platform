@@ -51,6 +51,7 @@ export interface ExecutionRequest {
     name: string;
     config: Record<string, unknown>;
     isActive: boolean;
+    defaultNextStepId?: string | null;
   }>;
 }
 
@@ -71,6 +72,7 @@ export interface ExecutionResult {
   response: Record<string, unknown>;
   working: Record<string, unknown>;
   totalDurationMs: number;
+  executionPath?: string[];
 }
 
 // ── Service ───────────────────────────────────────────────────────────────────
@@ -221,11 +223,52 @@ export class ExecutionService {
       .filter((s) => s.isActive)
       .sort((a, b) => a.stepOrder - b.stepOrder);
 
-    for (const step of activeSteps) {
+    // Build step map for graph traversal
+    const stepMap = new Map(activeSteps.map((s) => [s.id, s]));
+    const stepByOrder = [...activeSteps];
+    let currentStepId: string | null = stepByOrder[0]?.id ?? null;
+    const visited = new Set<string>();
+    const executionPath: string[] = [];
+    const MAX_ITERATIONS = 100;
+    let iterations = 0;
+
+    while (currentStepId && iterations < MAX_ITERATIONS) {
+      // Cycle detection
+      if (visited.has(currentStepId) && iterations > visited.size * 2) {
+        this.logger.error(
+          `Potential cycle detected at step ${currentStepId} after ${iterations} iterations`,
+          request.correlationId,
+        );
+        return {
+          correlationId: request.correlationId,
+          status: 'failed',
+          stepResults,
+          response: context.response,
+          working: context.working,
+          totalDurationMs: Date.now() - startTime,
+          executionPath,
+        };
+      }
+      visited.add(currentStepId);
+      iterations++;
+
+      const step = stepMap.get(currentStepId);
+      if (!step) break;
+
       context.metadata.currentStep = step.stepOrder;
 
       const resilience = (step.config as any)?.resilience as StepResilienceConfig | undefined;
       const onFailure = resilience?.onFailure ?? 'stop';
+
+      // Helper to determine the next step (used after skip, condition-not-met, or execution)
+      const getNextStepId = (handlerNextStepId?: string | null): string | null => {
+        if (handlerNextStepId) return handlerNextStepId;
+        const configNext = (step.config as any)?.defaultNextStepId ?? step.defaultNextStepId;
+        if (configNext) return configNext;
+        // Fallback: next by stepOrder (backward compatible)
+        const currentIdx = stepByOrder.findIndex((s) => s.id === step.id);
+        return stepByOrder[currentIdx + 1]?.id ?? null;
+      };
 
       // ── 0. skip_step check (set by rules engine via _skipSteps) ──────────
       const skipSteps = (context.working as any)?._skipSteps as string[] | undefined;
@@ -241,6 +284,7 @@ export class ExecutionService {
           status: 'skipped',
           durationMs: 0,
         });
+        currentStepId = getNextStepId();
         continue;
       }
 
@@ -272,6 +316,7 @@ export class ExecutionService {
           status: 'skipped',
           durationMs: 0,
         });
+        currentStepId = getNextStepId();
         continue;
       }
 
@@ -298,8 +343,10 @@ export class ExecutionService {
             response: context.response,
             working: context.working,
             totalDurationMs: Date.now() - startTime,
+            executionPath,
           };
         }
+        currentStepId = getNextStepId();
         continue;
       }
 
@@ -325,11 +372,13 @@ export class ExecutionService {
           response: context.response,
           working: context.working,
           totalDurationMs: Date.now() - startTime,
+          executionPath,
         };
       }
 
       // ── 4. Execute (with retry) ───────────────────────────────────────────
       const stepStart = Date.now();
+      let handlerNextStepId: string | null = null;
       try {
         this.logger.log(
           `Executing step ${step.stepOrder}: ${step.name} (${step.stepType})`,
@@ -345,20 +394,31 @@ export class ExecutionService {
 
         const stepDuration = Date.now() - stepStart;
 
+        // Capture handler's next step redirect (from branch handler)
+        handlerNextStepId = result?.nextStepId ?? null;
+
         if (cbConfig) {
           result.status === 'failed'
             ? this.recordCircuitFailure(step.id, cbConfig.failureThreshold)
             : this.recordCircuitSuccess(step.id);
         }
 
-        stepResults.push({
+        const stepEntry: StepResultEntry = {
           stepId: step.id,
           stepType: step.stepType,
           stepName: step.name,
           status: result.status || 'completed',
           durationMs: stepDuration,
           output: result.output,
-        });
+        };
+
+        // Attach branch decision if present
+        if (result.branchDecision) {
+          (stepEntry as any).branchDecision = result.branchDecision;
+        }
+
+        stepResults.push(stepEntry);
+        executionPath.push(step.id);
 
         if (result.status === 'failed' && onFailure === 'stop') {
           this.logger.error(
@@ -372,6 +432,7 @@ export class ExecutionService {
             response: context.response,
             working: context.working,
             totalDurationMs: Date.now() - startTime,
+            executionPath,
           };
         }
       } catch (err) {
@@ -391,6 +452,8 @@ export class ExecutionService {
           error: errorMsg,
         });
 
+        executionPath.push(step.id);
+
         if (onFailure === 'stop') {
           return {
             correlationId: request.correlationId,
@@ -399,9 +462,20 @@ export class ExecutionService {
             response: context.response,
             working: context.working,
             totalDurationMs: Date.now() - startTime,
+            executionPath,
           };
         }
       }
+
+      // Determine next step
+      currentStepId = getNextStepId(handlerNextStepId);
+    }
+
+    if (iterations >= MAX_ITERATIONS) {
+      this.logger.error(
+        `Execution exceeded max iterations (${MAX_ITERATIONS})`,
+        request.correlationId,
+      );
     }
 
     return {
@@ -411,6 +485,7 @@ export class ExecutionService {
       response: context.response,
       working: context.working,
       totalDurationMs: Date.now() - startTime,
+      executionPath,
     };
   }
 }

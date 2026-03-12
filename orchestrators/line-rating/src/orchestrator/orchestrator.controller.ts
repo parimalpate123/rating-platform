@@ -42,6 +42,21 @@ export class OrchestratorController {
     return result;
   }
 
+  // ── Flow graph (nodes + edges) for visualization ───────────────────────────
+  @Get(':productLineCode/flow/:endpointPath/graph')
+  async getFlowGraph(
+    @Param('productLineCode') code: string,
+    @Param('endpointPath') endpointPath: string,
+  ) {
+    const result = await this.orchestratorService.findByProductAndEndpoint(code, endpointPath);
+    if (!result) {
+      throw new NotFoundException(
+        `Orchestrator not found for product: ${code}, endpoint: ${endpointPath}`,
+      );
+    }
+    return this.orchestratorService.buildFlowGraph(result.steps);
+  }
+
   // ── Delete a specific flow ──────────────────────────────────────────────────
   @Delete(':productLineCode/flow/:endpointPath')
   @HttpCode(HttpStatus.NO_CONTENT)

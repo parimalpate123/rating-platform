@@ -25,6 +25,13 @@ export interface EvaluateResponse {
   durationMs: number;
 }
 
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 @Injectable()
 export class RulesService {
   private readonly logger = new Logger(RulesService.name);
@@ -74,6 +81,9 @@ export class RulesService {
     conditions?: Partial<RuleConditionEntity>[],
     actions?: Partial<RuleActionEntity>[],
   ): Promise<any> {
+    if (!data.configKey && data.name) {
+      data.configKey = `rating:rule:${generateSlug(data.name)}`;
+    }
     const rule = this.ruleRepo.create(data);
     const saved = await this.ruleRepo.save(rule);
 

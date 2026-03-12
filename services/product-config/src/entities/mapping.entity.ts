@@ -20,6 +20,9 @@ export class MappingEntity {
   @Column({ name: 'created_by', length: 100, default: 'System' })
   createdBy!: string;
 
+  @Column({ type: 'text', nullable: true, unique: true, name: 'config_key' })
+  configKey!: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

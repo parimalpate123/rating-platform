@@ -42,6 +42,13 @@ export interface UpdateFieldMappingDto {
   sortOrder?: number;
 }
 
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 @Injectable()
 export class MappingsService {
   constructor(
@@ -67,6 +74,9 @@ export class MappingsService {
   }
 
   async createMapping(data: Partial<MappingEntity>): Promise<MappingEntity> {
+    if (!data.configKey && data.name) {
+      data.configKey = `rating:mapping:${generateSlug(data.name)}`;
+    }
     const entity = this.mappingRepo.create(data);
     return this.mappingRepo.save(entity);
   }

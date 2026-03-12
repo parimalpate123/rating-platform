@@ -73,3 +73,4 @@ infra/terraform/terraform.tfvars
 .env.production
 *.pem
 .aws-credentials
+temp/

@@ -34,6 +34,7 @@ export interface RateResponse {
     error?: string;
     output?: Record<string, unknown>;
   }>;
+  executionPath?: string[];
   totalDurationMs: number;
 }
 
@@ -122,6 +123,7 @@ export class RatingService {
           completedSteps: executionResult.stepResults.filter((r) => r.status === 'completed').length,
           premiumResult: (executionResult.response as any)?.premium ?? null,
           errorMessage: executionResult.stepResults.find((r) => r.error)?.error ?? null,
+          executionPath: executionResult.executionPath ?? null,
         },
         { headers: { 'x-correlation-id': correlationId } },
       );
@@ -141,6 +143,7 @@ export class RatingService {
             durationMs: sr.durationMs,
             startedAt: new Date().toISOString(),
             completedAt: new Date().toISOString(),
+            branchDecision: (sr as any).branchDecision ?? null,
           },
           { headers: { 'x-correlation-id': correlationId } },
         );
@@ -161,6 +164,7 @@ export class RatingService {
       data: executionResult.working,
       response: executionResult.response,
       stepResults: executionResult.stepResults,
+      executionPath: executionResult.executionPath,
       totalDurationMs,
     };
   }

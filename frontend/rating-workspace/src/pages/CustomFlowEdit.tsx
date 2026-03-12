@@ -18,6 +18,7 @@ import { customFlowsApi, type CustomFlow, type CustomFlowStep } from '../api/cus
 import { productsApi, type ProductLine } from '../api/products';
 import { scriptApi } from '../api/script';
 import { ScriptEditor } from '../components/ScriptEditor';
+import { BranchConfigForm } from '../components/flow/BranchConfigForm';
 import { cn } from '../lib/utils';
 
 // Step types allowed in custom flows (plan: validate_request, generate_value, field_mapping, enrich)
@@ -27,6 +28,7 @@ const CUSTOM_FLOW_STEP_TYPES = [
   { value: 'field_mapping', label: 'Field Mapping' },
   { value: 'enrich', label: 'Enrich' },
   { value: 'run_script', label: 'Run script' },
+  { value: 'branch', label: 'Conditional Branch' },
 ];
 
 const STEP_TYPE_COLORS: Record<string, string> = {
@@ -35,6 +37,7 @@ const STEP_TYPE_COLORS: Record<string, string> = {
   field_mapping: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700',
   enrich: 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-300 dark:border-yellow-700',
   run_script: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700',
+  branch: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-700',
 };
 
 interface ConfigField {
@@ -64,6 +67,7 @@ const CUSTOM_FLOW_STEP_CONFIG: Record<string, ConfigField[]> = {
     { key: 'targetField', label: 'Target Field (path)', type: 'text', placeholder: 'e.g. policy.enriched' },
   ],
   run_script: [], // script + timeout rendered in custom block below
+  branch: [], // branch config rendered in BranchConfigForm
 };
 
 function CustomFlowStepConfigForm({
@@ -177,6 +181,10 @@ const [sampleRequestJson, setSampleRequestJson] = useState('{}');
       setTestLoading(false);
     }
   };
+
+  if (stepType === 'branch') {
+    return <BranchConfigForm config={config} onChange={onChange} />;
+  }
 
   if (stepType === 'run_script') {
     return (

@@ -26,6 +26,9 @@ export class ProductOrchestratorEntity {
   @Column({ type: 'int', default: 1 })
   version!: number;
 
+  @Column({ type: 'text', nullable: true, unique: true, name: 'config_key' })
+  configKey!: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

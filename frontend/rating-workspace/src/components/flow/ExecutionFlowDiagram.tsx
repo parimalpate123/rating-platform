@@ -1,5 +1,5 @@
 import React from 'react'
-import { CheckCircle, XCircle, Circle, MinusCircle } from 'lucide-react'
+import { CheckCircle, XCircle, Circle, MinusCircle, GitBranch } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 // ── Shared types ──────────────────────────────────────────────────────────────
@@ -22,6 +22,12 @@ export interface DiagramResult {
   output?: Record<string, unknown>
   startedAt?: string
   completedAt?: string
+  branchDecision?: {
+    conditionEvaluated: string
+    result: boolean
+    branchLabel: string
+    targetStepName: string
+  } | null
 }
 
 // ── Service / endpoint label helpers ─────────────────────────────────────────
@@ -41,6 +47,8 @@ export function getServiceLabel(stepType: string, config?: Record<string, unknow
       return config?.systemCode ? String(config.systemCode) : 'external engine'
     case 'publish_event':
       return 'kafka (mock)'
+    case 'branch':
+      return 'conditional branch'
     default:
       return stepType.replace(/_/g, '-')
   }
@@ -84,6 +92,7 @@ const STEP_NODE_STYLES: Record<string, string> = {
   call_orchestrator: 'border-l-teal-400',
   publish_event: 'border-l-pink-400',
   enrich: 'border-l-yellow-400',
+  branch: 'border-l-rose-400',
 }
 
 const STEP_BADGE_STYLES: Record<string, string> = {
@@ -98,6 +107,7 @@ const STEP_BADGE_STYLES: Record<string, string> = {
   call_orchestrator: 'bg-teal-100 text-teal-700',
   publish_event: 'bg-pink-100 text-pink-700',
   enrich: 'bg-yellow-100 text-yellow-700',
+  branch: 'bg-rose-100 text-rose-700',
 }
 
 // ── Status helpers ────────────────────────────────────────────────────────────
@@ -190,7 +200,19 @@ export function ExecutionFlowDiagram({
                   {step.stepType.replace(/_/g, ' ')}
                 </span>
                 {/* Service label */}
-                <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">{serviceLabel}</p>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">
+                  {step.stepType === 'branch' && <GitBranch className="w-3 h-3 inline mr-0.5 -mt-0.5" />}
+                  {serviceLabel}
+                </p>
+                {/* Branch decision pill */}
+                {result?.branchDecision && (
+                  <span
+                    className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-medium bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-700 mt-0.5"
+                    title={`Condition: ${result.branchDecision.conditionEvaluated}`}
+                  >
+                    Took: {result.branchDecision.branchLabel}
+                  </span>
+                )}
                 {/* Execution overlay */}
                 {result && (
                   <div className="mt-1.5 pt-1 border-t border-gray-100 dark:border-gray-700 flex items-center gap-1">

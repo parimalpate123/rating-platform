@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, X, Copy, ChevronRight, AlertCircle, MinusCircle } from 'lucide-react';
+import { CheckCircle, XCircle, X, Copy, ChevronRight, AlertCircle, MinusCircle, GitBranch } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { getServiceLabel } from './ExecutionFlowDiagram';
 
@@ -21,6 +21,12 @@ export interface TestingFlowStepResult {
   durationMs: number;
   error?: string;
   output?: Record<string, unknown>;
+  branchDecision?: {
+    conditionEvaluated: string;
+    result: boolean;
+    branchLabel: string;
+    targetStepName: string;
+  } | null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -241,18 +247,19 @@ export function TestingFlowCircles({
               ? `${step.name} · Skipped (condition not met)`
               : `${step.name} · ${serviceLabel}`;
 
+          const isBranch = step.stepType === 'branch';
           const nodeContent = result ? (
             isFailed ? (
               <AlertCircle className="w-4 h-4 text-red-600" aria-label="Failed" />
             ) : status === 'completed' ? (
-              <CheckCircle className="w-4 h-4" />
+              isBranch ? <GitBranch className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />
             ) : isSkipped ? (
               <MinusCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-label="Skipped" />
             ) : (
-              <span className="text-[10px] font-bold">{index + 1}</span>
+              isBranch ? <GitBranch className="w-3.5 h-3.5" /> : <span className="text-[10px] font-bold">{index + 1}</span>
             )
           ) : (
-            <span className="text-[10px] font-bold">{index + 1}</span>
+            isBranch ? <GitBranch className="w-3.5 h-3.5" /> : <span className="text-[10px] font-bold">{index + 1}</span>
           );
 
           const nodeClass = isFailed

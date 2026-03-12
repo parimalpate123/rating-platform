@@ -13,6 +13,7 @@ export interface Transaction {
   durationMs?: number;
   stepCount: number;
   completedSteps: number;
+  executionPath?: string[] | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,6 +29,12 @@ export interface StepLog {
   outputSnapshot?: Record<string, unknown>;
   startedAt?: string;
   completedAt?: string;
+  branchDecision?: {
+    conditionEvaluated: string;
+    result: boolean;
+    branchLabel: string;
+    targetStepName: string;
+  } | null;
 }
 
 export interface TransactionListParams {

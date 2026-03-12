@@ -10,7 +10,8 @@ export type OrchestratorStepType =
   | 'call_orchestrator'
   | 'publish_event'
   | 'enrich'
-  | 'run_script';
+  | 'run_script'
+  | 'branch';
 
 export type ImplementationType = 'built_in' | 'library' | 'external_api';
 
@@ -44,6 +45,17 @@ export interface StepResilienceConfig {
   retry?: StepRetryConfig;
   circuitBreaker?: StepCircuitBreakerConfig;
   onFailure: OnFailureAction;
+}
+
+export interface BranchCondition {
+  label: string;
+  conditionExpression: string;
+  targetStepId: string;
+}
+
+export interface BranchConfig {
+  branches: BranchCondition[];
+  defaultTargetStepId?: string;
 }
 
 export interface StepConfig {
@@ -84,6 +96,13 @@ export interface StepConfig {
   scriptSource?: string;
   timeoutMs?: number;
 
+  // branch
+  branches?: BranchCondition[];
+  defaultTargetStepId?: string;
+
+  // graph wiring — explicit next step (overrides stepOrder)
+  defaultNextStepId?: string;
+
   // condition (optional — skip step if not met)
   condition?: StepCondition;
 
@@ -99,6 +118,8 @@ export interface OrchestratorStep {
   name: string;
   config: StepConfig;
   isActive: boolean;
+  configKey?: string;
+  defaultNextStepId?: string;
   createdAt: string;
 }
 

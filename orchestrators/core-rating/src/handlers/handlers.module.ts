@@ -12,6 +12,7 @@ import { EnrichHandler } from './enrich.handler';
 import { GenerateValueHandler } from './generate-value.handler';
 import { RunCustomFlowHandler } from './run-custom-flow.handler';
 import { RunScriptHandler } from './run-script.handler';
+import { BranchHandler } from './branch.handler';
 
 @Module({
   imports: [RegistryModule],
@@ -27,6 +28,7 @@ import { RunScriptHandler } from './run-script.handler';
     GenerateValueHandler,
     RunCustomFlowHandler,
     RunScriptHandler,
+    BranchHandler,
   ],
   exports: [
     FieldMappingHandler,
@@ -40,6 +42,7 @@ import { RunScriptHandler } from './run-script.handler';
     GenerateValueHandler,
     RunCustomFlowHandler,
     RunScriptHandler,
+    BranchHandler,
   ],
 })
 export class HandlersModule implements OnModuleInit {
@@ -56,6 +59,7 @@ export class HandlersModule implements OnModuleInit {
     private readonly generateValue: GenerateValueHandler,
     private readonly runCustomFlow: RunCustomFlowHandler,
     private readonly runScript: RunScriptHandler,
+    private readonly branch: BranchHandler,
   ) {}
 
   onModuleInit() {
@@ -70,5 +74,6 @@ export class HandlersModule implements OnModuleInit {
     this.registry.register(this.generateValue);
     this.registry.register(this.runCustomFlow);
     this.registry.register(this.runScript);
+    this.registry.register(this.branch);
   }
 }

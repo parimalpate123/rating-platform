@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Search,
   Copy,
+  GitBranch,
 } from 'lucide-react'
 import { transactionsApi, type Transaction, type StepLog } from '../api/transactions'
 import { cn, statusColor, formatDate } from '../lib/utils'
@@ -99,6 +100,7 @@ function InsightDetailRow({
     output: log.outputSnapshot,
     startedAt: log.startedAt,
     completedAt: log.completedAt,
+    branchDecision: log.branchDecision,
   }))
 
   if (loading) {
@@ -166,8 +168,14 @@ function InsightDetailRow({
                     <div className="flex-1 min-w-0">
                       <span className="font-medium text-gray-800 dark:text-gray-200">{step.stepName}</span>
                       <span className="ml-2 text-gray-400 dark:text-gray-500 text-[11px] font-mono">
+                        {step.stepType === 'branch' && <GitBranch className="w-3 h-3 inline mr-0.5 -mt-0.5" />}
                         {getServiceLabel(step.stepType)}
                       </span>
+                      {step.branchDecision && (
+                        <span className="ml-2 inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-medium bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-700">
+                          Took: {step.branchDecision.branchLabel}
+                        </span>
+                      )}
                       {step.errorMessage && (
                         <p className="text-red-500 dark:text-red-400 text-[11px] mt-0.5 truncate">{step.errorMessage}</p>
                       )}

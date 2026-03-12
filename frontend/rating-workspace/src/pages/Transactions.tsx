@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, Activity, ChevronDown, ChevronRight, AlertCircle, CheckCircle, Clock, RefreshCw } from 'lucide-react'
+import { Loader2, Activity, ChevronDown, ChevronRight, AlertCircle, CheckCircle, Clock, RefreshCw, GitBranch } from 'lucide-react'
 import { transactionsApi, type Transaction, type StepLog } from '../api/transactions'
 import { cn, statusColor, formatDate } from '../lib/utils'
 import { ExecutionFlowDiagram, type DiagramStep, type DiagramResult } from '../components/flow/ExecutionFlowDiagram'
@@ -70,6 +70,7 @@ function StepLogsRow({ txId }: { txId: string }) {
     output: log.outputSnapshot,
     startedAt: log.startedAt,
     completedAt: log.completedAt,
+    branchDecision: log.branchDecision,
   }))
 
   return (
@@ -111,7 +112,15 @@ function StepLogsRow({ txId }: { txId: string }) {
                         <StepStatusIcon status={step.status} />
                         <div className="flex-1 min-w-0">
                           <span className="font-medium text-gray-800">{step.stepName}</span>
-                          <span className="ml-2 text-gray-400 text-[11px] font-mono">{step.stepType}</span>
+                          <span className="ml-2 text-gray-400 text-[11px] font-mono">
+                            {step.stepType === 'branch' && <GitBranch className="w-3 h-3 inline mr-0.5 -mt-0.5" />}
+                            {step.stepType}
+                          </span>
+                          {step.branchDecision && (
+                            <span className="ml-2 inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-medium bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-700">
+                              Took: {step.branchDecision.branchLabel}
+                            </span>
+                          )}
                           {step.errorMessage && (
                             <p className="text-red-500 dark:text-red-400 text-[11px] mt-0.5 truncate">{step.errorMessage}</p>
                           )}

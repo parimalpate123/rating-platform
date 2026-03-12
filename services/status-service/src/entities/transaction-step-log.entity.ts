@@ -40,4 +40,7 @@ export class TransactionStepLogEntity {
 
   @Column({ type: 'timestamp', nullable: true, name: 'completed_at' })
   completedAt!: Date | null;
+
+  @Column({ type: 'jsonb', nullable: true, name: 'branch_decision' })
+  branchDecision!: Record<string, unknown> | null;
 }

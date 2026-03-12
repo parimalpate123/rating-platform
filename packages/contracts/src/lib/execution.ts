@@ -25,6 +25,13 @@ export interface ExecutionContext {
   };
 }
 
+export interface BranchDecision {
+  conditionEvaluated: string;
+  result: boolean;
+  branchLabel: string;
+  targetStepName: string;
+}
+
 export interface StepResult {
   stepId: string;
   stepType: string;
@@ -34,6 +41,8 @@ export interface StepResult {
   error?: string;
   durationMs: number;
   metadata?: Record<string, unknown>;
+  nextStepId?: string;
+  branchDecision?: BranchDecision;
 }
 
 export interface ValidationResult {
