@@ -56,7 +56,7 @@ jobs:
 
       # ── Scale UP: start RDS first (services need the DB) ─────────────────
       - name: Start RDS
-        if: inputs.action == 'up' && inputs.include_rds
+        if: ${{ inputs.action == 'up' && inputs.include_rds }}
         run: |
           STATUS=$(aws rds describe-db-instances \
             --db-instance-identifier "${{ env.RDS_INSTANCE }}" \
@@ -126,7 +126,7 @@ jobs:
 
       # ── Scale DOWN: stop RDS after ECS is drained ────────────────────────
       - name: Stop RDS
-        if: inputs.action == 'down' && inputs.include_rds
+        if: ${{ inputs.action == 'down' && inputs.include_rds }}
         run: |
           STATUS=$(aws rds describe-db-instances \
             --db-instance-identifier "${{ env.RDS_INSTANCE }}" \
